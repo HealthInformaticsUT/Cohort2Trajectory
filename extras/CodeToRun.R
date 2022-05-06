@@ -4,7 +4,6 @@
 #
 ################################################################################
 # devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run only first time
-devtools::install()
 library(Cohort2Trajectory)
 studyName = "HeartFailure" # TODO
 pathToResults <- getwd()   # TODO
