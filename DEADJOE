@@ -1,0 +1,33 @@
+
+*** These modified files were found in JOE when it aborted on Sat May  7 06:36:31 2022
+*** JOE was aborted by UNIX signal 1
+
+*** File '/home/mhaug/R-packages/HealthInformaticsUT/Cohort2Trajectory/.git/MERGE_MSG'
+Merge branch 'main' of https
+[//github.com/HealthInformaticsUT/Cohort2Trajectory into main
+
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit
+
+
+*** File '(Unnamed)'
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/HealthInformaticsUT/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/HealthInformaticsUT/TrajectoryMarkovAnalysis/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/HealthInformaticsUT/Cohort2Trajectory/.git/COMMIT_EDITMSG
+/home/mhaug/R-packages/HealthInformaticsUT/Cohort2Trajectory/.git/MERGE_MSG
+
+*** File '* Startup Log *'
+Processing '/etc/joe/editorrc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc

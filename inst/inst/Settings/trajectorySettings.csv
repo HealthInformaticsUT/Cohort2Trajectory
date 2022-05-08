@@ -1,0 +1,4 @@
+"studyName","trajectoryType","trajectoryStates","priorityOrder","stateSelectionType","absorbingStates","mandatoryStates","lengthOfStay","outOfCohortAllowed"
+"TestCohort2Trajectory","Discrete","TestState1,TestState2","TestState1,TestState2",3,"TestState2","TestState2",30,TRUE
+"TestCohort2TrajectorySaved","Discrete","TestState2,TestState1","TestState2,TestState1",1,"No absorbing state","No mandatory state",30,TRUE
+"HeartFailure","Discrete","HF1,HFD,HF2,HF3,HF0","HFD,HF0,HF1,HF2,HF3",3,"HFD","HFD",30,TRUE
