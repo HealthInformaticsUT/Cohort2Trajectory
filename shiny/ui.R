@@ -290,7 +290,7 @@ body = shinydashboard::dashboardBody(
                                       choices = c("Discrete time" = 0,
                                                   "Continuous time" = 1),
                                       selected = if (studyHasBeenSaved) {
-                                        if (savedTrajectoryType == "Discrete time") {
+                                        if (savedTrajectoryType == "Discrete") {
                                           0
                                         }
                                         else{
