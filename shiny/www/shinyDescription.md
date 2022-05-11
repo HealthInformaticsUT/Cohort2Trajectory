@@ -1,4 +1,4 @@
-### Package 'Cohort2Trajectory' ;  Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS
+### Package 'Cohort2Trajectory':  Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS
 
 **Development Status: Under Development**
 
