@@ -1,45 +1,11 @@
-### Analysing patient trajectories on OMOP CDM data structure
+### Package 'Cohort2Trajectory' ;  Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS
 
 **Development Status: Under Development**
 
-**The results are not final**
-
-
 ### Information
 
+This shiny application aims to help users in using Cohort2Trajectory functionalities.
+Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time. Package can be run with GUI or CLI.
 
-
-This shiny application aims to help users in using Markov chains on OMOP CDM data.
-
-During manuscript development and the subsequent review period, these results are considered under embargo and should not be disclosed without explicit permission and consent from the authors.
-
-
-
-Below are links for study-related artifacts that have been made available as part of this study:
-
-
-
-
-
-
-### Abstract 
-
-
-Below is the abstract of the manuscript that summarizes the findings:
-
-
-
-**Background:**  
-
-
-**Methods:** 
-
-**Findings:** 
-
-
-**Interpretation:**
-
-
-
-
-
+You can continue to importing data and start generating trajectories!
+Guides can be found under the "Help" tab.
