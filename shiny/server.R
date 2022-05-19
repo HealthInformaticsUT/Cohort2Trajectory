@@ -408,7 +408,8 @@ server <- function(input, output, session) {
           dbms = connectionDetails$dbms,
           cdmSchema = cdmSchema,
           resultsSchema = cdmResultsSchema,
-          selectedCohorts = c(input$ctargetCohort, input$cstateCohorts),
+          selectedTarget = input$ctargetCohort,
+          selectedStates = input$cstateCohorts,
           baseUrl = baseUrl,
           pathToResults = pathToResults
         )
