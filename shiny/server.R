@@ -949,7 +949,7 @@ server <- function(input, output, session) {
   output$patientExists <- shinydashboard::renderInfoBox({
     validate(need(
       !is.null(v$patientData),
-      "Please import relevant cohorts under 'Import' tab!!"
+      "Please create trajectories under 'Trajectories' tab!"
     ))
     if (input$profileSearchButton == 0)
       return(shinydashboard::infoBox(
