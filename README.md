@@ -11,6 +11,7 @@ Package can be run with GUI or CLI.
 
 Features
 ========
+**Sharing the study**: For sharing the trajectory generation parameters and cohorts just share the "inst" folder with your counterpart. When placing the "inst" directory to the pathToResults folder the settings are shared (given that the same studyName argument is used). When using GUI one should use the "Import via JSONs" tab for loading saved cohorts.
 
 Screenshots
 ===========

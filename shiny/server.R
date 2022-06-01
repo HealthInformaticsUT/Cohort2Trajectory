@@ -194,7 +194,6 @@ server <- function(input, output, session) {
                    width = 12,
                    title = paste("State cohort ", v$nrStatesJSON[i], " JSON:"),
                    status = "primary",
-                   solidHeader = TRUE,
                    shiny::textInput(
                      inputId = paste0('statesJSONLabel', v$nrStatesJSON[i]),
                      label = "State cohort label",
@@ -949,7 +948,7 @@ server <- function(input, output, session) {
   output$patientExists <- shinydashboard::renderInfoBox({
     validate(need(
       !is.null(v$patientData),
-      "Please generate trajectories under 'Trajectories' tab!"
+      "Please create trajectories under 'Trajectories' tab!"
     ))
     if (input$profileSearchButton == 0)
       return(shinydashboard::infoBox(
