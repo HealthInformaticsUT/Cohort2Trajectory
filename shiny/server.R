@@ -408,7 +408,8 @@ server <- function(input, output, session) {
           dbms = connectionDetails$dbms,
           cdmSchema = cdmSchema,
           resultsSchema = cdmResultsSchema,
-          selectedCohorts = c(input$ctargetCohort, input$cstateCohorts),
+          selectedTarget = input$ctargetCohort,
+          selectedStates = input$cstateCohorts,
           baseUrl = baseUrl,
           pathToResults = pathToResults
         )
@@ -948,7 +949,7 @@ server <- function(input, output, session) {
   output$patientExists <- shinydashboard::renderInfoBox({
     validate(need(
       !is.null(v$patientData),
-      "Please import relevant cohorts under 'Import' tab!!"
+      "Please generate trajectories under 'Trajectories' tab!"
     ))
     if (input$profileSearchButton == 0)
       return(shinydashboard::infoBox(
