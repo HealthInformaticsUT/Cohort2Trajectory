@@ -404,6 +404,7 @@ getInclusionTable = function(cohortData,
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
+#' @param states State labels in the order of importing
 #' @keywords internal
 getTrajectoriesDiscrete = function(connection,
                                    cohortData,
@@ -411,6 +412,7 @@ getTrajectoriesDiscrete = function(connection,
                                    pathToResults = getwd(),
                                    stateSelection = 1,
                                    statePriorityVector = NULL,
+                                   states = NULL,
                                    absorbingStates = NULL,
                                    studyName = "") {
   tmp_data = dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
@@ -461,7 +463,6 @@ getTrajectoriesDiscrete = function(connection,
     stateSelectionName = "Priority"
   }
   
-  states = unique(newPatientData$STATE)
   n = length(states)
   
   newPatientData$STATE_ID =
@@ -666,7 +667,7 @@ getTrajectoriesContinuous = function(connection,
   states = c("START", statePriorityVector, "EXIT")
   # We have to map states to 1,..., n.
   
-  n = length(unique(data$COHORT_DEFINITION_ID))
+  n = length(states)
   data$STATE =
     plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
