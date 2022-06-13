@@ -763,7 +763,6 @@ server <- function(input, output, session) {
         stateDuration = v$stateLength,
         stateSelection = input$stateSelectionType,
         statePriorityVector = input$rankListPriority,
-        states = if(is.null(v$customisedStates)) as.character(input$cstateCohorts) else v$customisedStates,
         absorbingStates = input$absorbingStates,
         studyName = studyName,
         pathToResults = pathToResults

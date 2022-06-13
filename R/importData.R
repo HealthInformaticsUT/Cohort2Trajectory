@@ -404,7 +404,6 @@ getInclusionTable = function(cohortData,
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
-#' @param states State labels in the order of importing
 #' @keywords internal
 getTrajectoriesDiscrete = function(connection,
                                    cohortData,
@@ -412,7 +411,6 @@ getTrajectoriesDiscrete = function(connection,
                                    pathToResults = getwd(),
                                    stateSelection = 1,
                                    statePriorityVector = NULL,
-                                   states = NULL,
                                    absorbingStates = NULL,
                                    studyName = "") {
   tmp_data = dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
@@ -463,6 +461,9 @@ getTrajectoriesDiscrete = function(connection,
     stateSelectionName = "Priority"
   }
   
+  states = as.character(c("START", setdiff(
+    unique(newPatientData$STATE), c('START', 'EXIT')
+  ), "EXIT"))
   n = length(states)
   
   newPatientData$STATE_ID =
@@ -664,18 +665,6 @@ getTrajectoriesContinuous = function(connection,
   ),
   SUBJECT_ID,
   COHORT_START_DATE)
-  states = c("START", statePriorityVector, "EXIT")
-  # We have to map states to 1,..., n.
-  
-  n = length(states)
-  data$STATE =
-    plyr::mapvalues(
-      x = data$COHORT_DEFINITION_ID,
-      from = states,
-      to = 1:n,
-      warn_missing = FALSE
-    )
-  
   ##############################################################################
   #
   # When we have prioritized states, we have to make sure that a state with smaller
@@ -755,7 +744,7 @@ getTrajectoriesContinuous = function(connection,
   
   # We should make sure that the time_in_cohort column has differing values for each state for the same patient
   # for developement case, let's just create an artificial difference of 1 day for each colliding date
-  data = dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
+  data = dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
   paient_id = NA
   last_patient_id = data$SUBJECT_ID[1]
   last_observed_ts = data$TIME_IN_COHORT[1]
@@ -779,6 +768,18 @@ getTrajectoriesContinuous = function(connection,
       last_observed_ts = data$TIME_IN_COHORT[row]
     }
   }
+  # We have to map states to 1,..., n.
+  states = as.character(c("START", setdiff(
+    unique(data$COHORT_DEFINITION_ID), c('START', 'EXIT')
+  ), "EXIT"))
+  n = length(states)
+  data$STATE =
+    plyr::mapvalues(
+      x = data$COHORT_DEFINITION_ID,
+      from = states,
+      to = 1:n,
+      warn_missing = FALSE
+    )
   
   data = dplyr::mutate(data, STATE = as.numeric(STATE))
   data = dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
