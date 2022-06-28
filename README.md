@@ -1,5 +1,3 @@
-Branch for developers
-
 Cohort2Trajectory
 ======================
 
