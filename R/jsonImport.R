@@ -9,7 +9,7 @@
 #' @param cdmTempSchema Schema for temporary tables
 #' @param studyName Customized name for the study
 #' @keywords internal
-getJSONData = function(connection,
+getJSONData <- function(connection,
                        connectionDetails,
                        jsons,
                        names,
@@ -60,17 +60,17 @@ getJSONData = function(connection,
       cdmTempSchema = cdmTempSchema,
       studyName = studyName
     )
-  data = DatabaseConnector::querySql(connection, sql)
+  data <- DatabaseConnector::querySql(connection, sql)
   # Apply state names
-  names = c("0", names)
-  data$COHORT_DEFINITION_ID = plyr::mapvalues(
+  names <- c("0", names)
+  data$COHORT_DEFINITION_ID <- plyr::mapvalues(
     x = data$COHORT_DEFINITION_ID,
     from = 1:length(names),
     to = names,
     warn_missing = FALSE
   )
   
-  data = dplyr::select(data,
+  data <- dplyr::select(data,
                        SUBJECT_ID,
                        COHORT_DEFINITION_ID,
                        COHORT_START_DATE,

@@ -15,7 +15,7 @@
 #' @example man/examples/runGUI.R
 #'
 #' @export
-runGUI = function(conn,
+runGUI <- function(conn,
                   connectionDetails,
                   pathToDriver = './Drivers',
                   pathToResults = NULL,

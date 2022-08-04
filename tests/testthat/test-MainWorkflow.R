@@ -11,14 +11,14 @@ pathToResults <<- dirname(dirname(getwd())) #
 # Database credentials
 #
 ################################################################################
-pathToDriver = './Drivers'
+pathToDriver <- './Drivers'
 dbms <- "sqlite" 
 
-cdmSchema = "main"  # Schema which contains the OHDSI Common Data Model
-cdmTmpSchema = "main" # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema = "main" # Schema which will contain the final results
+cdmSchema <- "main"  # Schema which contains the OHDSI Common Data Model
+cdmTmpSchema <- "main" # Schema for temporary tables, will be deleted # should be ohdsi_temp
+cdmResultsSchema <- "main" # Schema which will contain the final results
 
-baseUrl = NULL  # WebAPI URL is not needed when jsons' are already imported
+baseUrl <- NULL  # WebAPI URL is not needed when jsons' are already imported
 
 
 ################################################################################
@@ -71,14 +71,14 @@ Cohort2Trajectory(
 )
 
 
-data = readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectoryimportedData.csv", sep =""))
+data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectoryimportedData.csv", sep =""))
 
   expect_equal(nrow(data), 5017)
 })
 #> Test passed 🥇
 
 test_that("Constructed trajectory data nrow is equal to expected (5532)", {
-data = readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorypatientDataPriority.csv", sep = ""))
+data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorypatientDataPriority.csv", sep = ""))
 
   expect_equal(nrow(data), 5532)
 })

@@ -80,7 +80,7 @@ idExists <- function(data, id) {
 #' @param controlStart Start of the date interval of interest
 #' @param controlEnd End of the date interval of interest
 #' @keywords internal
-daysOverlap = function(dateStart,
+daysOverlap <- function(dateStart,
                        dateEnd,
                        controlStart,
                        controlEnd) {
