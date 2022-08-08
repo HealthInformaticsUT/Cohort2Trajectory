@@ -137,13 +137,14 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     stateCohortMandatory <- settings$savedMandatoryStates
     stateCohortAbsorbing <- settings$savedAbsorbingStates
     stateSelectionType <- settings$savedStateSelectionType
-    trajectoryType <- if (settings$savedTrajectoryType == "Discrete")
+    trajectoryType <- if (settings$savedTrajectoryType == "Discrete") {
       0
-    else
+    }
+    else {
       1
+    }
     lengthOfStay <- settings$savedLengthOfStay
     outOfCohortAllowed <- settings$savedOutOfCohortAllowed
-    
     
     
     data <- DatabaseConnector::querySql(connection, sql)
@@ -182,7 +183,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       warn_missing = FALSE
     )
     
-    if(!is.null(baseUrl)){
+    if (!is.null(baseUrl)) {
     for (i in 1:length(stateCohortLabels)) {
       file.rename(
         paste(
@@ -279,17 +280,19 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   ############################################################################
   
   if (!runSavedStudy) {
-    savedTrajectoryType <- if (trajectoryType == 0)
+    savedTrajectoryType <- if (trajectoryType == 0) {
       "Discrete"
-    else
+    }  
+    else {
       "Continuous"
+    }
     savedTrajectoryStates <- stateCohortLabels
     savedPriorityOrder <- stateCohortPriorityOrder
     savedStateSelectionType <- stateSelectionType
     savedAbsorbingStates <- stateCohortAbsorbing
     savedMandatoryStates <- stateCohortMandatory
     savedLengthOfStay <- lengthOfStay
-    savedOutOfCohortAllowed <-  as.logical(outOfCohortAllowed)
+    savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
     # defining a row
     newSettings <- data.frame(
       studyName,
@@ -306,7 +309,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     settings <- read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
     if (studyName %in% settings$studyName) {
       studyIndex <- which(settings$studyName == studyName)
-      settings[studyIndex,] <- newSettings
+      settings[studyIndex, ] <- newSettings
     }
     else{
       colnames(newSettings) <- colnames(settings)

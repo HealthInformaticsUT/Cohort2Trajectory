@@ -65,7 +65,7 @@ getCohortData <- function(connection,
     paste(pathToResults, "/inst/SQL/", sep = ""), full.names = TRUE
   )))
   
-  if(!is.null(baseUrl)){
+  if (!is.null(baseUrl)) {
   for (i in 1:length(selectedCohorts)) {
     cohortId = as.integer(selectedCohorts[i])
     object <-
@@ -694,37 +694,37 @@ getTrajectoriesContinuous <- function(connection,
                                     COHORT_DEFINITION_ID != statePriorityVector[p])
         if (nrow(patientData) > 0) {
           for (i in 1:nrow(priorityData)) {
-            newpatientData <- patientData[0,]
+            newpatientData <- patientData[0, ]
             for (j in 1:nrow(patientData)) {
-              if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE &
-                  priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE)
+              if (priorityData[i, ]$COHORT_START_DATE > patientData[j, ]$COHORT_START_DATE &
+                  priorityData[i, ]$COHORT_END_DATE < patientData[j, ]$COHORT_END_DATE)
               {
-                if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
-                  head <- patientData[j,]
-                  head$COHORT_END_DATE <- priorityData[i,]$COHORT_START_DATE
+                if (priorityData[i, ]$COHORT_START_DATE > patientData[j, ]$COHORT_START_DATE) {
+                  head <- patientData[j, ]
+                  head$COHORT_END_DATE <- priorityData[i, ]$COHORT_START_DATE
                   newpatientData <- rbind(newpatientData, head)
                 }
                 
-                if (priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE) {
-                  tail <- patientData[j,]
-                  tail$COHORT_START_DATE <- priorityData[i,]$COHORT_END_DATE
+                if (priorityData[i, ]$COHORT_END_DATE < patientData[j, ]$COHORT_END_DATE) {
+                  tail <- patientData[j, ]
+                  tail$COHORT_START_DATE <- priorityData[i, ]$COHORT_END_DATE
                   newpatientData <- rbind(newpatientData, tail)
                 }
               }
-              else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_END_DATE &
-                       priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_END_DATE) {
-                head <- patientData[j,]
-                head$COHORT_END_DATE <- priorityData[i,]$COHORT_START_DATE
+              else if (priorityData[i, ]$COHORT_START_DATE < patientData[j, ]$COHORT_END_DATE &
+                       priorityData[i, ]$COHORT_END_DATE > patientData[j, ]$COHORT_END_DATE) {
+                head <- patientData[j, ]
+                head$COHORT_END_DATE <- priorityData[i, ]$COHORT_START_DATE
                 newpatientData <- rbind(newpatientData, head)
               }
-              else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_START_DATE &
-                       priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_START_DATE) {
-                tail <- patientData[j,]
-                tail$COHORT_START_DATE <- priorityData[i,]$COHORT_END_DATE
+              else if (priorityData[i, ]$COHORT_START_DATE < patientData[j, ]$COHORT_START_DATE &
+                       priorityData[i, ]$COHORT_END_DATE > patientData[j, ]$COHORT_START_DATE) {
+                tail <- patientData[j, ]
+                tail$COHORT_START_DATE <- priorityData[i, ]$COHORT_END_DATE
                 newpatientData <- rbind(newpatientData, tail)
               }
               else{
-                newpatientData <- rbind(newpatientData, patientData[j,])
+                newpatientData <- rbind(newpatientData, patientData[j, ])
               }
               
             }
@@ -811,10 +811,12 @@ getTrajectoriesContinuous <- function(connection,
   data <- removeAfterAbsorbingStatesContinuous(
     patientData = data,
     patientIDs = unique(data$SUBJECT_ID),
-    absorbingStates = if (is.null(absorbingStates))
+    absorbingStates = if (is.null(absorbingStates)) {
       c("No absorbing state")
-    else
+    }
+    else {
       absorbingStates
+    }
   )
   
   ##############################################################################
@@ -918,10 +920,12 @@ loadSettings <- function(studyName) {
   targetIndex <- which(stateNamesJSON == "0")
   env$stateNamesJSON <- stateNamesJSON[-targetIndex]
   
-  env$targetJSON <- if (identical(jsonFiles[targetIndex], character(0)))
+  env$targetJSON <- if (identical(jsonFiles[targetIndex], character(0))) {
     ""
-  else
+  }
+  else {
     paste(readLines(jsonFiles[targetIndex]), collapse = "\n")
+  }
   env$jsonFiles <-  jsonFiles[-targetIndex]
   
   insertedJSONs <- c()

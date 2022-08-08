@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-jsonFiles = list.files(
+jsonFiles <- list.files(
     path = paste(pathToResults,"/inst/JSON/",sep = ""),
     pattern = NULL,
     all.files = FALSE,
@@ -17,15 +17,15 @@ stateNamesJSON <- list.files(
     full.names = FALSE
   )
 stateNamesJSON <<- substr(stateNamesJSON,1,nchar(stateNamesJSON)-5)
-targetIndex = which(stateNamesJSON == "0")
-stateNamesJSON = stateNamesJSON[-targetIndex]
-targetJSON = if(identical(jsonFiles[targetIndex], character(0))) "" else paste(readLines(jsonFiles[targetIndex]), collapse = "\n")
-jsonFiles =  jsonFiles[-targetIndex]
+targetIndex <- which(stateNamesJSON == "0")
+stateNamesJSON <- stateNamesJSON[-targetIndex]
+targetJSON <- if(identical(jsonFiles[targetIndex], character(0))) "" else paste(readLines(jsonFiles[targetIndex]), collapse = "\n")
+jsonFiles <-  jsonFiles[-targetIndex]
 
-insertedJSONs = c()
+insertedJSONs <- c()
 
 for (jsonFile in jsonFiles) {
-  insertedJSONs = c(insertedJSONs, paste(readLines(jsonFile), collapse = "\n"))
+  insertedJSONs <- c(insertedJSONs, paste(readLines(jsonFile), collapse = "\n"))
 }
 
 ################################################################################
@@ -34,17 +34,21 @@ for (jsonFile in jsonFiles) {
 #
 ################################################################################
 
-settings = read.csv(paste(pathToResults,"/inst/Settings/trajectorySettings.csv",sep = ""))
+settings <- read.csv(paste(pathToResults,"/inst/Settings/trajectorySettings.csv",sep = ""))
 
-savedStudyName = settings$studyName
-studyIndex = which(studyName == savedStudyName)
-studyHasBeenSaved = if(length(studyIndex) == 0) FALSE else TRUE
+savedStudyName <- settings$studyName
+studyIndex <- which(studyName == savedStudyName)
+studyHasBeenSaved <- if (length(studyIndex) == 0) {
+  FALSE
+  } else {
+    TRUE
+  }
 
-savedTrajectoryType = settings$trajectoryType[studyIndex]
-savedTrajectoryStates = strsplit(settings$trajectoryStates[studyIndex],",")
-savedPriorityOrder = strsplit(settings$priorityOrder[studyIndex],",")
-savedStateSelectionType = settings$stateSelectionType[studyIndex]
-savedAbsorbingStates = settings$absorbingStates[studyIndex]
-savedMandatoryStates = settings$mandatoryStates[studyIndex]
-savedLengthOfStay = settings$lengthOfStay[studyIndex]
-savedOutOfCohortAllowed = settings$outOfCohortAllowed[studyIndex]
+savedTrajectoryType <- settings$trajectoryType[studyIndex]
+savedTrajectoryStates <- strsplit(settings$trajectoryStates[studyIndex],",")
+savedPriorityOrder <- strsplit(settings$priorityOrder[studyIndex],",")
+savedStateSelectionType <- settings$stateSelectionType[studyIndex]
+savedAbsorbingStates <- settings$absorbingStates[studyIndex]
+savedMandatoryStates <- settings$mandatoryStates[studyIndex]
+savedLengthOfStay <- settings$lengthOfStay[studyIndex]
+savedOutOfCohortAllowed <- settings$outOfCohortAllowed[studyIndex]
