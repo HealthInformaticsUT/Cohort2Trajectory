@@ -82,9 +82,9 @@ idExists <- function(data, id) {
 #' @param controlEnd End of the date interval of interest
 #' @keywords internal
 daysOverlap <- function(dateStart,
-                       dateEnd,
-                       controlStart,
-                       controlEnd) {
+                        dateEnd,
+                        controlStart,
+                        controlEnd) {
   if (dateStart > controlStart &
       dateEnd > controlEnd) {
     return(max(as.numeric(controlEnd - dateStart), 0))
@@ -151,11 +151,11 @@ dropRelation <-
     }
     
     ParallelLogger::logInfo(paste("DROP TABLE ",
-                schema,
-                ".",
-                relationName,
-                " EXECUTED!",
-                sep = ""))
+                                  schema,
+                                  ".",
+                                  relationName,
+                                  " EXECUTED!",
+                                  sep = ""))
   }
 
 #' Function which converts text formatted JSON to digestible JSON
@@ -175,12 +175,15 @@ dropRelation <-
 #' @param pathToResults Path to the package results
 #' @keywords internal
 createMandatorySubDirs <- function(pathToResults) {
-  dir.create(file.path(pathToResults, "tmp"),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/tmp', sep = ""), 'datasets'),showWarnings = FALSE)
+  dir.create(file.path(pathToResults, "tmp"), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/tmp', sep = ""), 'datasets'), showWarnings = FALSE)
   
-  dir.create(file.path(pathToResults, "inst"),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'JSON'),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'SQL'),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'Settings'),showWarnings = FALSE)
-  file.copy(paste(getwd(),'/inst/Settings/trajectorySettings.csv', sep = ""),paste(pathToResults,'/inst/Settings', sep = ""))
-  }
+  dir.create(file.path(pathToResults, "inst"), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'JSON'), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'SQL'), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'Settings'), showWarnings = FALSE)
+  file.copy(
+    paste(getwd(), '/inst/Settings/trajectorySettings.csv', sep = ""),
+    paste(pathToResults, '/inst/Settings', sep = "")
+  )
+}

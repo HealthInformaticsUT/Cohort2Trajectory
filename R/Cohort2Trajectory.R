@@ -25,25 +25,24 @@
 #'
 #' @export
 Cohort2Trajectory <- function(dbms = "postgresql",
-                             connection,
-                             cdmSchema = "ohdsi_cdm",
-                             cdmTmpSchema = "ohdsi_temp",
-                             cdmResultsSchema = "ohdsi_results",
-                             studyName = "Cohort2Trajectory",
-                             baseUrl = "http://localhost:8080/WebAPI",
-                             atlasTargetCohort,
-                             atlasStateCohorts,
-                             stateCohortLabels,
-                             stateCohortPriorityOrder,
-                             stateCohortMandatory,
-                             stateCohortAbsorbing,
-                             stateSelectionType,
-                             trajectoryType,
-                             lengthOfStay,
-                             outOfCohortAllowed,
-                             runSavedStudy = FALSE,
-                             pathToResults = getwd())
-{
+                              connection,
+                              cdmSchema = "ohdsi_cdm",
+                              cdmTmpSchema = "ohdsi_temp",
+                              cdmResultsSchema = "ohdsi_results",
+                              studyName = "Cohort2Trajectory",
+                              baseUrl = "http://localhost:8080/WebAPI",
+                              atlasTargetCohort,
+                              atlasStateCohorts,
+                              stateCohortLabels,
+                              stateCohortPriorityOrder,
+                              stateCohortMandatory,
+                              stateCohortAbsorbing,
+                              stateSelectionType,
+                              trajectoryType,
+                              lengthOfStay,
+                              outOfCohortAllowed,
+                              runSavedStudy = FALSE,
+                              pathToResults = getwd()) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -137,9 +136,10 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     stateCohortMandatory <- settings$savedMandatoryStates
     stateCohortAbsorbing <- settings$savedAbsorbingStates
     stateSelectionType <- settings$savedStateSelectionType
-    trajectoryType <- if (settings$savedTrajectoryType == "Discrete") {
-      0
-    }
+    trajectoryType <-
+      if (settings$savedTrajectoryType == "Discrete") {
+        0
+      }
     else {
       1
     }
@@ -157,10 +157,10 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       warn_missing = FALSE
     )
     data <- dplyr::select(data,
-                         SUBJECT_ID,
-                         COHORT_DEFINITION_ID,
-                         COHORT_START_DATE,
-                         COHORT_END_DATE)
+                          SUBJECT_ID,
+                          COHORT_DEFINITION_ID,
+                          COHORT_START_DATE,
+                          COHORT_END_DATE)
     
   }
   else {
@@ -184,36 +184,40 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     )
     
     if (!is.null(baseUrl)) {
-    for (i in 1:length(stateCohortLabels)) {
-      file.rename(
-        paste(
-          pathToResults,
-          "/inst/JSON/",
-          atlasStateCohorts[i],
-          ".json",
-          sep = ""
-        ),
-        paste(
-          pathToResults,
-          "/inst/JSON/",
-          stateCohortLabels[i],
-          ".json",
-          sep = ""
+      for (i in 1:length(stateCohortLabels)) {
+        file.rename(
+          paste(
+            pathToResults,
+            "/inst/JSON/",
+            atlasStateCohorts[i],
+            ".json",
+            sep = ""
+          ),
+          paste(
+            pathToResults,
+            "/inst/JSON/",
+            stateCohortLabels[i],
+            ".json",
+            sep = ""
+          )
         )
-      )
-      file.rename(
-        paste(pathToResults,
-              "/inst/SQL/",
-              atlasStateCohorts[i],
-              ".sql",
-              sep = ""),
-        paste(pathToResults,
-              "/inst/SQL/",
-              stateCohortLabels[i],
-              ".sql",
-              sep = "")
-      )
-    }
+        file.rename(
+          paste(
+            pathToResults,
+            "/inst/SQL/",
+            atlasStateCohorts[i],
+            ".sql",
+            sep = ""
+          ),
+          paste(
+            pathToResults,
+            "/inst/SQL/",
+            stateCohortLabels[i],
+            ".sql",
+            sep = ""
+          )
+        )
+      }
     }
     save_object(
       path =  paste(
@@ -270,7 +274,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       studyName = studyName
     )
   }
-
+  
   
   ParallelLogger::logInfo("Trajectory generation completed!")
   ############################################################################
@@ -282,7 +286,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   if (!runSavedStudy) {
     savedTrajectoryType <- if (trajectoryType == 0) {
       "Discrete"
-    }  
+    }
     else {
       "Continuous"
     }
@@ -306,24 +310,37 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       savedOutOfCohortAllowed
     )
     
-    settings <- read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
+    settings <-
+      read.csv(paste(
+        pathToResults,
+        "/inst/Settings/trajectorySettings.csv",
+        sep = ""
+      ))
     if (studyName %in% settings$studyName) {
       studyIndex <- which(settings$studyName == studyName)
-      settings[studyIndex, ] <- newSettings
+      settings[studyIndex,] <- newSettings
     }
-    else{
+    else {
       colnames(newSettings) <- colnames(settings)
       settings <- rbind(settings, newSettings)
     }
     
     write.csv(
       settings,
-      paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""),
+      paste(
+        pathToResults,
+        "/inst/Settings/trajectorySettings.csv",
+        sep = ""
+      ),
       row.names = FALSE
     )
     ParallelLogger::logInfo(paste(
       "Saved settings to: ",
-      paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""),
+      paste(
+        pathToResults,
+        "/inst/Settings/trajectorySettings.csv",
+        sep = ""
+      ),
       sep = ""
     ))
   }

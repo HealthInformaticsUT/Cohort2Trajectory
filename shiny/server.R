@@ -845,7 +845,7 @@ server <- function(input, output, session) {
       savedOutOfCohortAllowed
     )
     if (studyName %in% settings$studyName) {
-      settings[studyIndex, ] <- newSettings
+      settings[studyIndex,] <- newSettings
     }
     else {
       colnames(newSettings) <- colnames(settings)
@@ -879,7 +879,7 @@ server <- function(input, output, session) {
     progress$set(message = "Creating statistics tables", value = 4 / 5)
     
     tmpDataState <-
-      dplyr::filter(result, !STATE %in% c("START", "EXIT"))
+      dplyr::filter(result,!STATE %in% c("START", "EXIT"))
     
     table <- prop.table(table(tmpDataState$STATE))
     table <- as.data.frame(table)
@@ -932,7 +932,8 @@ server <- function(input, output, session) {
     if (idExists(v$patientData, input$profiles_personIdInput)) {
       v$profileStochasticPlot <-
         visualisePatient(v$patientData,
-                         as.numeric(input$profiles_personIdInput),)
+                         as.numeric(input$profiles_personIdInput),
+        )
     }
   })
   

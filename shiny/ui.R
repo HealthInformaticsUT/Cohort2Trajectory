@@ -3,19 +3,20 @@
 # Header content
 #
 ################################################################################
-header <-  shinydashboard::dashboardHeader(title = "Cohort2Trajectory dashboard",
-                                          tags$li(
-                                            div(
-                                              img(
-                                                src = 'images/logo.png',
-                                                title = "OHDSI PLP",
-                                                height = "40px",
-                                                width = "40px"
-                                              ),
-                                              style = "padding-top:0px; padding-bottom:0px;"
-                                            ),
-                                            class = "dropdown"
-                                          ))
+header <-
+  shinydashboard::dashboardHeader(title = "Cohort2Trajectory dashboard",
+                                  tags$li(
+                                    div(
+                                      img(
+                                        src = 'images/logo.png',
+                                        title = "OHDSI PLP",
+                                        height = "40px",
+                                        width = "40px"
+                                      ),
+                                      style = "padding-top:0px; padding-bottom:0px;"
+                                    ),
+                                    class = "dropdown"
+                                  ))
 
 
 ################################################################################
@@ -354,9 +355,9 @@ body <- shinydashboard::dashboardBody(
                                       selected = if (studyHasBeenSaved) {
                                         as.logical(savedOutOfCohortAllowed)
                                       }
-                                        else {
+                                      else {
                                         FALSE
-                                        }
+                                      }
                                     ),
                                     shiny::actionButton("trajectoriesButton", "Generate")
                                   )

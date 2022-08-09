@@ -10,12 +10,12 @@
 #' @param studyName Customized name for the study
 #' @keywords internal
 getJSONData <- function(connection,
-                       connectionDetails,
-                       jsons,
-                       names,
-                       cdmDataSchema,
-                       cdmTempSchema,
-                       studyName) {
+                        connectionDetails,
+                        jsons,
+                        names,
+                        cdmDataSchema,
+                        cdmTempSchema,
+                        studyName) {
   cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
   for (i in 1:length(jsons)) {
     cohortJson <- jsons[i]
@@ -46,12 +46,12 @@ getJSONData <- function(connection,
   )
   # Generate the cohorts
   CohortGenerator::generateCohortSet(
-      connection = connection,
-      cdmDatabaseSchema = cdmDataSchema,
-      cohortDatabaseSchema = cdmTempSchema,
-      cohortTableNames = cohortTableNames,
-      cohortDefinitionSet = cohortsToCreate
-    )
+    connection = connection,
+    cdmDatabaseSchema = cdmDataSchema,
+    cohortDatabaseSchema = cdmTempSchema,
+    cohortTableNames = cohortTableNames,
+    cohortDefinitionSet = cohortsToCreate
+  )
   
   sql <-
     loadRenderTranslateSql(
@@ -71,11 +71,10 @@ getJSONData <- function(connection,
   )
   
   data <- dplyr::select(data,
-                       SUBJECT_ID,
-                       COHORT_DEFINITION_ID,
-                       COHORT_START_DATE,
-                       COHORT_END_DATE)
+                        SUBJECT_ID,
+                        COHORT_DEFINITION_ID,
+                        COHORT_START_DATE,
+                        COHORT_END_DATE)
   
   return(data)
 }
-
