@@ -3,7 +3,7 @@
 # Header content
 #
 ################################################################################
-header =  shinydashboard::dashboardHeader(title = "Cohort2Trajectory dashboard",
+header <-  shinydashboard::dashboardHeader(title = "Cohort2Trajectory dashboard",
                                           tags$li(
                                             div(
                                               img(
@@ -23,7 +23,7 @@ header =  shinydashboard::dashboardHeader(title = "Cohort2Trajectory dashboard",
 # Sidebar content
 #
 ################################################################################
-sidebar = shinydashboard::dashboardSidebar(
+sidebar <- shinydashboard::dashboardSidebar(
   shinydashboard::sidebarMenu(
     shinydashboard::menuItem("Description", tabName = "description", icon = icon("home")),
     shinydashboard::menuItem(
@@ -62,7 +62,7 @@ sidebar = shinydashboard::dashboardSidebar(
 #
 ################################################################################
 
-body = shinydashboard::dashboardBody(
+body <- shinydashboard::dashboardBody(
   shinydashboard::tabItems(
     ################################################################################
     #
@@ -293,11 +293,11 @@ body = shinydashboard::dashboardBody(
                                         if (savedTrajectoryType == "Discrete") {
                                           0
                                         }
-                                        else{
+                                        else {
                                           1
                                         }
                                       }
-                                      else{
+                                      else {
                                         0
                                       }
                                     )
@@ -311,10 +311,12 @@ body = shinydashboard::dashboardBody(
                                           '<i class="	fas fa-user-cog" style = "color:#00000;"></i><span style = "color:#00000"> Length of a state stay in days (only discrete case) </span>'
                                         )
                                       ),
-                                      value = if (studyHasBeenSaved)
+                                      value = if (studyHasBeenSaved) {
                                         savedLengthOfStay
-                                      else
-                                        30,
+                                      }
+                                      else {
+                                        30
+                                      },
                                       min = 0
                                     )
                                   ),
@@ -328,10 +330,12 @@ body = shinydashboard::dashboardBody(
                                         "Largest overlap" = 2,
                                         "Priority first" = 3
                                       ),
-                                      selected = if (studyHasBeenSaved)
+                                      selected = if (studyHasBeenSaved) {
                                         savedStateSelectionType
-                                      else
+                                      }
+                                      else {
                                         1
+                                      }
                                     )
                                   )
                                 ),
@@ -347,10 +351,12 @@ body = shinydashboard::dashboardBody(
                                       label = "Allow states out of observation period",
                                       choices = c("No" = FALSE,
                                                   "Yes" = TRUE),
-                                      selected = if (studyHasBeenSaved)
+                                      selected = if (studyHasBeenSaved) {
                                         as.logical(savedOutOfCohortAllowed)
-                                      else
+                                      }
+                                        else {
                                         FALSE
+                                        }
                                     ),
                                     shiny::actionButton("trajectoriesButton", "Generate")
                                   )

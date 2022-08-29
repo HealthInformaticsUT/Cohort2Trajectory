@@ -15,7 +15,7 @@
 #' @example man/examples/runGUI.R
 #'
 #' @export
-runGUI = function(conn,
+runGUI <- function(conn,
                   connectionDetails,
                   pathToDriver = './Drivers',
                   pathToResults = NULL,
@@ -46,10 +46,10 @@ runGUI = function(conn,
   cdmSchema <<- cdmSchema
   cdmTmpSchema <<- cdmTmpSchema
   cdmResultsSchema <<- cdmResultsSchema
-  if(!is.null(pathToResults)){
+  if (!is.null(pathToResults)) {
     pathToResults <<- pathToResults
   }
-  else{
+  else {
   pathToResults <<- paste(getwd(), "/tmp", sep = "")
   }
   studyName <<- studyName

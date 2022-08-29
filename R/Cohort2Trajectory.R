@@ -24,7 +24,7 @@
 #' @example man/examples/Cohort2Trajectory.R
 #'
 #' @export
-Cohort2Trajectory = function(dbms = "postgresql",
+Cohort2Trajectory <- function(dbms = "postgresql",
                              connection,
                              cdmSchema = "ohdsi_cdm",
                              cdmTmpSchema = "ohdsi_temp",
@@ -66,15 +66,15 @@ Cohort2Trajectory = function(dbms = "postgresql",
   
   ##############################################################################
   
-  data = NULL
+  data <- NULL
   
   # running already defined study
   if (runSavedStudy) {
     cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
     # loading settings
-    settings = loadSettings(studyName)
-    stateNamesJSON = c("0", settings$stateNamesJSON)
-    insertedJSONs = c(settings$targetJSON, settings$insertedJSONs)
+    settings <- loadSettings(studyName)
+    stateNamesJSON <- c("0", settings$stateNamesJSON)
+    insertedJSONs <- c(settings$targetJSON, settings$insertedJSONs)
     
     for (i in 1:length(stateNamesJSON)) {
       cohortJson <- insertedJSONs[i]
@@ -132,30 +132,31 @@ Cohort2Trajectory = function(dbms = "postgresql",
     #
     ############################################################################
     
-    stateCohortLabels = settings$savedTrajectoryStates
-    stateCohortPriorityOrder = settings$savedPriorityOrder
-    stateCohortMandatory = settings$savedMandatoryStates
-    stateCohortAbsorbing = settings$savedAbsorbingStates
-    stateSelectionType = settings$savedStateSelectionType
-    trajectoryType = if (settings$savedTrajectoryType == "Discrete")
+    stateCohortLabels <- settings$savedTrajectoryStates
+    stateCohortPriorityOrder <- settings$savedPriorityOrder
+    stateCohortMandatory <- settings$savedMandatoryStates
+    stateCohortAbsorbing <- settings$savedAbsorbingStates
+    stateSelectionType <- settings$savedStateSelectionType
+    trajectoryType <- if (settings$savedTrajectoryType == "Discrete") {
       0
-    else
+    }
+    else {
       1
-    lengthOfStay = settings$savedLengthOfStay
-    outOfCohortAllowed = settings$savedOutOfCohortAllowed
+    }
+    lengthOfStay <- settings$savedLengthOfStay
+    outOfCohortAllowed <- settings$savedOutOfCohortAllowed
     
     
-    
-    data = DatabaseConnector::querySql(connection, sql)
+    data <- DatabaseConnector::querySql(connection, sql)
     # Apply state names
-    names = c("0", stateCohortPriorityOrder)
-    data$COHORT_DEFINITION_ID = plyr::mapvalues(
+    names <- c("0", stateCohortPriorityOrder)
+    data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = 1:length(names),
       to = names,
       warn_missing = FALSE
     )
-    data = dplyr::select(data,
+    data <- dplyr::select(data,
                          SUBJECT_ID,
                          COHORT_DEFINITION_ID,
                          COHORT_START_DATE,
@@ -164,7 +165,7 @@ Cohort2Trajectory = function(dbms = "postgresql",
   }
   else {
     ParallelLogger::logInfo("Importing data ...")
-    data = getCohortData(
+    data <- getCohortData(
       connection,
       dbms,
       resultsSchema = cdmResultsSchema,
@@ -175,14 +176,14 @@ Cohort2Trajectory = function(dbms = "postgresql",
       pathToResults = pathToResults
     )
     # Change state labels
-    data$COHORT_DEFINITION_ID = plyr::mapvalues(
+    data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = c("0", as.character(atlasStateCohorts)),
       to = c("0", stateCohortLabels),
       warn_missing = FALSE
     )
     
-    if(!is.null(baseUrl)){
+    if (!is.null(baseUrl)) {
     for (i in 1:length(stateCohortLabels)) {
       file.rename(
         paste(
@@ -234,7 +235,7 @@ Cohort2Trajectory = function(dbms = "postgresql",
   
   
   ParallelLogger::logInfo("Cleaning data ...")
-  data = cleanCohortData(
+  data <- cleanCohortData(
     cohortData = data,
     mandatoryStates = stateCohortMandatory,
     outOfCohortAllowed = as.logical(outOfCohortAllowed)
@@ -245,9 +246,9 @@ Cohort2Trajectory = function(dbms = "postgresql",
   
   ParallelLogger::logInfo("Generating trajectories ...")
   
-  result = NULL
+  result <- NULL
   if (trajectoryType == 0) {
-    result = getTrajectoriesDiscrete(
+    result <- getTrajectoriesDiscrete(
       connection = connection,
       cohortData = data,
       stateDuration = lengthOfStay,
@@ -259,7 +260,7 @@ Cohort2Trajectory = function(dbms = "postgresql",
     )
   }
   else if (trajectoryType == 1) {
-    result = getTrajectoriesContinuous(
+    result <- getTrajectoriesContinuous(
       connection = connection,
       patientData =  data,
       pathToResults = pathToResults,
@@ -279,17 +280,19 @@ Cohort2Trajectory = function(dbms = "postgresql",
   ############################################################################
   
   if (!runSavedStudy) {
-    savedTrajectoryType = if (trajectoryType == 0)
+    savedTrajectoryType <- if (trajectoryType == 0) {
       "Discrete"
-    else
+    }  
+    else {
       "Continuous"
-    savedTrajectoryStates = stateCohortLabels
-    savedPriorityOrder = stateCohortPriorityOrder
-    savedStateSelectionType = stateSelectionType
-    savedAbsorbingStates = stateCohortAbsorbing
-    savedMandatoryStates = stateCohortMandatory
-    savedLengthOfStay = lengthOfStay
-    savedOutOfCohortAllowed =  as.logical(outOfCohortAllowed)
+    }
+    savedTrajectoryStates <- stateCohortLabels
+    savedPriorityOrder <- stateCohortPriorityOrder
+    savedStateSelectionType <- stateSelectionType
+    savedAbsorbingStates <- stateCohortAbsorbing
+    savedMandatoryStates <- stateCohortMandatory
+    savedLengthOfStay <- lengthOfStay
+    savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
     # defining a row
     newSettings <- data.frame(
       studyName,
@@ -303,14 +306,14 @@ Cohort2Trajectory = function(dbms = "postgresql",
       savedOutOfCohortAllowed
     )
     
-    settings = read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
+    settings <- read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
     if (studyName %in% settings$studyName) {
-      studyIndex = which(settings$studyName == studyName)
-      settings[studyIndex,] = newSettings
+      studyIndex <- which(settings$studyName == studyName)
+      settings[studyIndex, ] <- newSettings
     }
     else{
-      colnames(newSettings) = colnames(settings)
-      settings = rbind(settings, newSettings)
+      colnames(newSettings) <- colnames(settings)
+      settings <- rbind(settings, newSettings)
     }
     
     write.csv(
