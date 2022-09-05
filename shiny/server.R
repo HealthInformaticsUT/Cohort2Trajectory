@@ -32,30 +32,30 @@ server <- function(input, output, session) {
   ################################################################################
   v <-
     reactiveValues(
-      data <- NULL,
-      nrStatesJSON <- NULL,
-      insertedJSONs <-
+      data = NULL,
+      nrStatesJSON = NULL,
+      insertedJSONs =
         if (studyHasBeenSaved) {
           insertedJSONs
         } else {
           NULL
         },
-      customisedStates <-
+      customisedStates =
         if (studyHasBeenSaved) {
           stateNamesJSON
         } else {
           NULL
         },
-      customisedTarget <- NULL,
-      patientData <- NULL,
-      profileStochasticPlot <- NULL,
-      patientCostInfo <- NULL,
-      kmData <- NULL,
-      kmAgeAnalysis <- FALSE,
-      kmIntervalIds <- NULL,
-      generatedData <- NULL,
-      trajectoryTable1 <- NULL,
-      trajectoryTable2 <- NULL
+      customisedTarget = NULL,
+      patientData = NULL,
+      profileStochasticPlot = NULL,
+      patientCostInfo = NULL,
+      kmData = NULL,
+      kmAgeAnalysis = FALSE,
+      kmIntervalIds = NULL,
+      generatedData = NULL,
+      trajectoryTable1 = NULL,
+      trajectoryTable2 = NULL
     )
   ################################################################################
   #

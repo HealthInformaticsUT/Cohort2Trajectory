@@ -5,7 +5,7 @@
 ################################################################################
 # devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run only first time
 library(Cohort2Trajectory)
-studyName = "HeartFailure" # TODO
+studyName <- "HeartFailure" # TODO
 pathToResults <- getwd()   # TODO
 
 ################################################################################
@@ -13,18 +13,18 @@ pathToResults <- getwd()   # TODO
 # Database credentials
 #
 ################################################################################
-pathToDriver = './Drivers'
+pathToDriver <- './Drivers'
 dbms <- "postgresql" #TODO
 user <- 'user' #TODO
 pw <- "password" #TODO
 server <- 'ip/database' #TODO
 port <- '5432' #TODO
 
-cdmSchema = "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
-cdmTmpSchema = "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema = "ohdsi_results" #TODO # Schema which will contain the final results
+cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
+cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
+cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
 
-baseUrl = "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
+baseUrl <- "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
 ################################################################################
 #
 # Initiate the database connection
@@ -106,7 +106,6 @@ runGUI(
 # Create the trajectories with saved settings
 #
 ################################################################################
-
 
 Cohort2Trajectory(
   dbms = dbms,
