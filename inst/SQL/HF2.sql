@@ -31,19 +31,8 @@ WHERE E.concept_id is null
 SELECT 2 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
 ( 
   select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (45567179,319835,316139,45581779,45576879)
-UNION  select c.concept_id
-  from @vocabulary_database_schema.CONCEPT c
-  join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
-  and ca.ancestor_concept_id in (45567179,319835,316139,45581779,45576879)
-  and c.invalid_reason is null
 
 ) I
-LEFT JOIN
-(
-  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (45576863,319034)
-
-) E ON I.concept_id = E.concept_id
-WHERE E.concept_id is null
 ) C UNION ALL 
 SELECT 3 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
 ( 
@@ -53,6 +42,29 @@ UNION  select c.concept_id
   join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
   and ca.ancestor_concept_id in (9201,262)
   and c.invalid_reason is null
+
+) I
+) C UNION ALL 
+SELECT 4 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
+( 
+  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (9202)
+
+) I
+) C UNION ALL 
+SELECT 5 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
+( 
+  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (9202,9201)
+UNION  select c.concept_id
+  from @vocabulary_database_schema.CONCEPT c
+  join @vocabulary_database_schema.CONCEPT_ANCESTOR ca on c.concept_id = ca.descendant_concept_id
+  and ca.ancestor_concept_id in (9202,9201)
+  and c.invalid_reason is null
+
+) I
+) C UNION ALL 
+SELECT 6 as codeset_id, c.concept_id FROM (select distinct I.concept_id FROM
+( 
+  select concept_id from @vocabulary_database_schema.CONCEPT where concept_id in (45567179,319835,316139,45581779,45576879,319835,316139,439694,439696,314378,444101,439846)
 
 ) I
 ) C
@@ -77,7 +89,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -98,7 +110,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -120,7 +132,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -138,7 +150,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 3)
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -159,7 +171,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 3)
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -181,7 +193,7 @@ from
 (
   select vo.* 
   FROM @cdm_database_schema.VISIT_OCCURRENCE vo
-JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 3)
+JOIN #Codesets cs on (vo.visit_concept_id = cs.concept_id and cs.codeset_id = 5)
 ) C
 
 
@@ -198,7 +210,7 @@ FROM
 (
   SELECT co.* 
   FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-  JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 2)
+  JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 6)
 ) C
 
 
@@ -354,11 +366,33 @@ FROM
 (
   SELECT co.* 
   FROM @cdm_database_schema.CONDITION_OCCURRENCE co
-  JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 2)
+  JOIN #Codesets cs on (co.condition_concept_id = cs.concept_id and cs.codeset_id = 6)
 ) C
 JOIN @cdm_database_schema.VISIT_OCCURRENCE V on C.visit_occurrence_id = V.visit_occurrence_id and C.person_id = V.person_id
-WHERE V.visit_concept_id in (9201)
+WHERE V.visit_concept_id in (9201,9202)
 -- End Condition Occurrence Criteria
+
+) C on C.person_id = I.person_id and C.start_date >= I.start_date and C.START_DATE <= I.op_end_date
+GROUP BY i.event_id, i.person_id
+
+UNION ALL
+select i.event_id, i.person_id, MIN(c.start_date) as end_date
+FROM #included_events i
+JOIN
+(
+-- Begin Death Criteria
+select C.person_id, C.person_id as event_id, C.death_date as start_date, DATEADD(d,1,C.death_date) as end_date,
+  CAST(NULL as bigint) as visit_occurrence_id, C.death_date as sort_date
+from 
+(
+  select d.*
+  FROM @cdm_database_schema.DEATH d
+
+) C
+
+
+-- End Death Criteria
+
 
 ) C on C.person_id = I.person_id and C.start_date >= I.start_date and C.START_DATE <= I.op_end_date
 GROUP BY i.event_id, i.person_id

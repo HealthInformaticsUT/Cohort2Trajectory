@@ -22,7 +22,8 @@ loadRenderTranslateSql <- function(sql,
     pathToSql <- paste("inst/SQL/", sql, sep = "")
     parameterizedSql <-
       readChar(pathToSql, file.info(pathToSql)$size)[1]
-  } else {
+  }
+  else {
     parameterizedSql <- sql
   }
   
@@ -42,7 +43,7 @@ loadRenderTranslateSql <- function(sql,
 #' Function for finding NaN values in a data.frame object
 #'
 #' @param data SQL data.frame object
-#'@keywords internal
+#' @keywords internal
 is.nan.data.frame <- function(data) {
   do.call(cbind, lapply(data, is.nan))
 }
@@ -56,7 +57,7 @@ save_object <- function(object, path) {
   if (is.data.frame(object)) {
     utils::write.csv(object, path, row.names = FALSE)
   }
-  else{
+  else {
     save(object, file = path)
   }
 }
@@ -80,10 +81,10 @@ idExists <- function(data, id) {
 #' @param controlStart Start of the date interval of interest
 #' @param controlEnd End of the date interval of interest
 #' @keywords internal
-daysOverlap = function(dateStart,
-                       dateEnd,
-                       controlStart,
-                       controlEnd) {
+daysOverlap <- function(dateStart,
+                        dateEnd,
+                        controlStart,
+                        controlEnd) {
   if (dateStart > controlStart &
       dateEnd > controlEnd) {
     return(max(as.numeric(controlEnd - dateStart), 0))
@@ -100,7 +101,7 @@ daysOverlap = function(dateStart,
            dateEnd <= controlEnd) {
     return(max(as.numeric(dateEnd - dateStart), 0))
   }
-  else{
+  else {
     return(0)
   }
 }
@@ -137,7 +138,7 @@ dropRelation <-
                                                               relationName = relationName)
                                     ))
     }
-    else{
+    else {
       DatabaseConnector::executeSql(connection,
                                     SqlRender::translate(
                                       targetDialect = dbms,
@@ -150,11 +151,11 @@ dropRelation <-
     }
     
     ParallelLogger::logInfo(paste("DROP TABLE ",
-                schema,
-                ".",
-                relationName,
-                " EXECUTED!",
-                sep = ""))
+                                  schema,
+                                  ".",
+                                  relationName,
+                                  " EXECUTED!",
+                                  sep = ""))
   }
 
 #' Function which converts text formatted JSON to digestible JSON
@@ -173,13 +174,16 @@ dropRelation <-
 #'
 #' @param pathToResults Path to the package results
 #' @keywords internal
-createMandatorySubDirs <- function(pathToResults){
-  dir.create(file.path(pathToResults, "tmp"),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/tmp', sep = ""), 'datasets'),showWarnings = FALSE)
+createMandatorySubDirs <- function(pathToResults) {
+  dir.create(file.path(pathToResults, "tmp"), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/tmp', sep = ""), 'datasets'), showWarnings = FALSE)
   
-  dir.create(file.path(pathToResults, "inst"),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'JSON'),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'SQL'),showWarnings = FALSE)
-  dir.create(file.path(paste(pathToResults,'/inst', sep = ""), 'Settings'),showWarnings = FALSE)
-  file.copy(paste(getwd(),'/inst/Settings/trajectorySettings.csv', sep = ""),paste(pathToResults,'/inst/Settings', sep = ""))
-  }
+  dir.create(file.path(pathToResults, "inst"), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'JSON'), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'SQL'), showWarnings = FALSE)
+  dir.create(file.path(paste(pathToResults, '/inst', sep = ""), 'Settings'), showWarnings = FALSE)
+  file.copy(
+    paste(getwd(), '/inst/Settings/trajectorySettings.csv', sep = ""),
+    paste(pathToResults, '/inst/Settings', sep = "")
+  )
+}

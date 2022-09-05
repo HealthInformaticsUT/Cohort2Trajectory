@@ -15,9 +15,8 @@
 #' @param resultsSchema Name of the OMOP results schema
 #' @return A sorted vector of generated cohorts
 #' @keywords internal
-getCohorts = function(connection, dbms, resultsSchema) {
-  
-  allCohorts = DatabaseConnector::querySql(
+getCohorts <- function(connection, dbms, resultsSchema) {
+  allCohorts <- DatabaseConnector::querySql(
     connection,
     sql = loadRenderTranslateSql(
       dbms = dbms,
@@ -25,7 +24,7 @@ getCohorts = function(connection, dbms, resultsSchema) {
       resultsSchema = resultsSchema
     )
   )
-  allCohorts = sort(allCohorts$COHORT_DEFINITION_ID)
+  allCohorts <- sort(allCohorts$COHORT_DEFINITION_ID)
   return(allCohorts)
 }
 
@@ -40,22 +39,22 @@ getCohorts = function(connection, dbms, resultsSchema) {
 #' @param selectedStates Vector of included cohort ID's
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
-getCohortData = function(connection,
-                         dbms,
-                         resultsSchema,
-                         cdmSchema,
-                         selectedTarget,
-                         selectedStates,
-                         # customizedStates = NULL,
-                         baseUrl = "http://localhost:8080/WebAPI",
-                         pathToResults = getwd()) {
+getCohortData <- function(connection,
+                          dbms,
+                          resultsSchema,
+                          cdmSchema,
+                          selectedTarget,
+                          selectedStates,
+                          # customizedStates = NULL,
+                          baseUrl = "http://localhost:8080/WebAPI",
+                          pathToResults = getwd()) {
   ##############################################################################
   #
   # Save selected cohorts as JSON and SQL
   #
   ##############################################################################
   #ParallelLogger::logInfo("Quering data of selected cohorts from database")
-  selectedCohorts = c(selectedTarget, selectedStates)
+  selectedCohorts <- c(selectedTarget, selectedStates)
   # Delete folder content
   
   do.call(file.remove, list(list.files(
@@ -65,45 +64,45 @@ getCohortData = function(connection,
     paste(pathToResults, "/inst/SQL/", sep = ""), full.names = TRUE
   )))
   
-  if(!is.null(baseUrl)){
-  for (i in 1:length(selectedCohorts)) {
-    cohortId = as.integer(selectedCohorts[i])
-    object <-
-      ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
-    json <- .toJSON(object$expression, pretty = TRUE)
-    sql <-
-      ROhdsiWebApi::getCohortSql(
-        baseUrl = baseUrl,
-        cohortDefinition = object,
-        generateStats = FALSE
-      )
-    # Target cohort always have "0" value
-    if (i == 1) {
-      cohortId = 0
+  if (!is.null(baseUrl)) {
+    for (i in 1:length(selectedCohorts)) {
+      cohortId = as.integer(selectedCohorts[i])
+      object <-
+        ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
+      json <- .toJSON(object$expression, pretty = TRUE)
+      sql <-
+        ROhdsiWebApi::getCohortSql(
+          baseUrl = baseUrl,
+          cohortDefinition = object,
+          generateStats = FALSE
+        )
+      # Target cohort always have "0" value
+      if (i == 1) {
+        cohortId = 0
+      }
+      fileConn <-
+        file(paste(
+          pathToResults,
+          "/inst/JSON/",
+          as.character(cohortId),
+          ".json",
+          sep = ""
+        ))
+      writeLines(json, fileConn)
+      close(fileConn)
+      fileConn <-
+        file(paste(
+          pathToResults,
+          "/inst/SQL/",
+          as.character(cohortId),
+          ".sql",
+          sep = ""
+        ))
+      writeLines(sql, fileConn)
+      close(fileConn)
+      
     }
-    fileConn <-
-      file(paste(
-        pathToResults,
-        "/inst/JSON/",
-        as.character(cohortId),
-        ".json",
-        sep = ""
-      ))
-    writeLines(json, fileConn)
-    close(fileConn)
-    fileConn <-
-      file(paste(
-        pathToResults,
-        "/inst/SQL/",
-        as.character(cohortId),
-        ".sql",
-        sep = ""
-      ))
-    writeLines(sql, fileConn)
-    close(fileConn)
-    
   }
-}
   
   idString <-
     toString(sprintf("%s", selectedCohorts))
@@ -114,15 +113,15 @@ getCohortData = function(connection,
       resultsSchema = resultsSchema
     )
   sql_q <- sprintf(sql_base, idString)
-  data = DatabaseConnector::querySql(connection, sql_q)
-
+  data <- DatabaseConnector::querySql(connection, sql_q)
+  
   ##############################################################################
   #
   # We can have a situation where the target cohort is also given
   # as a state cohort
   #
   ##############################################################################
-  data_tmp_target = NULL
+  data_tmp_target <- NULL
   if (selectedTarget %in% selectedStates) {
     data_tmp_target = dplyr::filter(data, COHORT_DEFINITION_ID == selectedTarget)
   }
@@ -134,7 +133,7 @@ getCohortData = function(connection,
   #
   ##############################################################################
   
-  data = dplyr::mutate(
+  data <- dplyr::mutate(
     data,
     COHORT_DEFINITION_ID = ifelse(
       COHORT_DEFINITION_ID == selectedTarget,
@@ -147,11 +146,11 @@ getCohortData = function(connection,
     data = rbind(data, data_tmp_target)
   }
   
-  data = dplyr::select(data,
-                       SUBJECT_ID,
-                       COHORT_DEFINITION_ID,
-                       COHORT_START_DATE,
-                       COHORT_END_DATE)
+  data <- dplyr::select(data,
+                        SUBJECT_ID,
+                        COHORT_DEFINITION_ID,
+                        COHORT_START_DATE,
+                        COHORT_END_DATE)
   data$COHORT_DEFINITION_ID = as.character(data$COHORT_DEFINITION_ID)
   return(data)
 }
@@ -163,8 +162,8 @@ getCohortData = function(connection,
 #' @param cdmSchema Schema where "person" table resides
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
-addPersonalData = function(cohortData, connection, cdmSchema) {
-  data = cohortData
+addPersonalData <- function(cohortData, connection, cdmSchema) {
+  data <- cohortData
   ##############################################################################
   #
   # Add state specific person data to each row
@@ -179,8 +178,9 @@ addPersonalData = function(cohortData, connection, cdmSchema) {
   idString <-
     toString(sprintf("%s", as.numeric(unique(data$SUBJECT_ID))))
   sql_q <- sprintf(sql_base, idString)
-  personal_data = DatabaseConnector::querySql(connection, sql_q)
-  colnames(personal_data) = c("SUBJECT_ID", "GENDER_CONCEPT_ID", "BIRTH_DATETIME")
+  personal_data <- DatabaseConnector::querySql(connection, sql_q)
+  colnames(personal_data) <-
+    c("SUBJECT_ID", "GENDER_CONCEPT_ID", "BIRTH_DATETIME")
   ##############################################################################
   #
   # Merge two datasets
@@ -197,12 +197,12 @@ addPersonalData = function(cohortData, connection, cdmSchema) {
   # Calculate age when entering state and time in cohort
   #
   ##############################################################################
-  data_merged = dplyr::mutate(data_merged, AGE = round(as.numeric(
+  data_merged <- dplyr::mutate(data_merged, AGE = round(as.numeric(
     difftime(as.Date(STATE_START_DATE),
              as.Date(BIRTH_DATETIME),
              units = "days") / 365.25
   ), 3))
-  data_merged = dplyr::select(data_merged, !BIRTH_DATETIME)
+  data_merged <- dplyr::select(data_merged,!BIRTH_DATETIME)
   return(data_merged)
 }
 #' This function eliminates patients which do not fulfill the inclusion criteria
@@ -212,10 +212,10 @@ addPersonalData = function(cohortData, connection, cdmSchema) {
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
 
-cleanCohortData = function(cohortData,
-                           mandatoryStates,
-                           outOfCohortAllowed = FALSE) {
-  data_tmp = cohortData
+cleanCohortData <- function(cohortData,
+                            mandatoryStates,
+                            outOfCohortAllowed = FALSE) {
+  data_tmp <- cohortData
   
   
   ##############################################################################
@@ -225,9 +225,11 @@ cleanCohortData = function(cohortData,
   ##############################################################################
   
   # Preserving only patients present in target cohort
-  patientsEligible = unique(dplyr::filter(data_tmp, COHORT_DEFINITION_ID == "0")$SUBJECT_ID)
+  patientsEligible <-
+    unique(dplyr::filter(data_tmp, COHORT_DEFINITION_ID == "0")$SUBJECT_ID)
   
-  data_tmp = dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
+  data_tmp <-
+    dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
   
   ##############################################################################
   #
@@ -240,7 +242,7 @@ cleanCohortData = function(cohortData,
   # then for the same as target cohort)
   
   # Selecting the first occurring target cohort row
-  data_target = dplyr::slice(dplyr::arrange(
+  data_target <- dplyr::slice(dplyr::arrange(
     dplyr::group_by(
       dplyr::filter(data_tmp, COHORT_DEFINITION_ID == "0"),
       SUBJECT_ID
@@ -249,30 +251,36 @@ cleanCohortData = function(cohortData,
   ), 1L)
   
   # Selecting information about the states
-  data_states = dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
+  data_states <-
+    dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
   
-  data_tmp = rbind(data_target, data_states)
+  data_tmp <- rbind(data_target, data_states)
   
   
   
-  data_target = dplyr::select(data_target, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
-  colnames(data_target) = c("SUBJECT_ID", "REFERENCE_START_DATE", "REFERENCE_END_DATE")
-  data_tmp = merge(data_tmp, data_target, by = "SUBJECT_ID")
+  data_target <-
+    dplyr::select(data_target, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
+  colnames(data_target) <-
+    c("SUBJECT_ID", "REFERENCE_START_DATE", "REFERENCE_END_DATE")
+  data_tmp <- merge(data_tmp, data_target, by = "SUBJECT_ID")
   
   # If the state start date is after inclusion criteria end date then let's filter it out
   if (!outOfCohortAllowed) {
-    data_tmp = dplyr::filter(data_tmp, !(REFERENCE_END_DATE < COHORT_START_DATE))
+    data_tmp <-
+      dplyr::filter(data_tmp,!(REFERENCE_END_DATE < COHORT_START_DATE))
   }
   # If the state end date is before inclusion criteria start date then let's filter it out
-  data_tmp = dplyr::filter(data_tmp, !(REFERENCE_START_DATE > COHORT_END_DATE))
+  data_tmp <-
+    dplyr::filter(data_tmp,!(REFERENCE_START_DATE > COHORT_END_DATE))
   
-  data_tmp$COHORT_END_DATE = as.Date(data_tmp$COHORT_END_DATE)
+  data_tmp$COHORT_END_DATE <- as.Date(data_tmp$COHORT_END_DATE)
   
-  data_tmp$REFERENCE_END_DATE  = as.Date(data_tmp$REFERENCE_END_DATE)
+  data_tmp$REFERENCE_END_DATE <-
+    as.Date(data_tmp$REFERENCE_END_DATE)
   # If the state start date is inside the interval but the end date is outside the interval
   # then cut the endpoint to reference end point
   if (!outOfCohortAllowed) {
-    data_tmp = dplyr::mutate(
+    data_tmp <- dplyr::mutate(
       data_tmp,
       COHORT_END_DATE = dplyr::if_else(
         REFERENCE_END_DATE < COHORT_END_DATE,
@@ -282,7 +290,7 @@ cleanCohortData = function(cohortData,
     )
   }
   # If state start date is before inclusion criteria start date then let's change it to the target cohort start date
-  data_tmp = dplyr::mutate(
+  data_tmp <- dplyr::mutate(
     data_tmp,
     COHORT_START_DATE =
       dplyr::if_else(
@@ -294,9 +302,10 @@ cleanCohortData = function(cohortData,
   # Lets prioritize the cohorts giving the target cohort priority 0 others 1
   # We use priority feature to always order target cohort first per patient in the dataframe
   # this positioning is needed for calculating the feature TIME_IN_COHORT
-  data_tmp = dplyr::mutate(data_tmp,
-                           PRIORITY = dplyr::if_else(COHORT_DEFINITION_ID == "0", 0, 1))
-  data_tmp = dplyr::arrange(data_tmp, SUBJECT_ID, PRIORITY, COHORT_START_DATE)
+  data_tmp <- dplyr::mutate(data_tmp,
+                            PRIORITY = dplyr::if_else(COHORT_DEFINITION_ID == "0", 0, 1))
+  data_tmp <-
+    dplyr::arrange(data_tmp, SUBJECT_ID, PRIORITY, COHORT_START_DATE)
   
   ##############################################################################
   #
@@ -313,7 +322,8 @@ cleanCohortData = function(cohortData,
       
     }
   }
-  data_tmp = dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
+  data_tmp <-
+    dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
   
   ##############################################################################
   #
@@ -325,15 +335,16 @@ cleanCohortData = function(cohortData,
   #data_merged = data_merged[order(data_merged[, 1], data_merged[, 3], data_merged[, 4]),]
   
   
-  data_tmp = dplyr::mutate(data_tmp, TIME_IN_COHORT = round(as.numeric(
-    difftime(
-      as.Date(COHORT_START_DATE),
-      as.Date(REFERENCE_START_DATE),
-      units = "days"
-    ) /
-      365.25
-  ), 3))
-  data_tmp = dplyr::select(
+  data_tmp <-
+    dplyr::mutate(data_tmp, TIME_IN_COHORT = round(as.numeric(
+      difftime(
+        as.Date(COHORT_START_DATE),
+        as.Date(REFERENCE_START_DATE),
+        units = "days"
+      ) /
+        365.25
+    ), 3))
+  data_tmp <- dplyr::select(
     data_tmp,
     SUBJECT_ID,
     COHORT_DEFINITION_ID,
@@ -355,17 +366,21 @@ cleanCohortData = function(cohortData,
 #' @param cohortLabels Labels for cohort
 #' @return A dataframe with each selected cohort and its relation to the target cohort
 #' @keywords internal
-getInclusionTable = function(cohortData,
-                             selectedCohorts,
-                             cohortLabels = NULL) {
-  data = cohortData
-  nr_unique_cohorts = length(unique(selectedCohorts))
-  cohortbyinclusion = as.data.frame(matrix(NA, nrow = nr_unique_cohorts, ncol = 3))
-  colnames(cohortbyinclusion) = c('(#) of patients', '(#) in target cohort', "(%) in target cohort")
-  rownames(cohortbyinclusion) = c(unique(selectedCohorts))
-  data_inclusion = dplyr::distinct(dplyr::select(data, c(COHORT_DEFINITION_ID, SUBJECT_ID)))
-  patients_target = dplyr::select(dplyr::filter(data_inclusion, COHORT_DEFINITION_ID == "0"),
-                                c(SUBJECT_ID))
+getInclusionTable <- function(cohortData,
+                              selectedCohorts,
+                              cohortLabels = NULL) {
+  data <- cohortData
+  nr_unique_cohorts <- length(unique(selectedCohorts))
+  cohortbyinclusion <-
+    as.data.frame(matrix(NA, nrow = nr_unique_cohorts, ncol = 3))
+  colnames(cohortbyinclusion) <-
+    c('(#) of patients', '(#) in target cohort', "(%) in target cohort")
+  rownames(cohortbyinclusion) <- c(unique(selectedCohorts))
+  data_inclusion <-
+    dplyr::distinct(dplyr::select(data, c(COHORT_DEFINITION_ID, SUBJECT_ID)))
+  patients_target <-
+    dplyr::select(dplyr::filter(data_inclusion, COHORT_DEFINITION_ID == "0"),
+                  c(SUBJECT_ID))
   ##############################################################################
   #
   # It's important that the state cohorts are defined in Atlas so that they are
@@ -373,22 +388,28 @@ getInclusionTable = function(cohortData,
   #
   ##############################################################################
   for (cohortID in unique(selectedCohorts)) {
-    patients_observed = dplyr::select(dplyr::filter(data_inclusion, COHORT_DEFINITION_ID == cohortID),
-                                      c(SUBJECT_ID))
-    nr_of_patients = nrow(patients_observed)
-    nr_in_target = length(intersect(patients_target$SUBJECT_ID, patients_observed$SUBJECT_ID))
-    prc_in_target = ifelse(nr_of_patients == 0, 0.00, round((nr_in_target /
-                                                             nr_of_patients) * 100, 2))
-    cohortbyinclusion[toString(cohortID), ] = c(nr_of_patients, nr_in_target, prc_in_target)
+    patients_observed <-
+      dplyr::select(dplyr::filter(data_inclusion, COHORT_DEFINITION_ID == cohortID),
+                    c(SUBJECT_ID))
+    nr_of_patients <- nrow(patients_observed)
+    nr_in_target <-
+      length(intersect(
+        patients_target$SUBJECT_ID,
+        patients_observed$SUBJECT_ID
+      ))
+    prc_in_target <-
+      ifelse(nr_of_patients == 0, 0.00, round((nr_in_target /
+                                                 nr_of_patients) * 100, 2))
+    cohortbyinclusion[toString(cohortID),] = c(nr_of_patients, nr_in_target, prc_in_target)
   }
   
-  cohortbyinclusion[, 2] = as.integer(cohortbyinclusion[, 2])
-  cohortbyinclusion[, 1] = as.integer(cohortbyinclusion[, 1])
+  cohortbyinclusion[, 2] <- as.integer(cohortbyinclusion[, 2])
+  cohortbyinclusion[, 1] <- as.integer(cohortbyinclusion[, 1])
   if (is.null(cohortLabels) |
       length(cohortLabels) != length(selectedCohorts))
     return(cohortbyinclusion)
   if (cohortLabels[1] == "0") {
-    cohortLabels[1] = "TARGET"
+    cohortLabels[1] <- "TARGET"
   }
   rownames(cohortbyinclusion) = cohortLabels
   return(cohortbyinclusion)
@@ -405,34 +426,35 @@ getInclusionTable = function(cohortData,
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
 #' @keywords internal
-getTrajectoriesDiscrete = function(connection,
-                                   cohortData,
-                                   stateDuration = 30,
-                                   pathToResults = getwd(),
-                                   stateSelection = 1,
-                                   statePriorityVector = NULL,
-                                   absorbingStates = NULL,
-                                   studyName = "") {
-  tmp_data = dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
-  tmp_data = dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
+getTrajectoriesDiscrete <- function(connection,
+                                    cohortData,
+                                    stateDuration = 30,
+                                    pathToResults = getwd(),
+                                    stateSelection = 1,
+                                    statePriorityVector = NULL,
+                                    absorbingStates = NULL,
+                                    studyName = "") {
+  tmp_data <- dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
+  tmp_data <-
+    dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
   # Getting all relevant patient ID's
-  patientIds = unique(tmp_data$SUBJECT_ID)
-  newPatientData = getDiscreteStates(
-    stateSelection = as.numeric(stateSelection),
-    stateDuration = stateDuration,
-    patientIDs = patientIds,
-    patientData = tmp_data,
-    statePriorityVector = statePriorityVector
+  patientIds <- unique(tmp_data$SUBJECT_ID)
+  newPatientData <- getDiscreteStates(
+    stateSelection <- as.numeric(stateSelection),
+    stateDuration <- stateDuration,
+    patientIDs <- patientIds,
+    patientData <- tmp_data,
+    statePriorityVector <- statePriorityVector
   )
   ################################################################################
   #
   # Removing absorbing states
   #
   ################################################################################
-  newPatientData = removeAfterAbsorbingStatesDiscrete(
-    patientData = newPatientData,
-    patientIDs = patientIds,
-    absorbingStates = if (is.null(absorbingStates))
+  newPatientData <- removeAfterAbsorbingStatesDiscrete(
+    patientData <- newPatientData,
+    patientIDs <- patientIds,
+    absorbingStates <- if (is.null(absorbingStates))
       c("No absorbing state")
     else
       absorbingStates
@@ -443,22 +465,23 @@ getTrajectoriesDiscrete = function(connection,
   #
   ##############################################################################
   
-  newPatientData = addPersonalData(newPatientData, connection, cdmSchema)
+  newPatientData <-
+    addPersonalData(newPatientData, connection, cdmSchema)
   ################################################################################
   #
   # Saving data
   #
   ################################################################################
   
-  stateSelectionName = NULL
+  stateSelectionName <- NULL
   if (stateSelection == "1") {
-    stateSelectionName = "FirstOccurring"
+    stateSelectionName <- "FirstOccurring"
   }
   else if (stateSelection == "2") {
-    stateSelectionName = "Overlap"
+    stateSelectionName <- "Overlap"
   }
   else if (stateSelection == "3") {
-    stateSelectionName = "Priority"
+    stateSelectionName <- "Priority"
   }
   
   states = as.character(c("START", setdiff(
@@ -518,10 +541,10 @@ getTrajectoriesDiscrete = function(connection,
 #' @param personId Person id value in person table
 #' @return A dataframe with selected patient's row data from OMOP database
 #' @keywords internal
-getProfileData = function(connection,
-                          dbms,
-                          cdmSchema,
-                          personId) {
+getProfileData <- function(connection,
+                           dbms,
+                           cdmSchema,
+                           personId) {
   ParallelLogger::logInfo("Quering information about the selected person")
   # Error handling
   if (!grepl("\\D", personId)) {
@@ -542,7 +565,7 @@ getProfileData = function(connection,
     personData$birthtimeString = toString(personData$BIRTH_DATETIME)
     return(personData)
   }
-  else{
+  else {
     personData = cbind(c("NA"), c("NA"), c("NA"), c("NA"), c("NA"))
     colnames(personData) = c(
       "BIRTH_DATETIME",
@@ -563,21 +586,23 @@ getProfileData = function(connection,
 #' @param cohortData A data.frame object which is queried with getCohortsPatients function
 #' @param stateCohorts The IDs of state cohorts
 #' @keywords internal
-getChronologicalMatrix = function(cohortData,
-                                  stateCohorts)
-{
+getChronologicalMatrix <- function(cohortData,
+                                   stateCohorts) {
   # Let's convert all data to character
-  tmp_data = dplyr::mutate(cohortData, across(everything(), as.character))
+  tmp_data <-
+    dplyr::mutate(cohortData, across(everything(), as.character))
   # Extract patients' data which is related to the state cohorts
-  tmp_data = dplyr::filter(tmp_data, COHORT_DEFINITION_ID != "0")
+  tmp_data <- dplyr::filter(tmp_data, COHORT_DEFINITION_ID != "0")
   # Order by patientId, start & end date
-  tmp_data = as.data.frame(tmp_data[order(tmp_data[, 1], tmp_data[, 3], tmp_data[, 4]), ])
+  tmp_data <-
+    as.data.frame(tmp_data[order(tmp_data[, 1], tmp_data[, 3], tmp_data[, 4]),])
   # Getting cohorts' ID's
-  states = as.character(sort(stateCohorts))
-  tmp_data = dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
+  states <- as.character(sort(stateCohorts))
+  tmp_data <-
+    dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
   M = data.frame(matrix(0, ncol = length(states), nrow = length(states)))
-  rownames(M) = states
-  colnames(M) = states
+  rownames(M) <- states
+  colnames(M) <- states
   for (row in 2:nrow(tmp_data)) {
     # If we have the same subject we continue the movement between states
     if (tmp_data[row, "SUBJECT_ID"] == tmp_data[row - 1, "SUBJECT_ID"]) {
@@ -587,7 +612,7 @@ getChronologicalMatrix = function(cohortData,
     # If the subject ID changes we do not make any changes
   }
   # We'll divide each row by it's sum and will get transfer probabilities
-  M = round(prop.table(as.matrix(M), 1), 3)
+  M <- round(prop.table(as.matrix(M), 1), 3)
   # There is a possibility that we have NaN values, therefore we will change them to zeros
   M[is.nan(M)] <- 0
   return(M)
@@ -610,20 +635,20 @@ getChronologicalMatrix = function(cohortData,
 #' @param absorbingStates Absorbing states in dataframe
 #' @return A dataframe ready for using msm package
 #' @keywords internal
-getTrajectoriesContinuous = function(connection,
-                                     patientData,
-                                     stateSelection,
-                                     statePriorityVector,
-                                     absorbingStates = NULL,
-                                     studyName = "",
-                                     pathToResults = paste(getwd(), "/tmp", sep = "")) {
-  data = patientData
-  data = dplyr::mutate(
+getTrajectoriesContinuous <- function(connection,
+                                      patientData,
+                                      stateSelection,
+                                      statePriorityVector,
+                                      absorbingStates = NULL,
+                                      studyName = "",
+                                      pathToResults = paste(getwd(), "/tmp", sep = "")) {
+  data <- patientData
+  data <- dplyr::mutate(
     data,
     COHORT_DEFINITION_ID = ifelse(COHORT_DEFINITION_ID == "0", "START", COHORT_DEFINITION_ID)
   )
   ### Let's find the ending date of last active state
-  data_ls = dplyr::select(
+  data_ls <- dplyr::select(
     dplyr::summarise(
       dplyr::group_by(
         dplyr::filter(data, COHORT_DEFINITION_ID != "START"),
@@ -635,9 +660,9 @@ getTrajectoriesContinuous = function(connection,
     LAST_STATE_DATE
   )
   
-  data = merge(data, data_ls, by = "SUBJECT_ID")
+  data <- merge(data, data_ls, by = "SUBJECT_ID")
   
-  data = dplyr::mutate(
+  data <- dplyr::mutate(
     data,
     COHORT_END_DATE = dplyr::if_else(
       COHORT_DEFINITION_ID == "START",
@@ -648,7 +673,7 @@ getTrajectoriesContinuous = function(connection,
   
   # data$COHORT_DEFINITION_ID = as.character(data$COHORT_DEFINITION_ID)
   
-  data = dplyr::arrange(dplyr::bind_rows(
+  data <- dplyr::arrange(dplyr::bind_rows(
     dplyr::mutate(
       dplyr::summarise(
         dplyr::group_by(data, SUBJECT_ID),
@@ -674,9 +699,10 @@ getTrajectoriesContinuous = function(connection,
   
   # Lets just create a new dataframe and add all the states in the order of priorities
   if (stateSelection == 2) {
-    newData = dplyr::filter(data, COHORT_DEFINITION_ID %in% c("START", "EXIT"))
+    newData <-
+      dplyr::filter(data, COHORT_DEFINITION_ID %in% c("START", "EXIT"))
     for (patientID in unique(newData$SUBJECT_ID)) {
-      patientData = dplyr::filter(
+      patientData <- dplyr::filter(
         data,
         SUBJECT_ID == patientID &
           COHORT_DEFINITION_ID != "EXIT" &
@@ -685,95 +711,98 @@ getTrajectoriesContinuous = function(connection,
       
       
       for (p in 1:length(statePriorityVector)) {
-        priorityData = dplyr::filter(patientData,
-                                     COHORT_DEFINITION_ID == statePriorityVector[p])
+        priorityData <- dplyr::filter(patientData,
+                                      COHORT_DEFINITION_ID == statePriorityVector[p])
         if (nrow(priorityData) == 0) {
           next
         }
-        patientData = dplyr::filter(patientData,
-                                    COHORT_DEFINITION_ID != statePriorityVector[p])
+        patientData <- dplyr::filter(patientData,
+                                     COHORT_DEFINITION_ID != statePriorityVector[p])
         if (nrow(patientData) > 0) {
           for (i in 1:nrow(priorityData)) {
-            newpatientData = patientData[0,]
+            newpatientData <- patientData[0,]
             for (j in 1:nrow(patientData)) {
               if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE &
-                  priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE)
-              {
+                  priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE) {
                 if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
-                  head = patientData[j,]
-                  head$COHORT_END_DATE = priorityData[i,]$COHORT_START_DATE
-                  newpatientData = rbind(newpatientData, head)
+                  head <- patientData[j,]
+                  head$COHORT_END_DATE <-
+                    priorityData[i,]$COHORT_START_DATE
+                  newpatientData <- rbind(newpatientData, head)
                 }
                 
                 if (priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE) {
-                  tail = patientData[j,]
-                  tail$COHORT_START_DATE = priorityData[i,]$COHORT_END_DATE
-                  newpatientData = rbind(newpatientData, tail)
+                  tail <- patientData[j,]
+                  tail$COHORT_START_DATE <-
+                    priorityData[i,]$COHORT_END_DATE
+                  newpatientData <- rbind(newpatientData, tail)
                 }
               }
               else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_END_DATE &
                        priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_END_DATE) {
-                head = patientData[j,]
-                head$COHORT_END_DATE = priorityData[i,]$COHORT_START_DATE
-                newpatientData = rbind(newpatientData, head)
+                head <- patientData[j,]
+                head$COHORT_END_DATE <-
+                  priorityData[i,]$COHORT_START_DATE
+                newpatientData <- rbind(newpatientData, head)
               }
               else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_START_DATE &
                        priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_START_DATE) {
-                tail = patientData[j,]
-                tail$COHORT_START_DATE = priorityData[i,]$COHORT_END_DATE
-                newpatientData = rbind(newpatientData, tail)
+                tail <- patientData[j,]
+                tail$COHORT_START_DATE <-
+                  priorityData[i,]$COHORT_END_DATE
+                newpatientData <- rbind(newpatientData, tail)
               }
-              else{
-                newpatientData = rbind(newpatientData, patientData[j,])
+              else {
+                newpatientData <- rbind(newpatientData, patientData[j,])
               }
               
             }
-            patientData = newpatientData
+            patientData <- newpatientData
           }
         }
         
-        newData = rbind(newData, priorityData)
+        newData <- rbind(newData, priorityData)
         
       }
       
       
     }
     # Inherit the new value
-    data = newData
+    data <- newData
   }
   
   # We should make sure that the time_in_cohort column has differing values for each state for the same patient
   # for developement case, let's just create an artificial difference of 1 day for each colliding date
-  data = dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
-  paient_id = NA
-  last_patient_id = data$SUBJECT_ID[1]
-  last_observed_ts = data$TIME_IN_COHORT[1]
-  coef = 1
-  impact = 1 / 365.25
+  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
+  paient_id <- NA
+  last_patient_id <- data$SUBJECT_ID[1]
+  last_observed_ts <- data$TIME_IN_COHORT[1]
+  coef <- 1
+  impact <- 1 / 365.25
   
-  data$TIME_IN_COHORT = round(data$TIME_IN_COHORT, 6)
+  data$TIME_IN_COHORT <- round(data$TIME_IN_COHORT, 6)
   
   for (row in 2:nrow(data)) {
-    patient_id = data$SUBJECT_ID[row]
+    patient_id <- data$SUBJECT_ID[row]
     if (patient_id != last_patient_id |
         last_observed_ts < data$TIME_IN_COHORT[row]) {
-      last_patient_id = patient_id
-      last_observed_ts = data$TIME_IN_COHORT[row]
-      coef = 1
+      last_patient_id <- patient_id
+      last_observed_ts <- data$TIME_IN_COHORT[row]
+      coef <- 1
     }
     else {
-      data$TIME_IN_COHORT[row] = data$TIME_IN_COHORT[row] + impact * coef
-      last_patient_id = patient_id
-      coef = coef + 1
-      last_observed_ts = data$TIME_IN_COHORT[row]
+      data$TIME_IN_COHORT[row] <- data$TIME_IN_COHORT[row] + impact * coef
+      last_patient_id <- patient_id
+      coef <- coef + 1
+      last_observed_ts <- data$TIME_IN_COHORT[row]
     }
   }
   # We have to map states to 1,..., n.
-  states = as.character(c("START", setdiff(
+  states <- as.character(c("START", setdiff(
     unique(data$COHORT_DEFINITION_ID), c('START', 'EXIT')
   ), "EXIT"))
-  n = length(states)
-  data$STATE =
+  n <- length(states)
+  data$STATE <-
     plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = states,
@@ -781,9 +810,9 @@ getTrajectoriesContinuous = function(connection,
       warn_missing = FALSE
     )
   
-  data = dplyr::mutate(data, STATE = as.numeric(STATE))
-  data = dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
-  data = dplyr::select(
+  data <- dplyr::mutate(data, STATE = as.numeric(STATE))
+  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
+  data <- dplyr::select(
     data,
     SUBJECT_ID,
     COHORT_DEFINITION_ID,
@@ -794,7 +823,7 @@ getTrajectoriesContinuous = function(connection,
   )
   
   
-  colnames(data) = c(
+  colnames(data) <- c(
     "SUBJECT_ID",
     "STATE",
     "STATE_START_DATE",
@@ -808,13 +837,15 @@ getTrajectoriesContinuous = function(connection,
   # Removing absorbing states
   #
   ################################################################################
-  data = removeAfterAbsorbingStatesContinuous(
+  data <- removeAfterAbsorbingStatesContinuous(
     patientData = data,
     patientIDs = unique(data$SUBJECT_ID),
-    absorbingStates = if (is.null(absorbingStates))
+    absorbingStates = if (is.null(absorbingStates)) {
       c("No absorbing state")
-    else
+    }
+    else {
       absorbingStates
+    }
   )
   
   ##############################################################################
@@ -823,7 +854,7 @@ getTrajectoriesContinuous = function(connection,
   #
   ##############################################################################
   
-  data = addPersonalData(data, connection, cdmSchema)
+  data <- addPersonalData(data, connection, cdmSchema)
   
   ################################################################################
   #
@@ -861,7 +892,7 @@ getTrajectoriesContinuous = function(connection,
       sep = ""
     ))
   }
-  else{
+  else {
     save_object(data,
                 path = paste(
                   pathToResults,
@@ -897,8 +928,9 @@ getTrajectoriesContinuous = function(connection,
 #'
 #' @param studyName Customized name for the study
 #' @keywords internal
-loadSettings = function(studyName) {
-  env = rlang::new_environment(data = list(), parent = rlang::empty_env())
+loadSettings <- function(studyName) {
+  env <-
+    rlang::new_environment(data = list(), parent = rlang::empty_env())
   
   jsonFiles = list.files(
     path = paste(pathToResults, "/inst/JSON/", sep = ""),
@@ -915,41 +947,54 @@ loadSettings = function(studyName) {
   )
   stateNamesJSON <-
     substr(stateNamesJSON, 1, nchar(stateNamesJSON) - 5)
-  targetIndex = which(stateNamesJSON == "0")
-  env$stateNamesJSON = stateNamesJSON[-targetIndex]
+  targetIndex <- which(stateNamesJSON == "0")
+  env$stateNamesJSON <- stateNamesJSON[-targetIndex]
   
-  env$targetJSON = if (identical(jsonFiles[targetIndex], character(0)))
-    ""
-  else
+  env$targetJSON <-
+    if (identical(jsonFiles[targetIndex], character(0))) {
+      ""
+    }
+  else {
     paste(readLines(jsonFiles[targetIndex]), collapse = "\n")
-  env$jsonFiles =  jsonFiles[-targetIndex]
+  }
+  env$jsonFiles <-  jsonFiles[-targetIndex]
   
-  insertedJSONs = c()
+  insertedJSONs <- c()
   
   for (jsonFile in env$jsonFiles) {
-    insertedJSONs = c(insertedJSONs, paste(readLines(jsonFile), collapse = "\n"))
+    insertedJSONs <-
+      c(insertedJSONs, paste(readLines(jsonFile), collapse = "\n"))
   }
   
-  env$insertedJSONs = insertedJSONs
+  env$insertedJSONs <- insertedJSONs
   
-  settings = read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
+  settings <-
+    read.csv(paste(
+      pathToResults,
+      "/inst/Settings/trajectorySettings.csv",
+      sep = ""
+    ))
   
-  savedStudyNames = settings$studyName
+  savedStudyNames <- settings$studyName
   
-  studyIndex = which(savedStudyNames == studyName)
+  studyIndex <- which(savedStudyNames == studyName)
   
   if (length(studyIndex) == 0) {
     return(NULL)
   }
   
-  env$savedTrajectoryType = settings$trajectoryType[studyIndex]
-  env$savedTrajectoryStates = strsplit(settings$trajectoryStates[studyIndex], ",")
-  env$savedPriorityOrder = strsplit(settings$priorityOrder[studyIndex], ",")[[1]]
-  env$savedStateSelectionType = settings$stateSelectionType[studyIndex]
-  env$savedAbsorbingStates = settings$absorbingStates[studyIndex]
-  env$savedMandatoryStates = settings$mandatoryStates[studyIndex]
-  env$savedLengthOfStay = settings$lengthOfStay[studyIndex]
-  env$savedOutOfCohortAllowed = settings$outOfCohortAllowed[studyIndex]
+  env$savedTrajectoryType <- settings$trajectoryType[studyIndex]
+  env$savedTrajectoryStates <-
+    strsplit(settings$trajectoryStates[studyIndex], ",")
+  env$savedPriorityOrder <-
+    strsplit(settings$priorityOrder[studyIndex], ",")[[1]]
+  env$savedStateSelectionType <-
+    settings$stateSelectionType[studyIndex]
+  env$savedAbsorbingStates <- settings$absorbingStates[studyIndex]
+  env$savedMandatoryStates <- settings$mandatoryStates[studyIndex]
+  env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
+  env$savedOutOfCohortAllowed <-
+    settings$outOfCohortAllowed[studyIndex]
   
   return(env)
 }

@@ -15,21 +15,20 @@
 #' @example man/examples/runGUI.R
 #'
 #' @export
-runGUI = function(conn,
-                  connectionDetails,
-                  pathToDriver = './Drivers',
-                  pathToResults = NULL,
-                  dbms = "postgresql",
-                  # user = '',
-                  # pw = '',
-                  # server = 'localhost/postgres',
-                  # port = '5432',
-                  cdmSchema = "ohdsi_cdm",
-                  cdmTmpSchema = "ohdsi_temp",
-                  cdmResultsSchema = "ohdsi_results",
-                  studyName = "Cohort2Trajectory",
-                  baseUrl = "http://localhost:8080/WebAPI")
-{
+runGUI <- function(conn,
+                   connectionDetails,
+                   pathToDriver = './Drivers',
+                   pathToResults = NULL,
+                   dbms = "postgresql",
+                   # user = '',
+                   # pw = '',
+                   # server = 'localhost/postgres',
+                   # port = '5432',
+                   cdmSchema = "ohdsi_cdm",
+                   cdmTmpSchema = "ohdsi_temp",
+                   cdmResultsSchema = "ohdsi_results",
+                   studyName = "Cohort2Trajectory",
+                   baseUrl = "http://localhost:8080/WebAPI") {
   ################################################################################
   #
   # Creating global variables
@@ -46,11 +45,11 @@ runGUI = function(conn,
   cdmSchema <<- cdmSchema
   cdmTmpSchema <<- cdmTmpSchema
   cdmResultsSchema <<- cdmResultsSchema
-  if(!is.null(pathToResults)){
+  if (!is.null(pathToResults)) {
     pathToResults <<- pathToResults
   }
-  else{
-  pathToResults <<- paste(getwd(), "/tmp", sep = "")
+  else {
+    pathToResults <<- paste(getwd(), "/tmp", sep = "")
   }
   studyName <<- studyName
   baseUrl <<- baseUrl
