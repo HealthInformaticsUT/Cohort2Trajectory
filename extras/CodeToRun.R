@@ -117,3 +117,48 @@ runGUI(
 #   runSavedStudy = TRUE,
 #   pathToResults = pathToResults
 # )
+
+################################################################################
+#
+# Load data and create trajectories without OMOP CDM (No connection)
+#
+# The imported .csv file has to have 4 columns:
+# SUBJECT_ID (unique for each patient)
+# COHORT_DEFINITION_ID (the target cohort has to be notated as "0". Other, state cohorts, can be notated in any way convenient (names should make sense).)
+# COHORT_START_DATE (The start date of the corresponding cohort)
+# COHORT_END_DATE (The end date of the corresponding cohort)
+#
+# Example of a patient data:
+# "SUBJECT_ID","COHORT_DEFINITION_ID","COHORT_START_DATE","COHORT_END_DATE"
+# 3141,"0",2020-02-22,2021-02-23
+# 3150,"State1",2020-11-30,2020-12-01
+# 3150,"State2",2021-01-01,2021-02-01
+# ...
+#
+################################################################################
+
+# Cohort2Trajectory(
+#   studyName = studyName,
+#   stateCohortPriorityOrder = c("State1", "State3", "State2"), # Priority order of states
+#   stateCohortMandatory = c("State2"), # Mandatory states
+#   stateCohortAbsorbing = c("State3"), # Absorbing states
+#   ##############################################################################
+#   # stateSelectionTypes
+#   # 1 - First occurring
+#   # 2 - Largest overlap
+#   # 3 - Priority ordering
+#   ##############################################################################
+#   stateSelectionType = 3,
+#   ##############################################################################
+#   # trajectoryType
+#   # 0 - Discrete time
+#   # 1 - Continuous time
+#   ##############################################################################
+#   trajectoryType = 1,
+#   lengthOfStay = 30,
+#   outOfCohortAllowed = TRUE,
+#   runSavedStudy = FALSE,
+#   pathToResults = pathToResults,
+#     useCDM = FALSE,
+#     pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = "")
+# )

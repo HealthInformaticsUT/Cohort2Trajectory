@@ -425,6 +425,7 @@ getInclusionTable <- function(cohortData,
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
+#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient 
 #' @keywords internal
 getTrajectoriesDiscrete <- function(connection,
                                     cohortData,
@@ -433,7 +434,8 @@ getTrajectoriesDiscrete <- function(connection,
                                     stateSelection = 1,
                                     statePriorityVector = NULL,
                                     absorbingStates = NULL,
-                                    studyName = "") {
+                                    studyName = "",
+                                    addPersonalData = TRUE) {
   tmp_data <- dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
   tmp_data <-
     dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
@@ -465,8 +467,14 @@ getTrajectoriesDiscrete <- function(connection,
   #
   ##############################################################################
   
+  if (addPersonalData) {
   newPatientData <-
     addPersonalData(newPatientData, connection, cdmSchema)
+  }
+  else {
+    newPatientData$GENDER_CONCEPT_ID = 0
+    newPatientData$BIRTH_DATETIME = "1900-01-01" 
+  }
   ################################################################################
   #
   # Saving data
@@ -633,6 +641,7 @@ getChronologicalMatrix <- function(cohortData,
 #' @param stateSelection Selection of the type of ordering
 #' @param statePriorityVector All states in prioritized order
 #' @param absorbingStates Absorbing states in dataframe
+#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient 
 #' @return A dataframe ready for using msm package
 #' @keywords internal
 getTrajectoriesContinuous <- function(connection,
@@ -641,7 +650,8 @@ getTrajectoriesContinuous <- function(connection,
                                       statePriorityVector,
                                       absorbingStates = NULL,
                                       studyName = "",
-                                      pathToResults = paste(getwd(), "/tmp", sep = "")) {
+                                      pathToResults = paste(getwd(), "/tmp", sep = ""),
+                                      addPersonalData = TRUE) {
   data <- patientData
   data <- dplyr::mutate(
     data,
@@ -853,9 +863,13 @@ getTrajectoriesContinuous <- function(connection,
   # Adding personal data
   #
   ##############################################################################
-  
+  if (addPersonalData) {
   data <- addPersonalData(data, connection, cdmSchema)
-  
+  }
+  else {
+    data$GENDER_CONCEPT_ID = 0
+    data$BIRTH_DATETIME = "1900-01-01" 
+  }
   ################################################################################
   #
   # Saving data
