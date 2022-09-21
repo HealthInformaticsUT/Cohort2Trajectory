@@ -21,28 +21,33 @@
 #' @param trajectoryType The type of the trajectory (0 - Discrete time, 1 - Continuous time)
 #' @param lengthOfStay The length of stay (days) in one state (Effect only in discrete case)
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
+#' @param useCDM The package can also be run without the OMOP CDM
+#' @param pathToData When using without OMOP CDM specify the path to data file
 #' @example man/examples/Cohort2Trajectory.R
 #'
 #' @export
 Cohort2Trajectory <- function(dbms = "postgresql",
-                              connection,
+                              connection = NULL,
                               cdmSchema = "ohdsi_cdm",
                               cdmTmpSchema = "ohdsi_temp",
                               cdmResultsSchema = "ohdsi_results",
                               studyName = "Cohort2Trajectory",
                               baseUrl = "http://localhost:8080/WebAPI",
-                              atlasTargetCohort,
-                              atlasStateCohorts,
-                              stateCohortLabels,
-                              stateCohortPriorityOrder,
-                              stateCohortMandatory,
-                              stateCohortAbsorbing,
-                              stateSelectionType,
-                              trajectoryType,
-                              lengthOfStay,
-                              outOfCohortAllowed,
+                              atlasTargetCohort = NULL,
+                              atlasStateCohorts = NULL,
+                              stateCohortLabels = NULL,
+                              stateCohortPriorityOrder = NULL,
+                              stateCohortMandatory = NULL,
+                              stateCohortAbsorbing = NULL,
+                              stateSelectionType = NULL,
+                              trajectoryType = NULL,
+                              lengthOfStay = NULL,
+                              outOfCohortAllowed = NULL,
                               runSavedStudy = FALSE,
-                              pathToResults = getwd()) {
+                              pathToResults = getwd(),
+                              useCDM = TRUE,
+                              pathToData = './tmp/datasets/importedData.csv'
+                              ) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -163,7 +168,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                           COHORT_END_DATE)
     
   }
-  else {
+  else if (useCDM) {
     ParallelLogger::logInfo("Importing data ...")
     data <- getCohortData(
       connection,
@@ -235,6 +240,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     
   }
+  else {
+    ParallelLogger::logInfo("Importing data ...")
+    data = readr::read_csv(pathToData)
+    ParallelLogger::logInfo("Read complete!")
+    
+  }
   
   
   
@@ -260,7 +271,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       stateSelection = stateSelectionType,
       statePriorityVector = stateCohortPriorityOrder,
       absorbingStates = stateCohortAbsorbing,
-      studyName = studyName
+      studyName = studyName,
+      addPersonalData = useCDM
     )
   }
   else if (trajectoryType == 1) {
@@ -271,7 +283,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       stateSelection = stateSelectionType,
       statePriorityVector = stateCohortPriorityOrder,
       absorbingStates = stateCohortAbsorbing,
-      studyName = studyName
+      studyName = studyName,
+      addPersonalData = useCDM
     )
   }
   
@@ -348,3 +361,5 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   return(ParallelLogger::logInfo("Trajectories generated!"))
 }
+
+
