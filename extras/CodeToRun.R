@@ -20,9 +20,9 @@ pw <- "password" #TODO
 server <- 'ip/database' #TODO
 port <- '5432' #TODO
 
-cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
+cdmSchema <- "ohdsi_cdm_20220330" #TODO # Schema which contains the OHDSI Common Data Model
 cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
+cdmResultsSchema <- "ohdsi_results_20220330" #TODO # Schema which will contain the final results
 
 baseUrl <- "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
 ################################################################################
@@ -64,6 +64,29 @@ runGUI(
 
 ################################################################################
 #
+# Customizing the allowedStatesList, which describes which transitions are
+# possible
+#
+################################################################################
+
+stateCohortLabels = c("HF0", "HF1", "HF2", "HF3", "HFD")
+allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF2") # removes possibility to move from state4 to state2
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF3") # removes possibility to move from state2 to state3
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF1", transitionTail = "HF3") # removes possibility to move from state4 to state2
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF2", transitionTail = "HF0") # removes possibility to move from state2 to state3
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF1") # removes possibility to move from state4 to state2
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF0") # removes possibility to move from state2 to state3
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF1") # removes possibility to move from state4 to state2
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF0") # removes possibility to move from state2 to state3
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF3") # removes possibility to move from state4 to state2
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF2") # removes possibility to move from state2 to state3
+
+
+
+# /.../
+################################################################################
+#
 # Create the trajectories without using GUI
 #
 ################################################################################
@@ -98,7 +121,8 @@ runGUI(
 #   lengthOfStay = 30,
 #   outOfCohortAllowed = TRUE,
 #   runSavedStudy = FALSE,
-#   pathToResults = pathToResults
+#   pathToResults = pathToResults,
+#   allowedStatesList = allowedStatesList
 # )
 
 ################################################################################
@@ -107,16 +131,17 @@ runGUI(
 #
 ################################################################################
 
-# Cohort2Trajectory(
-#   dbms = dbms,
-#   connection = conn,
-#   cdmSchema = cdmSchema,
-#   cdmTmpSchema = cdmTmpSchema,
-#   cdmResultsSchema = cdmResultsSchema,
-#   studyName = studyName,
-#   runSavedStudy = TRUE,
-#   pathToResults = pathToResults
-# )
+Cohort2Trajectory(
+  dbms = dbms,
+  connection = conn,
+  cdmSchema = cdmSchema,
+  cdmTmpSchema = cdmTmpSchema,
+  cdmResultsSchema = cdmResultsSchema,
+  studyName = studyName,
+  runSavedStudy = TRUE,
+  pathToResults = pathToResults,
+  allowedStatesList = allowedStatesList
+)
 
 ################################################################################
 #
@@ -160,5 +185,6 @@ runGUI(
 #   runSavedStudy = FALSE,
 #   pathToResults = pathToResults,
 #     useCDM = FALSE,
-#     pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = "")
+#     pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = ""),
+#   allowedStatesList = allowedStatesList
 # )

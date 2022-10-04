@@ -435,18 +435,20 @@ getTrajectoriesDiscrete <- function(connection,
                                     statePriorityVector = NULL,
                                     absorbingStates = NULL,
                                     studyName = "",
-                                    addPersonalData = TRUE) {
+                                    addPersonalData = TRUE,
+                                    allowedStatesList = list()) {
   tmp_data <- dplyr::filter(cohortData, COHORT_DEFINITION_ID != "0")
   tmp_data <-
     dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$SUBJECT_ID)
   newPatientData <- getDiscreteStates(
-    stateSelection <- as.numeric(stateSelection),
-    stateDuration <- stateDuration,
-    patientIDs <- patientIds,
-    patientData <- tmp_data,
-    statePriorityVector <- statePriorityVector
+    stateSelection = as.numeric(stateSelection),
+    stateDuration = stateDuration,
+    patientIDs = patientIds,
+    patientData = tmp_data,
+    statePriorityVector = statePriorityVector,
+    allowedStatesList = allowedStatesList
   )
   ################################################################################
   #
@@ -504,8 +506,7 @@ getTrajectoriesDiscrete <- function(connection,
       to = 1:n,
       warn_missing = FALSE
     )
-  
-  
+
   save_object(newPatientData,
               path = paste(
                 pathToResults,
@@ -651,7 +652,8 @@ getTrajectoriesContinuous <- function(connection,
                                       absorbingStates = NULL,
                                       studyName = "",
                                       pathToResults = paste(getwd(), "/tmp", sep = ""),
-                                      addPersonalData = TRUE) {
+                                      addPersonalData = TRUE,
+                                      allowedStatesList = list()) {
   data <- patientData
   data <- dplyr::mutate(
     data,
@@ -860,6 +862,18 @@ getTrajectoriesContinuous <- function(connection,
   
   ##############################################################################
   #
+  # Remove prohibited transitions
+  #
+  ##############################################################################
+  
+  data <- removeProhibitedTransitionsContinuous(
+    patientData = data,
+    patientIDs = unique(data$SUBJECT_ID),
+    allowedStatesList = allowedStatesList
+  )
+  
+  ##############################################################################
+  #
   # Adding personal data
   #
   ##############################################################################
@@ -999,7 +1013,7 @@ loadSettings <- function(studyName) {
   
   env$savedTrajectoryType <- settings$trajectoryType[studyIndex]
   env$savedTrajectoryStates <-
-    strsplit(settings$trajectoryStates[studyIndex], ",")
+    strsplit(settings$trajectoryStates[studyIndex], ",")[[1]]
   env$savedPriorityOrder <-
     strsplit(settings$priorityOrder[studyIndex], ",")[[1]]
   env$savedStateSelectionType <-

@@ -362,10 +362,15 @@ body <- shinydashboard::dashboardBody(
                                     shiny::actionButton("trajectoriesButton", "Generate")
                                   )
                                 )
-                              )
-                              ,
-                              
-                            )),
+                              ),
+                              shinydashboard::box(
+                                width = 12,
+                                title = "Allowed transitions",
+                                status = "primary",
+                                solidHeader = T,
+                                uiOutput("allowedTransitsionChoices"))
+                                )
+                            ),
     
     
     ################################################################################

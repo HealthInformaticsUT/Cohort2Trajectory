@@ -46,7 +46,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               runSavedStudy = FALSE,
                               pathToResults = getwd(),
                               useCDM = TRUE,
-                              pathToData = './tmp/datasets/importedData.csv'
+                              pathToData = './tmp/datasets/importedData.csv',
+                              allowedStatesList = createStateList(stateCohortLabels)
                               ) {
   ###############################################################################
   #
@@ -154,7 +155,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     data <- DatabaseConnector::querySql(connection, sql)
     # Apply state names
-    names <- c("0", stateCohortPriorityOrder)
+    names <- c("0", stateCohortLabels)
     data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = 1:length(names),
@@ -166,7 +167,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                           COHORT_DEFINITION_ID,
                           COHORT_START_DATE,
                           COHORT_END_DATE)
-    
+
   }
   else if (useCDM) {
     ParallelLogger::logInfo("Importing data ...")
@@ -272,7 +273,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       statePriorityVector = stateCohortPriorityOrder,
       absorbingStates = stateCohortAbsorbing,
       studyName = studyName,
-      addPersonalData = useCDM
+      addPersonalData = useCDM,
+      allowedStatesList = allowedStatesList
     )
   }
   else if (trajectoryType == 1) {
@@ -284,7 +286,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       statePriorityVector = stateCohortPriorityOrder,
       absorbingStates = stateCohortAbsorbing,
       studyName = studyName,
-      addPersonalData = useCDM
+      addPersonalData = useCDM,
+      allowedStatesList = allowedStatesList
     )
   }
   

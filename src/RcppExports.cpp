@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // getDiscreteStates
-DataFrame getDiscreteStates(int stateSelection, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, std::vector<std::string> statePriorityVector);
-RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP) {
+DataFrame getDiscreteStates(int stateSelection, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, std::vector<std::string> statePriorityVector, Rcpp::List allowedStatesList);
+RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP, SEXP allowedStatesListSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,7 +21,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type statePriorityVector(statePriorityVectorSEXP);
-    rcpp_result_gen = Rcpp::wrap(getDiscreteStates(stateSelection, stateDuration, patientIDs, patientData, statePriorityVector));
+    Rcpp::traits::input_parameter< Rcpp::List >::type allowedStatesList(allowedStatesListSEXP);
+    rcpp_result_gen = Rcpp::wrap(getDiscreteStates(stateSelection, stateDuration, patientIDs, patientData, statePriorityVector, allowedStatesList));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -51,11 +52,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// removeProhibitedTransitionsContinuous
+DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData, std::vector<int> patientIDs, List allowedStatesList);
+RcppExport SEXP _Cohort2Trajectory_removeProhibitedTransitionsContinuous(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP allowedStatesListSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
+    Rcpp::traits::input_parameter< List >::type allowedStatesList(allowedStatesListSEXP);
+    rcpp_result_gen = Rcpp::wrap(removeProhibitedTransitionsContinuous(patientData, patientIDs, allowedStatesList));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 5},
+    {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 6},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous, 3},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete, 3},
+    {"_Cohort2Trajectory_removeProhibitedTransitionsContinuous", (DL_FUNC) &_Cohort2Trajectory_removeProhibitedTransitionsContinuous, 3},
     {NULL, NULL, 0}
 };
 
