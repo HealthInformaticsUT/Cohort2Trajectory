@@ -154,7 +154,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     data <- DatabaseConnector::querySql(connection, sql)
     # Apply state names
-    names <- c("0", stateCohortPriorityOrder)
+    names <- c("0", stateCohortLabels)
     data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = 1:length(names),
