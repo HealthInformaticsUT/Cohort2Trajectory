@@ -20,9 +20,9 @@ pw <- "password" #TODO
 server <- 'ip/database' #TODO
 port <- '5432' #TODO
 
-cdmSchema <- "ohdsi_cdm_20220330" #TODO # Schema which contains the OHDSI Common Data Model
+cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
 cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema <- "ohdsi_results_20220330" #TODO # Schema which will contain the final results
+cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
 
 baseUrl <- "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
 ################################################################################

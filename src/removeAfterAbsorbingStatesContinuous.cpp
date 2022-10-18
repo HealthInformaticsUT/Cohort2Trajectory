@@ -17,6 +17,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
   std::vector<Date> outStartDates;
   std::vector<Date> outEndDates;
   NumericVector outstateIDs;
+  NumericVector seqOrdinal;
   std::vector<double> outtimeCohort;
   
   // Getting data from patienData DataFrame
@@ -33,13 +34,24 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
     // Getting patient id
     int patientID = patientIDs[p];
     
+    std::string stateLast;
+    int seqCounter = 1;
+    
     // Let's get data of this person
     std::vector<int>::iterator iter = patientsIDs.begin();
     while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end())
     {
       int index = std::distance(patientsIDs.begin(), iter);
       std::string state = patientsStates[index];
-
+      
+      // Value for seqCounter;
+      if (stateLast == state){
+        seqCounter ++;
+      }
+      else {
+        seqCounter = 1;
+      }
+      stateLast = state;
       
       // Add info to vectors
       outpatientIDs.push_back(patientID);
@@ -48,6 +60,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
       outEndDates.push_back(patientsEnd[index]);
       outstateIDs.push_back(stateIDs[index]);
       outtimeCohort.push_back(timeCohort[index]);
+      seqOrdinal.push_back(seqCounter);
       
       
       
@@ -67,6 +80,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
         outEndDates.push_back(patientsEnd[index]);
         outstateIDs.push_back(stateIDs[index]);
         outtimeCohort.push_back(timeCohort[index]);
+        seqOrdinal.push_back(1);
         
         break;
       }
@@ -79,7 +93,8 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["STATE_ID"] = outstateIDs,
-                                                _["TIME_IN_COHORT"] = outtimeCohort);
+                                                _["TIME_IN_COHORT"] = outtimeCohort,
+                                                _["SEQ_ORDINAL"] = seqOrdinal);
   
   return outPatientData;
 }

@@ -18,6 +18,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   std::vector<Date> outEndDates;
   NumericVector outstateIDs;
   std::vector<double> outtimeCohort;
+  NumericVector outSeqOrdinal;
   
   // Getting data from patienData DataFrame
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
@@ -26,6 +27,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   std::vector<std::string> patientsStates = patientData["STATE"];
   NumericVector stateIDs = patientData["STATE_ID"];
   std::vector<double> timeCohort = patientData["TIME_IN_COHORT"];
+  NumericVector seqOrdinal = patientData["SEQ_ORDINAL"];
   
   
   for (int p=0; p < (int) patientIDs.size(); p++){
@@ -49,6 +51,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
       outEndDates.push_back(patientsEnd[index]);
       outstateIDs.push_back(stateIDs[index]);
       outtimeCohort.push_back(timeCohort[index]);
+      outSeqOrdinal.push_back(seqOrdinal[index]);
       
       
       // If state is "START" or "EXIT" then move on to the next state
@@ -82,7 +85,9 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["STATE_ID"] = outstateIDs,
-                                                _["TIME_IN_COHORT"] = outtimeCohort);
+                                                _["TIME_IN_COHORT"] = outtimeCohort,
+                                                _["SEQ_ORDINAL"] = outSeqOrdinal
+                                                );
   
   return outPatientData;
 }
