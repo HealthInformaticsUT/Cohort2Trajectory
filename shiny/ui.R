@@ -361,11 +361,22 @@ body <- shinydashboard::dashboardBody(
                                     ),
                                     shiny::actionButton("trajectoriesButton", "Generate")
                                   )
+                                ),
+                                shiny::fluidRow(
+                                  shiny::column(
+                                    width = 4,
+                                    uiOutput("fixOutOfCohort")
+                                  )
                                 )
-                              )
-                              ,
-                              
-                            )),
+                              ),
+                              shinydashboard::box(
+                                width = 12,
+                                title = "Allowed transitions",
+                                status = "primary",
+                                solidHeader = T,
+                                uiOutput("allowedTransitsionChoices"))
+                                )
+                            ),
     
     
     ################################################################################

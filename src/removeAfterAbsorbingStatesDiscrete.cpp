@@ -16,6 +16,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
   std::vector<Date> outStartDates;
   std::vector<Date> outEndDates;
   std::vector<double> outtimeCohort;
+  NumericVector seqOrdinal;
   // Getting data from patienData DataFrame
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
   DateVector patientsStart = patientData["STATE_START_DATE"];
@@ -27,6 +28,9 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
     
     // Getting patient id
     int patientID = patientIDs[p];
+    
+    std::string stateLast;
+    int seqCounter = 1;
     int k = 0;
     // Let's get data of this person
     std::vector<int>::iterator iter = patientsIDs.begin();
@@ -34,6 +38,14 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
     {
       int index = std::distance(patientsIDs.begin(), iter);
       std::string state = patientsStates[index];
+      // Value for seqCounter;
+      if (stateLast == state){
+        seqCounter ++;
+      }
+      else {
+        seqCounter = 1;
+      }
+      stateLast = state;
       Date startDate = patientsStart[index];
       Date endDate = patientsEnd[index];
       
@@ -44,6 +56,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
       outStartDates.push_back(startDate);
       outEndDates.push_back(startDate);
       outtimeCohort.push_back(0);
+      seqOrdinal.push_back(1);
       
       k ++;
       }
@@ -54,6 +67,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(timeCohort[index]);
+      seqOrdinal.push_back(seqCounter);
       
       // If it is an absorbing state break loop
       if (std::find(absorbingStates.begin(), absorbingStates.end(), state) != absorbingStates.end())
@@ -69,12 +83,14 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
     outStartDates.push_back(outEndDates.back() + 1);
     outEndDates.push_back(outEndDates.back() + 1);
     outtimeCohort.push_back(outtimeCohort.back());
+    seqOrdinal.push_back(1);
   }
   DataFrame outPatientData = DataFrame::create( Named("SUBJECT_ID") = outpatientIDs,
                                                 _["STATE"] = outStates,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
-                                                _["TIME_IN_COHORT"] = outtimeCohort
+                                                _["TIME_IN_COHORT"] = outtimeCohort,
+                                                _["SEQ_ORDINAL"] = seqOrdinal
                                                   );
   
   return outPatientData;

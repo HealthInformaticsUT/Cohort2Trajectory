@@ -55,7 +55,8 @@ server <- function(input, output, session) {
       kmIntervalIds = NULL,
       generatedData = NULL,
       trajectoryTable1 = NULL,
-      trajectoryTable2 = NULL
+      trajectoryTable2 = NULL,
+      allowedTransitions = NULL
     )
   ################################################################################
   #
@@ -768,6 +769,73 @@ server <- function(input, output, session) {
                               })
   })
   
+  output$fixOutOfCohort <- renderUI({
+    shiny::radioButtons("fixOutOfCohort",
+                              "Choose how to fix OUT OF COHORT cases:",
+                              as.list(c("None", "Last present state",
+                                        if (is.null(v$customisedStates)) {
+                                          input$cstateCohorts
+                                        }
+                                        else {
+                                          v$customisedStates
+                                        })),
+                              selected = if (studyHasBeenSaved) {
+                                savedOutOfCohortFix
+                              }
+                              else {
+                                c("None")
+                              })
+  })
+  
+  output$allowedTransitsionChoices  <- renderUI({
+    # siia tuleb mingi listilaadne asi teha, laplly ja lisada igale tagile ka oma nimi ühega probs ei saaa :((((()))))
+    
+    #   if (is.null(v$dtreeIds)) {
+    #     v$dtreeIds <<- 1
+    #   } else {
+    #     v$dtreeIds <<- c(v$dtreeIds, max(v$dtreeIds) + 1)
+    #   }
+    # output$inputs <- renderUI({
+    #   tagList(lapply(1:length(v$dtreeIds), function(i) {
+    #     checkboxGroupInput(
+    #       paste0("layerInput", v$dtreeIds[i]),
+    #       sprintf("Layer #%d", v$dtreeIds[i]),
+    #       choices = v$states
+    #     ) # choices = v$customisedStates
+    #   }))
+    # })
+    
+    states <- as.list(if (is.null(v$customisedStates)) {
+                          input$cstateCohorts
+                        }
+                        else {
+                          v$customisedStates
+                        })
+    tagList(lapply(1:length(states), function(i) {
+      checkboxGroupInput(
+        paste0("allowedTransitions", states[i]),
+        sprintf("Allowed transitsion states for %s", states[i]),
+        choices = states,
+        selected = states
+      ) # choices = v$customisedStates
+    }))
+  })
+   
+   
+ #   for (state in if (is.null(states)) {
+ #     input$cstateCohorts
+ #   }
+ #   else {
+ #     states
+ #   }) {
+ #     shiny::checkboxGroupInput("allowedTransitions",
+ #                               paste("Allowed transitsion states for ", state),
+ #                               states,
+ #                               selected = c("S1","S2"))
+ #   }
+ # })
+  
+  
   
   trajectoriesGeneration <- reactive({
     validate(need(
@@ -789,7 +857,45 @@ server <- function(input, output, session) {
     progress$set(message = "Generating trajectories", value = 1 /
                    3)
     result <- NULL
+    ############################################################################
+    #
+    # Reassemble allowed transitions to a list of vectors
+    #
+    ############################################################################
+    
+    stateVector = if (is.null(v$customisedStates)) {
+      input$cstateCohorts
+    }
+    else {
+      v$customisedStates
+    }
+    
+    v$allowedTransitions = list()
+    
+    allowedTransitions_ids <- lapply(1:length(stateVector), function(i) {
+      paste("allowedTransitions", stateVector[i], sep = "")
+    })
+    names(allowedTransitions_ids) = stateVector
+    for (state in stateVector) {
+    #  print(allowedTransitions_ids[[state]])
+      targets = sprintf(input[[allowedTransitions_ids[[state]]]])
+      v$allowedTransitions[[state]] <- sprintf(input[[allowedTransitions_ids[[state]]]])
+      if((length(targets) == 0)){
+        # If there are no allowed targets, then the state is absorbing.
+        input$absorbingStates = union(input$absorbingStates, state)
+      }
+      
+    }
+    # print(v$allowedTransitions)
+    names(v$allowedTransitions) = stateVector
+    # print(v$allowedTransitions)
+    ############################################################################
+    #
+    # Generation
+    #
+    ############################################################################
     if (input$trajectoryType == 0) {
+      # print(v$allowedTransitions)
       result <- getTrajectoriesDiscrete(
         connection = conn,
         cohortData = cohortData,
@@ -797,8 +903,10 @@ server <- function(input, output, session) {
         stateSelection = input$stateSelectionType,
         statePriorityVector = input$rankListPriority,
         absorbingStates = input$absorbingStates,
+        oocFix = input$fixOutOfCohort,
         studyName = studyName,
-        pathToResults = pathToResults
+        pathToResults = pathToResults,
+        allowedStatesList = v$allowedTransitions
       )
     }
     else if (input$trajectoryType == 1) {
@@ -809,7 +917,8 @@ server <- function(input, output, session) {
         statePriorityVector = input$rankListPriority,
         absorbingStates = input$absorbingStates,
         studyName = studyName,
-        pathToResults = pathToResults
+        pathToResults = pathToResults,
+        allowedStatesList = v$allowedTransitions
       )
     }
     ############################################################################
@@ -830,6 +939,7 @@ server <- function(input, output, session) {
     savedStateSelectionType <- input$stateSelectionType
     savedAbsorbingStates <- input$absorbingStates
     savedMandatoryStates <- input$mandatoryStates
+    savedOutOfCohortFix <- input$fixOutOfCohort
     savedLengthOfStay <- v$stateLength
     savedOutOfCohortAllowed <-  as.logical(input$outOfCohortAllowed)
     # defining a row
@@ -842,7 +952,8 @@ server <- function(input, output, session) {
       paste(savedAbsorbingStates, collapse = ","),
       paste(savedMandatoryStates, collapse = ","),
       savedLengthOfStay,
-      savedOutOfCohortAllowed
+      savedOutOfCohortAllowed,
+      savedOutOfCohortFix
     )
     if (studyName %in% settings$studyName) {
       settings[studyIndex,] <- newSettings

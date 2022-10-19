@@ -187,3 +187,39 @@ createMandatorySubDirs <- function(pathToResults) {
     paste(pathToResults, '/inst/Settings', sep = "")
   )
 }
+
+
+
+#' Create list for every state having all states
+#'
+#' @param stateVector Vector with the defines state labels
+#' @keywords internal
+createStateList <- function(stateVector) {
+  stateList = replicate(n = length(stateVector), expr = stateVector, simplify = FALSE)
+  names(stateList) = stateVector
+  return(stateList)
+}
+
+
+#' Remove element from list component's vector
+#'
+#' @param stateList List of all the states storing the possible destination states
+#' @param transitionHead State label which is the state where the transition is coming from
+#' @param transitionTail State label which is the state where the transition is going to
+#' @keywords internal
+removeListVectorEl <- function(stateList, transitionHead, transitionTail) {
+  stateList[[transitionHead]] = stateList[[transitionHead]][-which(stateList[[transitionHead]] == transitionTail)]
+  return(stateList)
+}
+
+
+#' Add element from list component's vector
+#'
+#' @param stateList List of all the states storing the possible destination states
+#' @param transitionHead State label which is the state where the transition is coming from
+#' @param transitionTail State label which is the state where the transition is going to
+#' @keywords internal
+addListVectorEl <- function(stateList, transitionHead, transitionTail) {
+  stateList[[transitionHead]] = c(stateList[[transitionHead]], transitionTail)
+  return(stateList)
+}

@@ -4,6 +4,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 using namespace Rcpp;
 using namespace std;
 
@@ -53,10 +54,12 @@ NumericVector replaceOnTreshold(NumericVector referenceVector, int treshold, int
 
 // [[Rcpp::export]]
 DataFrame getDiscreteStates(int stateSelection,
+                  std::string oocFix, 
                   int stateDuration,
                   std::vector<int> patientIDs,
                   DataFrame patientData,
-                  std::vector<std::string> statePriorityVector){
+                  std::vector<std::string> statePriorityVector,
+                  Rcpp::List allowedStatesList){
 
   //Initiating dataframe output data
   NumericVector outpatientIDs;
@@ -64,6 +67,14 @@ DataFrame getDiscreteStates(int stateSelection,
   std::vector<Date> outStartDates;
   std::vector<Date> outEndDates;
   std::vector<double> outtimeCohort;
+  
+  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF0"]) << '\n';
+  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF1"]) << '\n';
+  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF2"]) << '\n';
+  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF3"]) << '\n';
+  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HFD"]) << '\n';
+  //temp
+  // std::cout << allowedStatesList;
 
   // Getting data from patienData DataFrame
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
@@ -84,6 +95,7 @@ DataFrame getDiscreteStates(int stateSelection,
   // Getting patient id
   int patientID = patientIDs[p];
   // Let's get data of this person
+  std::string lastLegalState = "$$not_intialized_yet$$";
 
   std::vector<int>::iterator iter = patientsIDs.begin();
   while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end())
@@ -110,6 +122,7 @@ DataFrame getDiscreteStates(int stateSelection,
 
       NumericVector daysOverlapVector;
       std::string state;
+      std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
       Date endDate = startDate + stateDuration;
@@ -122,23 +135,69 @@ DataFrame getDiscreteStates(int stateSelection,
       }
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
+        if (oocFix == "None"){
         state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastState;
+        }
+        else{
+          state = oocFix;
+        }
         }
       else {
         // # Let's calculate the shift in days, all shifts in the past according to startingDate will be given a value of -Inf
         NumericVector daysShift = dateDiff(startDate, controlStart);
         // as.numeric(as.Date(startDate) -as.Date(personData$COHORT_START_DATE))
         daysShift = replaceOnTreshold(daysShift,0,std::numeric_limits<int>::min());
-        int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
+        NumericVector daysShift_copy = daysShift;
+        std::sort(daysShift_copy.begin(), daysShift_copy.end(), greater<int>()); // Sort an array of in greatest-first order.
+        
+        
+        Rcpp::StringVector allowedStates;
+        if(lastState == "$$not_intialized_yet$$"){
+          allowedStates = statePriorityVector;
+        }
+        else{
+          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
+        }
+        
+        for (int value=0; value < vectorLength; value++){
+        
+        auto it =  std::find(daysShift.begin(), daysShift.end(), daysShift_copy[value]);
+        
+        int index = it - daysShift.begin();
+        // int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
         // indexMax = which.max(daysShift)
-        state = states[maxElementIndex];;
+        // state = states[maxElementIndex];;
+        state = states[index];
+        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
+        if (isPresent != allowedStates.end()){
+          lastState = state;
+          break;
+        }
+        else if (it == daysShift.end()){
+          
+          if (oocFix == "None"){
+            state = "OUT OF COHORT";
+          }
+          else if (oocFix == "Last present state"){
+            state = lastLegalState;
+          }
+          else{
+            state = oocFix;
+          }          break;
+        }
+        
         // state = personData$COHORT_DEFINITION_ID[indexMax]
+        }
       }
       outpatientIDs.push_back(patientID);
       outStates.push_back(state);
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
 
   }
@@ -147,6 +206,7 @@ DataFrame getDiscreteStates(int stateSelection,
 
       NumericVector daysOverlapVector;
       std::string state;
+      std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
       Date endDate = startDate + stateDuration;
@@ -161,19 +221,63 @@ DataFrame getDiscreteStates(int stateSelection,
                                                 controlStart[i],
                                                             controlEnd[i]));
       }
+      
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
-        state = "OUT OF COHORT";
+        if (oocFix == "None"){
+          state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastLegalState;
+        }
+        else{
+          state = oocFix;
+        }
         }
       else {
-        int maxElementIndex = std::max_element(daysOverlapVector.begin(),daysOverlapVector.end()) - daysOverlapVector.begin();
-        state = states[maxElementIndex];
+        
+        Rcpp::StringVector allowedStates;
+        if(lastState == "$$not_intialized_yet$$"){
+          allowedStates = statePriorityVector;
+        }
+        else{
+          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
+        }
+
+        for (int value=0; value < vectorLength; value++){
+          
+          int maxElementIndex = std::max_element(daysOverlapVector.begin(),daysOverlapVector.end()) - daysOverlapVector.begin();
+          state = states[maxElementIndex];
+          
+          auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
+          if (isPresent != allowedStates.end()){
+            lastState = state;
+            break;
+          }
+          else {
+            daysOverlapVector[maxElementIndex] = 0;
+            if (sum(daysOverlapVector) == 0){
+              if (oocFix == "None"){
+                state = "OUT OF COHORT";
+              }
+              else if (oocFix == "Last present state"){
+                state = lastLegalState;
+              }
+              else{
+                state = oocFix;
+              }
+            break;
+            }
+          }
+          
+        }
       }
       outpatientIDs.push_back(patientID);
       outStates.push_back(state);
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
 
   }
@@ -182,6 +286,7 @@ DataFrame getDiscreteStates(int stateSelection,
 
       NumericVector daysOverlapVector;
       std::string state;
+      std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
       Date endDate = startDate + stateDuration;
@@ -195,20 +300,61 @@ DataFrame getDiscreteStates(int stateSelection,
                                                 controlStart[i],
                                                             controlEnd[i]));
       }
+      
       int sumV = sum(daysOverlapVector);
-      if(sumV == 0) {state = "OUT OF COHORT";}
+      if(sumV == 0) {
+        if (oocFix == "None"){
+          state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastLegalState;
+        }
+        else{
+          state = oocFix;
+        }
+      }
       else {
-        // # Let's calculate the shift in days, all shifts in the past according to startingDate will be given a value of -Inf
+        Rcpp::StringVector allowedStates;
+        if(lastState == "$$not_intialized_yet$$"){
+          allowedStates = statePriorityVector;
+        }
+        else{
+          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
+        }
+        // Rcpp::Rcout << allowedStates;
         int maxPriorityIndex = std::numeric_limits<int>::max();
         for (int j=0; j < vectorLength; j++){
           if (daysOverlapVector[j] > 0){
             std::vector<std::string>::iterator it = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[j]);
             int index_result = std::distance(statePriorityVector.begin(), it);
             // int index_result = index_result - statePriorityVector.end();
-            if(index_result < maxPriorityIndex){
+            std::string candidateState;
+            candidateState = statePriorityVector[index_result];
+            auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), candidateState);
+            
+            if(index_result < maxPriorityIndex && isPresent != allowedStates.end()){
               maxPriorityIndex = index_result;
-              state = statePriorityVector[index_result];
+              state = candidateState;
             }
+            else {
+            daysOverlapVector[j] = 0;
+            if (sum(daysOverlapVector) == 0){
+              if (oocFix == "None"){
+                state = "OUT OF COHORT";
+              }
+              else if (oocFix == "Last present state"){
+                state = lastLegalState;
+              }
+              else{
+                state = oocFix;
+              }
+              break;
+            }
+            }
+          }
+          if (j == vectorLength) {
+            lastState = state;
+            break;
           }
         }
       }
@@ -217,6 +363,7 @@ DataFrame getDiscreteStates(int stateSelection,
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
     }
   }

@@ -6,9 +6,9 @@ using namespace Rcpp;
 using namespace std;
 
 // [[Rcpp::export]]
-DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
-                                std::vector<int> patientIDs,
-                                std::vector<std::string> absorbingStates){
+DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
+                                               std::vector<int> patientIDs,
+                                               List allowedStatesList){
   
   
   //Initiating dataframe output data
@@ -17,8 +17,8 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
   std::vector<Date> outStartDates;
   std::vector<Date> outEndDates;
   NumericVector outstateIDs;
-  NumericVector seqOrdinal;
   std::vector<double> outtimeCohort;
+  NumericVector outSeqOrdinal;
   
   // Getting data from patienData DataFrame
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
@@ -27,6 +27,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
   std::vector<std::string> patientsStates = patientData["STATE"];
   NumericVector stateIDs = patientData["STATE_ID"];
   std::vector<double> timeCohort = patientData["TIME_IN_COHORT"];
+  NumericVector seqOrdinal = patientData["SEQ_ORDINAL"];
   
   
   for (int p=0; p < (int) patientIDs.size(); p++){
@@ -34,24 +35,14 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
     // Getting patient id
     int patientID = patientIDs[p];
     
-    std::string stateLast;
-    int seqCounter = 1;
-    
     // Let's get data of this person
     std::vector<int>::iterator iter = patientsIDs.begin();
-    while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end())
-    {
+    std::string lastState; 
+    
+    while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end()) {
       int index = std::distance(patientsIDs.begin(), iter);
       std::string state = patientsStates[index];
       
-      // Value for seqCounter;
-      if (stateLast == state){
-        seqCounter ++;
-      }
-      else {
-        seqCounter = 1;
-      }
-      stateLast = state;
       
       // Add info to vectors
       outpatientIDs.push_back(patientID);
@@ -60,29 +51,30 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
       outEndDates.push_back(patientsEnd[index]);
       outstateIDs.push_back(stateIDs[index]);
       outtimeCohort.push_back(timeCohort[index]);
-      seqOrdinal.push_back(seqCounter);
+      outSeqOrdinal.push_back(seqOrdinal[index]);
       
       
+      // If state is "START" or "EXIT" then move on to the next state
       
-      
-      // If it is an absorbing state break loop
-      
-      // We have to explicitly add 'EXIT' state as it would be otherwise cut off
-      if (std::find(absorbingStates.begin(), absorbingStates.end(), state) != absorbingStates.end())
-      {
-        while (patientsStates[index] != "EXIT"){
-          index ++;
+      if (state == "START" || state == "EXIT") {
+        lastState = "$$not_intialized_yet$$";
+        iter++;
+        continue;
+      }
+      else if (lastState == "$$not_intialized_yet$$") {
+        lastState = state;
+      }
+      // If there is a forbidden transition we delete the targeted state
+      else {
+        lastState = state;
+        Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[state]);
+        std::string nextState = patientsStates[index+1];
+        // Control: is the next state allowed
+        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), nextState);
+        // Rcpp::Rcout << allowedStates << '\n';
+        if(isPresent == allowedStates.end() && nextState != "EXIT"){
+          iter++;
         }
-        // Adding EXIT state
-        outpatientIDs.push_back(patientID);
-        outStates.push_back(patientsStates[index]);
-        outStartDates.push_back(patientsStart[index]);
-        outEndDates.push_back(patientsEnd[index]);
-        outstateIDs.push_back(stateIDs[index]);
-        outtimeCohort.push_back(timeCohort[index]);
-        seqOrdinal.push_back(1);
-        
-        break;
       }
       
       iter++;
@@ -94,7 +86,8 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["STATE_ID"] = outstateIDs,
                                                 _["TIME_IN_COHORT"] = outtimeCohort,
-                                                _["SEQ_ORDINAL"] = seqOrdinal);
+                                                _["SEQ_ORDINAL"] = outSeqOrdinal
+                                                );
   
   return outPatientData;
 }
