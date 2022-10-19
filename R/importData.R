@@ -211,13 +211,10 @@ addPersonalData <- function(cohortData, connection, cdmSchema) {
 #' @param mandatoryStates States which have to be present in the trajectory, otherwise dropped#'
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
-
 cleanCohortData <- function(cohortData,
                             mandatoryStates,
                             outOfCohortAllowed = FALSE) {
   data_tmp <- cohortData
-  
-  
   ##############################################################################
   #
   # Preserving only patients which are present in the target cohort
@@ -230,7 +227,6 @@ cleanCohortData <- function(cohortData,
   
   data_tmp <-
     dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
-  
   ##############################################################################
   #
   # Cleaning data from observations before and after target cohort
@@ -249,22 +245,16 @@ cleanCohortData <- function(cohortData,
     ),
     COHORT_START_DATE
   ), 1L)
-  
-  # Selecting information about the states
+    # Selecting information about the states
   data_states <-
     dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
-  
   data_tmp <- rbind(data_target, data_states)
-  
-  
-  
   data_target <-
     dplyr::select(data_target, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
   colnames(data_target) <-
     c("SUBJECT_ID", "REFERENCE_START_DATE", "REFERENCE_END_DATE")
   data_tmp <- merge(data_tmp, data_target, by = "SUBJECT_ID")
-  
-  # If the state start date is after inclusion criteria end date then let's filter it out
+    # If the state start date is after inclusion criteria end date then let's filter it out
   if (!outOfCohortAllowed) {
     data_tmp <-
       dplyr::filter(data_tmp,!(REFERENCE_END_DATE < COHORT_START_DATE))
@@ -333,7 +323,6 @@ cleanCohortData <- function(cohortData,
   
   # Order by patientId, start & end date
   #data_merged = data_merged[order(data_merged[, 1], data_merged[, 3], data_merged[, 4]),]
-  
   
   data_tmp <-
     dplyr::mutate(data_tmp, TIME_IN_COHORT = round(as.numeric(
@@ -434,6 +423,7 @@ getTrajectoriesDiscrete <- function(connection,
                                     stateSelection = 1,
                                     statePriorityVector = NULL,
                                     absorbingStates = NULL,
+                                    oocFix = "None",
                                     studyName = "",
                                     addPersonalData = TRUE,
                                     allowedStatesList = list()) {
@@ -442,8 +432,10 @@ getTrajectoriesDiscrete <- function(connection,
     dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$SUBJECT_ID)
+
   newPatientData <- getDiscreteStates(
     stateSelection = as.numeric(stateSelection),
+    oocFix = oocFix,
     stateDuration = stateDuration,
     patientIDs = patientIds,
     patientData = tmp_data,
@@ -1021,8 +1013,8 @@ loadSettings <- function(studyName) {
   env$savedAbsorbingStates <- settings$absorbingStates[studyIndex]
   env$savedMandatoryStates <- settings$mandatoryStates[studyIndex]
   env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
-  env$savedOutOfCohortAllowed <-
-    settings$outOfCohortAllowed[studyIndex]
+  env$savedOutOfCohortAllowed <- settings$outOfCohortAllowed[studyIndex]
+  env$outOfCohortFix <- settings$outOfCohortFix[studyIndex]
   
   return(env)
 }

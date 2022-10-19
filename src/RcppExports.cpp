@@ -11,18 +11,19 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // getDiscreteStates
-DataFrame getDiscreteStates(int stateSelection, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, std::vector<std::string> statePriorityVector, Rcpp::List allowedStatesList);
-RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP, SEXP allowedStatesListSEXP) {
+DataFrame getDiscreteStates(int stateSelection, std::string oocFix, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, std::vector<std::string> statePriorityVector, Rcpp::List allowedStatesList);
+RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP oocFixSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP, SEXP allowedStatesListSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type stateSelection(stateSelectionSEXP);
+    Rcpp::traits::input_parameter< std::string >::type oocFix(oocFixSEXP);
     Rcpp::traits::input_parameter< int >::type stateDuration(stateDurationSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type statePriorityVector(statePriorityVectorSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type allowedStatesList(allowedStatesListSEXP);
-    rcpp_result_gen = Rcpp::wrap(getDiscreteStates(stateSelection, stateDuration, patientIDs, patientData, statePriorityVector, allowedStatesList));
+    rcpp_result_gen = Rcpp::wrap(getDiscreteStates(stateSelection, oocFix, stateDuration, patientIDs, patientData, statePriorityVector, allowedStatesList));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -67,7 +68,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 6},
+    {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 7},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous, 3},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete, 3},
     {"_Cohort2Trajectory_removeProhibitedTransitionsContinuous", (DL_FUNC) &_Cohort2Trajectory_removeProhibitedTransitionsContinuous, 3},

@@ -15,8 +15,8 @@ pathToResults <- getwd()   # TODO
 ################################################################################
 pathToDriver <- './Drivers'
 dbms <- "postgresql" #TODO
-user <- 'user' #TODO
-pw <- "password" #TODO
+user <- '' #TODO
+pw <- "" #TODO
 server <- 'ip/database' #TODO
 port <- '5432' #TODO
 
@@ -69,18 +69,18 @@ runGUI(
 #
 ################################################################################
 
-stateCohortLabels = c("HF0", "HF1", "HF2", "HF3", "HFD")
-allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF2") # removes possibility to move from state4 to state2
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF3") # removes possibility to move from state2 to state3
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF1", transitionTail = "HF3") # removes possibility to move from state4 to state2
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF2", transitionTail = "HF0") # removes possibility to move from state2 to state3
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF1") # removes possibility to move from state4 to state2
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF0") # removes possibility to move from state2 to state3
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF1") # removes possibility to move from state4 to state2
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF0") # removes possibility to move from state2 to state3
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF3") # removes possibility to move from state4 to state2
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF2") # removes possibility to move from state2 to state3
+# stateCohortLabels = c("HF0", "HF1", "HF2", "HF3", "HFD")
+# allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF2") # removes possibility to move from state4 to state2
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF0", transitionTail = "HF3") # removes possibility to move from state2 to state3
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF1", transitionTail = "HF3") # removes possibility to move from state4 to state2
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF2", transitionTail = "HF0") # removes possibility to move from state2 to state3
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF1") # removes possibility to move from state4 to state2
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HF3", transitionTail = "HF0") # removes possibility to move from state2 to state3
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF1") # removes possibility to move from state4 to state2
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF0") # removes possibility to move from state2 to state3
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF3") # removes possibility to move from state4 to state2
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "HFD", transitionTail = "HF2") # removes possibility to move from state2 to state3
 
 
 
@@ -91,39 +91,46 @@ allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transition
 #
 ################################################################################
 
-# Cohort2Trajectory(
-#   dbms = dbms,
-#   connection = conn,
-#   cdmSchema = cdmSchema,
-#   cdmTmpSchema = cdmTmpSchema,
-#   cdmResultsSchema = cdmResultsSchema,
-#   studyName = studyName,
-#   baseUrl = baseUrl,
-#   atlasTargetCohort = 1, # Target cohort id from ATLAS
-#   atlasStateCohorts = c(2,3,4), # State cohorts' ids from ATLAS
-#   stateCohortLabels = c("State2", "State3", "State4"), # Customized labels in import order
-#   stateCohortPriorityOrder = c("State4", "State3", "State2"), # Priority order of states
-#   stateCohortMandatory = c("State2"), # Mandatory states
-#   stateCohortAbsorbing = c("State4"), # Absorbing states
-#   ##############################################################################
-#   # stateSelectionTypes
-#   # 1 - First occurring
-#   # 2 - Largest overlap
-#   # 3 - Priority ordering
-#   ##############################################################################
-#   stateSelectionType = 3,
-#   ##############################################################################
-#   # trajectoryType
-#   # 0 - Discrete time
-#   # 1 - Continuous time
-#   ##############################################################################
-#   trajectoryType = 0,
-#   lengthOfStay = 30,
-#   outOfCohortAllowed = TRUE,
-#   runSavedStudy = FALSE,
-#   pathToResults = pathToResults,
-#   allowedStatesList = allowedStatesList
-# )
+Cohort2Trajectory(
+  dbms = dbms,
+  connection = conn,
+  cdmSchema = cdmSchema,
+  cdmTmpSchema = cdmTmpSchema,
+  cdmResultsSchema = cdmResultsSchema,
+  studyName = studyName,
+  baseUrl = baseUrl,
+  atlasTargetCohort = 1, # Target cohort id from ATLAS
+  atlasStateCohorts = c(2,3,4,5,6), # State cohorts' ids from ATLAS
+  stateCohortLabels = c("HF1", "HF0", "HFD","HF2","HF3"), # Customized labels in import order
+  stateCohortPriorityOrder = c("HFD","HF3","HF2","HF1","HF0"), # Priority order of states
+  stateCohortMandatory = c("HFD"), # Mandatory states
+  stateCohortAbsorbing = c("HFD"), # Absorbing states
+  ##############################################################################
+  # stateSelectionTypes
+  # 1 - First occurring
+  # 2 - Largest overlap
+  # 3 - Priority ordering
+  ##############################################################################
+  stateSelectionType = 3,
+  ##############################################################################
+  # trajectoryType
+  # 0 - Discrete time
+  # 1 - Continuous time
+  ##############################################################################
+  trajectoryType = 0,
+  lengthOfStay = 30,
+  outOfCohortAllowed = TRUE,
+  runSavedStudy = FALSE,
+  pathToResults = pathToResults,
+  allowedStatesList = allowedStatesList,
+  ##############################################################################
+  # oocFix (out of cohort fix)
+  # None - out of cohort state is included
+  # Last present state - out of cohort state is substituted with the latest state
+  # Some state name - out of cohort state is substituted with some state's notation
+  ##############################################################################
+  oocFix = "Last present state"
+)
 
 ################################################################################
 #
@@ -184,7 +191,14 @@ Cohort2Trajectory(
 #   outOfCohortAllowed = TRUE,
 #   runSavedStudy = FALSE,
 #   pathToResults = pathToResults,
-#     useCDM = FALSE,
-#     pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = ""),
-#   allowedStatesList = allowedStatesList
+#   useCDM = FALSE,
+#   pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = ""),
+#   allowedStatesList = allowedStatesList,
+#  ##############################################################################
+#  # oocFix (out of cohort fix)
+#  # None - out of cohort state is included
+#  # Last present state - out of cohort state is substituted with the latest state
+#  # Some state name - out of cohort state is substituted with some state's notation
+#  ##############################################################################
+#  oocFix = "Last present state"
 # )

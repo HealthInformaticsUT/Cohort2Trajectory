@@ -361,6 +361,12 @@ body <- shinydashboard::dashboardBody(
                                     ),
                                     shiny::actionButton("trajectoriesButton", "Generate")
                                   )
+                                ),
+                                shiny::fluidRow(
+                                  shiny::column(
+                                    width = 4,
+                                    uiOutput("fixOutOfCohort")
+                                  )
                                 )
                               ),
                               shinydashboard::box(

@@ -54,6 +54,7 @@ NumericVector replaceOnTreshold(NumericVector referenceVector, int treshold, int
 
 // [[Rcpp::export]]
 DataFrame getDiscreteStates(int stateSelection,
+                  std::string oocFix, 
                   int stateDuration,
                   std::vector<int> patientIDs,
                   DataFrame patientData,
@@ -94,6 +95,7 @@ DataFrame getDiscreteStates(int stateSelection,
   // Getting patient id
   int patientID = patientIDs[p];
   // Let's get data of this person
+  std::string lastLegalState = "$$not_intialized_yet$$";
 
   std::vector<int>::iterator iter = patientsIDs.begin();
   while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end())
@@ -133,7 +135,15 @@ DataFrame getDiscreteStates(int stateSelection,
       }
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
+        if (oocFix == "None"){
         state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastState;
+        }
+        else{
+          state = oocFix;
+        }
         }
       else {
         // # Let's calculate the shift in days, all shifts in the past according to startingDate will be given a value of -Inf
@@ -167,8 +177,16 @@ DataFrame getDiscreteStates(int stateSelection,
           break;
         }
         else if (it == daysShift.end()){
-          state = "OUT OF COHORT";
-          break;
+          
+          if (oocFix == "None"){
+            state = "OUT OF COHORT";
+          }
+          else if (oocFix == "Last present state"){
+            state = lastLegalState;
+          }
+          else{
+            state = oocFix;
+          }          break;
         }
         
         // state = personData$COHORT_DEFINITION_ID[indexMax]
@@ -179,6 +197,7 @@ DataFrame getDiscreteStates(int stateSelection,
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
 
   }
@@ -205,7 +224,15 @@ DataFrame getDiscreteStates(int stateSelection,
       
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
-        state = "OUT OF COHORT";
+        if (oocFix == "None"){
+          state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastLegalState;
+        }
+        else{
+          state = oocFix;
+        }
         }
       else {
         
@@ -230,7 +257,15 @@ DataFrame getDiscreteStates(int stateSelection,
           else {
             daysOverlapVector[maxElementIndex] = 0;
             if (sum(daysOverlapVector) == 0){
-            state = "OUT OF COHORT";
+              if (oocFix == "None"){
+                state = "OUT OF COHORT";
+              }
+              else if (oocFix == "Last present state"){
+                state = lastLegalState;
+              }
+              else{
+                state = oocFix;
+              }
             break;
             }
           }
@@ -242,6 +277,7 @@ DataFrame getDiscreteStates(int stateSelection,
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
 
   }
@@ -266,7 +302,17 @@ DataFrame getDiscreteStates(int stateSelection,
       }
       
       int sumV = sum(daysOverlapVector);
-      if(sumV == 0) {state = "OUT OF COHORT";}
+      if(sumV == 0) {
+        if (oocFix == "None"){
+          state = "OUT OF COHORT";
+        }
+        else if (oocFix == "Last present state"){
+          state = lastLegalState;
+        }
+        else{
+          state = oocFix;
+        }
+      }
       else {
         Rcpp::StringVector allowedStates;
         if(lastState == "$$not_intialized_yet$$"){
@@ -293,7 +339,15 @@ DataFrame getDiscreteStates(int stateSelection,
             else {
             daysOverlapVector[j] = 0;
             if (sum(daysOverlapVector) == 0){
-              state = "OUT OF COHORT";
+              if (oocFix == "None"){
+                state = "OUT OF COHORT";
+              }
+              else if (oocFix == "Last present state"){
+                state = lastLegalState;
+              }
+              else{
+                state = oocFix;
+              }
               break;
             }
             }
@@ -309,6 +363,7 @@ DataFrame getDiscreteStates(int stateSelection,
       outStartDates.push_back(startDate);
       outEndDates.push_back(endDate);
       outtimeCohort.push_back(time);
+      lastLegalState = state;
     }
     }
   }

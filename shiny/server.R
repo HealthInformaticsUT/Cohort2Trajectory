@@ -769,6 +769,24 @@ server <- function(input, output, session) {
                               })
   })
   
+  output$fixOutOfCohort <- renderUI({
+    shiny::radioButtons("fixOutOfCohort",
+                              "Choose how to fix OUT OF COHORT cases:",
+                              as.list(c("None", "Last present state",
+                                        if (is.null(v$customisedStates)) {
+                                          input$cstateCohorts
+                                        }
+                                        else {
+                                          v$customisedStates
+                                        })),
+                              selected = if (studyHasBeenSaved) {
+                                savedOutOfCohortFix
+                              }
+                              else {
+                                c("None")
+                              })
+  })
+  
   output$allowedTransitsionChoices  <- renderUI({
     # siia tuleb mingi listilaadne asi teha, laplly ja lisada igale tagile ka oma nimi ühega probs ei saaa :((((()))))
     
@@ -885,6 +903,7 @@ server <- function(input, output, session) {
         stateSelection = input$stateSelectionType,
         statePriorityVector = input$rankListPriority,
         absorbingStates = input$absorbingStates,
+        oocFix = input$fixOutOfCohort,
         studyName = studyName,
         pathToResults = pathToResults,
         allowedStatesList = v$allowedTransitions
@@ -920,6 +939,7 @@ server <- function(input, output, session) {
     savedStateSelectionType <- input$stateSelectionType
     savedAbsorbingStates <- input$absorbingStates
     savedMandatoryStates <- input$mandatoryStates
+    savedOutOfCohortFix <- input$fixOutOfCohort
     savedLengthOfStay <- v$stateLength
     savedOutOfCohortAllowed <-  as.logical(input$outOfCohortAllowed)
     # defining a row
@@ -932,7 +952,8 @@ server <- function(input, output, session) {
       paste(savedAbsorbingStates, collapse = ","),
       paste(savedMandatoryStates, collapse = ","),
       savedLengthOfStay,
-      savedOutOfCohortAllowed
+      savedOutOfCohortAllowed,
+      savedOutOfCohortFix
     )
     if (studyName %in% settings$studyName) {
       settings[studyIndex,] <- newSettings

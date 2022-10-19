@@ -40,6 +40,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               stateCohortMandatory = NULL,
                               stateCohortAbsorbing = NULL,
                               stateSelectionType = NULL,
+                              oocFix = "None",
                               trajectoryType = NULL,
                               lengthOfStay = NULL,
                               outOfCohortAllowed = NULL,
@@ -142,6 +143,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     stateCohortMandatory <- settings$savedMandatoryStates
     stateCohortAbsorbing <- settings$savedAbsorbingStates
     stateSelectionType <- settings$savedStateSelectionType
+    oocFix = settings$outOfCohortFix
     trajectoryType <-
       if (settings$savedTrajectoryType == "Discrete") {
         0
@@ -155,7 +157,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     data <- DatabaseConnector::querySql(connection, sql)
     # Apply state names
-    names <- c("0", stateCohortLabels[[1]])
+    names <- c("0", stateCohortLabels)
     data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = 1:length(names),
@@ -255,12 +257,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     cohortData = data,
     mandatoryStates = stateCohortMandatory,
     outOfCohortAllowed = as.logical(outOfCohortAllowed)
-    
   )
   ParallelLogger::logInfo("Data cleaning completed!")
   
   
   ParallelLogger::logInfo("Generating trajectories ...")
+  
   
   result <- NULL
   if (trajectoryType == 0) {
@@ -269,6 +271,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       cohortData = data,
       stateDuration = lengthOfStay,
       pathToResults = pathToResults,
+      oocFix = oocFix,
       stateSelection = stateSelectionType,
       statePriorityVector = stateCohortPriorityOrder,
       absorbingStates = stateCohortAbsorbing,
