@@ -144,7 +144,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     stateCohortMandatory <- settings$savedMandatoryStates
     stateCohortAbsorbing <- settings$savedAbsorbingStates
     stateSelectionType <- settings$savedStateSelectionType
-    oocFix = settings$outOfCohortFix
+    oocFix <- settings$outOfCohortFix
     trajectoryType <-
       if (settings$savedTrajectoryType == "Discrete") {
         0
@@ -157,12 +157,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     
     data <- DatabaseConnector::querySql(connection, sql)
+    data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE)
     # Apply state names
-    names <- c("0", stateCohortLabels)
     data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
-      from = 1:length(names),
-      to = names,
+      from = 1:length(stateNamesJSON),
+      to = stateNamesJSON,
       warn_missing = FALSE
     )
     data <- dplyr::select(data,
@@ -228,17 +228,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
         )
       }
     }
-    save_object(
-      path =  paste(
-        pathToResults,
-        "/tmp/datasets/",
-        studyName,
-        "importedData.csv",
-        sep = ""
-      ),
-      object = data
-    )
-    
     
     ParallelLogger::logInfo("Data import completed!")
     
@@ -251,6 +240,16 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
   }
   
+  save_object(
+    path =  paste(
+      pathToResults,
+      "/tmp/datasets/",
+      studyName,
+      "importedData.csv",
+      sep = ""
+    ),
+    object = data
+  )
   
   
   ParallelLogger::logInfo("Cleaning data ...")
@@ -260,7 +259,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     outOfCohortAllowed = as.logical(outOfCohortAllowed)
   )
   ParallelLogger::logInfo("Data cleaning completed!")
-  
   
   ParallelLogger::logInfo("Generating trajectories ...")
   
@@ -317,6 +315,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     savedMandatoryStates <- stateCohortMandatory
     savedLengthOfStay <- lengthOfStay
     savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
+    savedOutOfCohortFix <- oocFix
     # defining a row
     newSettings <- data.frame(
       studyName,
@@ -327,7 +326,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       paste(savedAbsorbingStates, collapse = ","),
       paste(savedMandatoryStates, collapse = ","),
       savedLengthOfStay,
-      savedOutOfCohortAllowed
+      savedOutOfCohortAllowed,
+      savedOutOfCohortFix
     )
     
     settings <-
@@ -364,7 +364,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       sep = ""
     ))
   }
-  
   
   return(ParallelLogger::logInfo("Trajectories generated!"))
 }
