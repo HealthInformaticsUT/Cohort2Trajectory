@@ -18,6 +18,7 @@
 #' @param stateCohortMandatory Vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param stateCohortAbsorbing Vector of the customized labels of the state cohorts which are absorbing
 #' @param stateSelectionType The type of state selection (1 - First occurring, 2 - Max overlap, 3 - Priority)
+#' @param oocFix The method to use for replacing "OUT OF COHORT" states with more relevant states
 #' @param trajectoryType The type of the trajectory (0 - Discrete time, 1 - Continuous time)
 #' @param lengthOfStay The length of stay (days) in one state (Effect only in discrete case)
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period

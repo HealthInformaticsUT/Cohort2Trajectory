@@ -3,7 +3,8 @@
 # Study settings
 #
 ################################################################################
-# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run only first time
+# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory@v1.0.0") # Run for installing release v1.0.0
+# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory) # Run for installing the HEAD
 library(Cohort2Trajectory)
 studyName <- "A cool study" # TODO
 pathToResults <- getwd()   # TODO
