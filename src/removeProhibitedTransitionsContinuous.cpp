@@ -7,8 +7,8 @@ using namespace std;
 
 // [[Rcpp::export]]
 DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
-                                               std::vector<int> patientIDs,
-                                               List allowedStatesList){
+                                                std::vector<int> patientIDs,
+                                                List allowedStatesList){
   
   
   //Initiating dataframe output data
@@ -44,36 +44,51 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
       std::string state = patientsStates[index];
       
       
-      // Add info to vectors
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(state);
-      outStartDates.push_back(patientsStart[index]);
-      outEndDates.push_back(patientsEnd[index]);
-      outstateIDs.push_back(stateIDs[index]);
-      outtimeCohort.push_back(timeCohort[index]);
-      outSeqOrdinal.push_back(seqOrdinal[index]);
-      
-      
       // If state is "START" or "EXIT" then move on to the next state
       
       if (state == "START" || state == "EXIT") {
         lastState = "$$not_intialized_yet$$";
         iter++;
+        // Add info to vectors
+        outpatientIDs.push_back(patientID);
+        outStates.push_back(state);
+        outStartDates.push_back(patientsStart[index]);
+        outEndDates.push_back(patientsEnd[index]);
+        outstateIDs.push_back(stateIDs[index]);
+        outtimeCohort.push_back(timeCohort[index]);
+        outSeqOrdinal.push_back(seqOrdinal[index]);
         continue;
       }
       else if (lastState == "$$not_intialized_yet$$") {
         lastState = state;
+        // Add info to vectors
+        outpatientIDs.push_back(patientID);
+        outStates.push_back(state);
+        outStartDates.push_back(patientsStart[index]);
+        outEndDates.push_back(patientsEnd[index]);
+        outstateIDs.push_back(stateIDs[index]);
+        outtimeCohort.push_back(timeCohort[index]);
+        outSeqOrdinal.push_back(seqOrdinal[index]);
       }
-      // If there is a forbidden transition we delete the targeted state
+      // If there is a forbidden transition we do not add the targeted state
       else {
-        lastState = state;
-        Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[state]);
-        std::string nextState = patientsStates[index+1];
+        // siin miski broken
+        Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
+        //std::string nextState = patientsStates[index+1];
         // Control: is the next state allowed
-        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), nextState);
+        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
         // Rcpp::Rcout << allowedStates << '\n';
-        if(isPresent == allowedStates.end() && nextState != "EXIT"){
-          iter++;
+        if(isPresent != allowedStates.end()){
+          // Add info to vectors
+          outpatientIDs.push_back(patientID);
+          outStates.push_back(state);
+          outStartDates.push_back(patientsStart[index]);
+          outEndDates.push_back(patientsEnd[index]);
+          outstateIDs.push_back(stateIDs[index]);
+          outtimeCohort.push_back(timeCohort[index]);
+          outSeqOrdinal.push_back(seqOrdinal[index]);
+          
+          lastState = state;
         }
       }
       
@@ -87,7 +102,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
                                                 _["STATE_ID"] = outstateIDs,
                                                 _["TIME_IN_COHORT"] = outtimeCohort,
                                                 _["SEQ_ORDINAL"] = outSeqOrdinal
-                                                );
+  );
   
   return outPatientData;
 }

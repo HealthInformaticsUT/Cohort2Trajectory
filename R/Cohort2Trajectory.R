@@ -157,7 +157,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
     
     data <- DatabaseConnector::querySql(connection, sql)
-    data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE)
+    # data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE)
     # Apply state names
     data$COHORT_DEFINITION_ID <- plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
@@ -239,6 +239,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     ParallelLogger::logInfo("Read complete!")
     
   }
+  
+  data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
   
   save_object(
     path =  paste(

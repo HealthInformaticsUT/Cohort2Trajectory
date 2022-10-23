@@ -78,8 +78,10 @@ server <- function(input, output, session) {
       )
     v$customisedStates <- input$cstateCohorts
     v$customisedTarget <- 0
+    v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+    
     save_object(
-      path =  paste(pathToResults, "/tmp/datasets/importedData.csv", sep = ""),
+      path =  paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
       object = v$data
     )
   })
@@ -251,9 +253,9 @@ server <- function(input, output, session) {
         cdmTempSchema = cdmTmpSchema,
         studyName = studyName
       )
-    
+    v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
     save_object(
-      path =  paste(pathToResults, "/tmp/datasets/importedData.csv", sep = ""),
+      path =  paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
       object = v$data
     )
     dropRelation(
@@ -437,12 +439,9 @@ server <- function(input, output, session) {
           to = c("0", v$customisedStates),
           warn_missing = FALSE
         )
+        v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
         save_object(
-          path = paste(
-            pathToResults,
-            "/tmp/datasets/importedData.csv",
-            sep = ""
-          ),
+          paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
           object = v$data
         )
         Sys.sleep(0.5)
@@ -489,13 +488,9 @@ server <- function(input, output, session) {
             )
           )
         }
-        
+        v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
         save_object(
-          path =  paste(
-            pathToResults,
-            "/tmp/datasets/importedData.csv",
-            sep = ""
-          ),
+          path = paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
           object = v$data
         )
       }

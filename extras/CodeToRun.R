@@ -6,7 +6,7 @@
 # devtools::install_github("HealthInformaticsUT/Cohort2Trajectory@v1.0.0") # Run for installing release v1.0.0
 # devtools::install_github("HealthInformaticsUT/Cohort2Trajectory) # Run for installing the HEAD
 library(Cohort2Trajectory)
-studyName <- "A cool study" # TODO
+studyName <- "TestStudy" # TODO
 pathToResults <- getwd()   # TODO
 
 ################################################################################
@@ -61,14 +61,27 @@ runGUI(
   cdmResultsSchema = cdmResultsSchema,
   studyName = studyName,
   baseUrl = baseUrl
+  
+  
 )
+
+################################################################################
+#
+# Customizing the allowedStatesList, which describes which transitions are
+# possible
+#
+################################################################################
+
+stateCohortLabels = c("State1", "State2", "State3")
+allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State3") # removes possibility to move from state1 to state2
 
 ################################################################################
 #
 # Create the trajectories without using GUI
 #
 ################################################################################
-
+# 
 # Cohort2Trajectory(
 #   dbms = dbms,
 #   connection = conn,
@@ -79,10 +92,10 @@ runGUI(
 #   baseUrl = baseUrl,
 #   atlasTargetCohort = 1, # Target cohort id from ATLAS
 #   atlasStateCohorts = c(2,3,4), # State cohorts' ids from ATLAS
-#   stateCohortLabels = c("State2", "State3", "State4"), # Customized labels in import order
-#   stateCohortPriorityOrder = c("State4", "State3", "State2"), # Priority order of states
-#   stateCohortMandatory = c("State2"), # Mandatory states
-#   stateCohortAbsorbing = c("State4"), # Absorbing states
+#   stateCohortLabels = c("State1","State2", "State3"), # Customized labels in import order
+#   stateCohortPriorityOrder = c("State1", "State3", "State2"), # Priority order of states
+#   stateCohortMandatory = c("State1"), # Mandatory states
+#   stateCohortAbsorbing = c("State3"), # Absorbing states
 #   ##############################################################################
 #   # stateSelectionTypes
 #   # 1 - First occurring
@@ -96,10 +109,18 @@ runGUI(
 #   # 1 - Continuous time
 #   ##############################################################################
 #   trajectoryType = 0,
+#   ##############################################################################
+#   # oocFix --> Out of cohort fix
+#   # None
+#   # Last present state
+#   # any of the states
+#   ##############################################################################
+#   oocFix = "Last present state",
 #   lengthOfStay = 30,
 #   outOfCohortAllowed = TRUE,
 #   runSavedStudy = FALSE,
-#   pathToResults = pathToResults
+#   pathToResults = pathToResults,
+#   allowedStatesList = allowedStatesList
 # )
 
 ################################################################################
@@ -116,7 +137,8 @@ runGUI(
 #   cdmResultsSchema = cdmResultsSchema,
 #   studyName = studyName,
 #   runSavedStudy = TRUE,
-#   pathToResults = pathToResults
+#   pathToResults = pathToResults,
+#   allowedStatesList = allowedStatesList
 # )
 
 ################################################################################
