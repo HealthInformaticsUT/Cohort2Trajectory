@@ -12,7 +12,10 @@ getTrajectoriesDiscrete(
   stateSelection = 1,
   statePriorityVector = NULL,
   absorbingStates = NULL,
-  studyName = ""
+  oocFix = "None",
+  studyName = "",
+  addPersonalData = TRUE,
+  allowedStatesList = list()
 )
 }
 \arguments{
@@ -27,6 +30,8 @@ getTrajectoriesDiscrete(
 \item{statePriorityVector}{The order of priority for states}
 
 \item{absorbingStates}{The absorbing states: patient trajectory ends with it}
+
+\item{addPersonalData}{Logical, indicating whether or not to add personal data for each patient}
 }
 \description{
 This function outputs a data.frame object which describes the movement of patients between the defined states

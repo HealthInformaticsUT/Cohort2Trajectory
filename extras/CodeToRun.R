@@ -111,9 +111,9 @@ allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transition
 #   trajectoryType = 0,
 #   ##############################################################################
 #   # oocFix --> Out of cohort fix
-#   # None
-#   # Last present state
-#   # any of the states
+#   # None - The "OUT OF COHORT" state remains
+#   # Last present state - The "OUT OF COHORT" state is replaced with the latest present state
+#   # any of the defined states - The "OUT OF COHORT" state is replaced with the declared state
 #   ##############################################################################
 #   oocFix = "Last present state",
 #   lengthOfStay = 30,

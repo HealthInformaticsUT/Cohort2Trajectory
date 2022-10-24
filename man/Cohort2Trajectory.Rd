@@ -6,24 +6,28 @@
 \usage{
 Cohort2Trajectory(
   dbms = "postgresql",
-  connection,
+  connection = NULL,
   cdmSchema = "ohdsi_cdm",
   cdmTmpSchema = "ohdsi_temp",
   cdmResultsSchema = "ohdsi_results",
   studyName = "Cohort2Trajectory",
   baseUrl = "http://localhost:8080/WebAPI",
-  atlasTargetCohort,
-  atlasStateCohorts,
-  stateCohortLabels,
-  stateCohortPriorityOrder,
-  stateCohortMandatory,
-  stateCohortAbsorbing,
-  stateSelectionType,
-  trajectoryType,
-  lengthOfStay,
-  outOfCohortAllowed,
+  atlasTargetCohort = NULL,
+  atlasStateCohorts = NULL,
+  stateCohortLabels = NULL,
+  stateCohortPriorityOrder = NULL,
+  stateCohortMandatory = NULL,
+  stateCohortAbsorbing = NULL,
+  stateSelectionType = NULL,
+  oocFix = "None",
+  trajectoryType = NULL,
+  lengthOfStay = NULL,
+  outOfCohortAllowed = NULL,
   runSavedStudy = FALSE,
-  pathToResults = getwd()
+  pathToResults = getwd(),
+  useCDM = TRUE,
+  pathToData = "./tmp/datasets/importedData.csv",
+  allowedStatesList = createStateList(stateCohortLabels)
 )
 }
 \arguments{
@@ -51,11 +55,19 @@ Cohort2Trajectory(
 
 \item{stateSelectionType}{The type of state selection (1 - First occurring, 2 - Max overlap, 3 - Priority)}
 
+\item{oocFix}{The method to use for replacing "OUT OF COHORT" states with more relevant states}
+
 \item{trajectoryType}{The type of the trajectory (0 - Discrete time, 1 - Continuous time)}
 
 \item{lengthOfStay}{The length of stay (days) in one state (Effect only in discrete case)}
 
 \item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
+
+\item{useCDM}{The package can also be run without the OMOP CDM}
+
+\item{pathToData}{When using without OMOP CDM specify the path to data file}
+
+\item{allowedStatesList}{A list object which indicates accessible states from said state}
 }
 \description{
 This function creates patient treatment trajectories
@@ -128,9 +140,17 @@ Cohort2Trajectory::Cohort2Trajectory(
   # 1 - Continuous time
   ##############################################################################
   trajectoryType = 0,
+ ##############################################################################
+ # oocFix --> Out of cohort fix
+ # None
+ # Last present state
+ # any of the defined states
+ ##############################################################################
+  oocFix = "None",
   lengthOfStay = 30,
   outOfCohortAllowed = TRUE,
   runSavedStudy = FALSE,
-  pathToResults = pathToResults
+  pathToResults = pathToResults,
+  allowedStatesList = createStateList(stateCohortLabels)
 )
 }

@@ -24,6 +24,7 @@
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param pathToData When using without OMOP CDM specify the path to data file
+#' @param allowedStatesList A list object which indicates accessible states from said state
 #' @example man/examples/Cohort2Trajectory.R
 #'
 #' @export
@@ -263,8 +264,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   ParallelLogger::logInfo("Data cleaning completed!")
   
   ParallelLogger::logInfo("Generating trajectories ...")
-  
-  
+
   result <- NULL
   if (trajectoryType == 0) {
     result <- getTrajectoriesDiscrete(

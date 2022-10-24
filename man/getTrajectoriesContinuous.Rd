@@ -11,7 +11,9 @@ getTrajectoriesContinuous(
   statePriorityVector,
   absorbingStates = NULL,
   studyName = "",
-  pathToResults = paste(getwd(), "/tmp", sep = "")
+  pathToResults = paste(getwd(), "/tmp", sep = ""),
+  addPersonalData = TRUE,
+  allowedStatesList = list()
 )
 }
 \arguments{
@@ -24,6 +26,8 @@ getTrajectoriesContinuous(
 \item{statePriorityVector}{All states in prioritized order}
 
 \item{absorbingStates}{Absorbing states in dataframe}
+
+\item{addPersonalData}{Logical, indicating whether or not to add personal data for each patient}
 }
 \value{
 A dataframe ready for using msm package
