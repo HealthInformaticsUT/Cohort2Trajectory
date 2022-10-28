@@ -215,6 +215,7 @@ cleanCohortData <- function(cohortData,
                             mandatoryStates,
                             outOfCohortAllowed = FALSE) {
   data_tmp <- cohortData
+
   ##############################################################################
   #
   # Preserving only patients which are present in the target cohort
@@ -232,7 +233,6 @@ cleanCohortData <- function(cohortData,
   # Cleaning data from observations before and after target cohort
   #
   ##############################################################################
-  
   # Removing subjects information which have been included before
   # target cohort start date (maybe should just switch the start date
   # then for the same as target cohort)
@@ -296,7 +296,7 @@ cleanCohortData <- function(cohortData,
                             PRIORITY = dplyr::if_else(COHORT_DEFINITION_ID == "0", 0, 1))
   data_tmp <-
     dplyr::arrange(data_tmp, SUBJECT_ID, PRIORITY, COHORT_START_DATE)
-  
+
   ##############################################################################
   #
   # Preserving only patients which have the mandatory state(s)
@@ -323,7 +323,6 @@ cleanCohortData <- function(cohortData,
   
   # Order by patientId, start & end date
   #data_merged = data_merged[order(data_merged[, 1], data_merged[, 3], data_merged[, 4]),]
-  
   data_tmp <-
     dplyr::mutate(data_tmp, TIME_IN_COHORT = round(as.numeric(
       difftime(
@@ -663,7 +662,6 @@ getTrajectoriesContinuous <- function(connection,
     SUBJECT_ID,
     LAST_STATE_DATE
   )
-  
   data <- merge(data, data_ls, by = "SUBJECT_ID")
   
   data <- dplyr::mutate(
@@ -702,7 +700,7 @@ getTrajectoriesContinuous <- function(connection,
   ##############################################################################
   
   # Lets just create a new dataframe and add all the states in the order of priorities
-  if (stateSelection == 2) {
+  if (stateSelection == 3) {
     newData <-
       dplyr::filter(data, COHORT_DEFINITION_ID %in% c("START", "EXIT"))
     for (patientID in unique(newData$SUBJECT_ID)) {
@@ -720,14 +718,15 @@ getTrajectoriesContinuous <- function(connection,
         if (nrow(priorityData) == 0) {
           next
         }
+        
         patientData <- dplyr::filter(patientData,
                                      COHORT_DEFINITION_ID != statePriorityVector[p])
         if (nrow(patientData) > 0) {
           for (i in 1:nrow(priorityData)) {
             newpatientData <- patientData[0,]
             for (j in 1:nrow(patientData)) {
-              if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE &
-                  priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE) {
+              if (priorityData[i,]$COHORT_START_DATE >= patientData[j,]$COHORT_START_DATE &
+                  priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
                 if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
                   head <- patientData[j,]
                   head$COHORT_END_DATE <-
@@ -735,22 +734,22 @@ getTrajectoriesContinuous <- function(connection,
                   newpatientData <- rbind(newpatientData, head)
                 }
                 
-                if (priorityData[i,]$COHORT_END_DATE < patientData[j,]$COHORT_END_DATE) {
+                if (priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
                   tail <- patientData[j,]
                   tail$COHORT_START_DATE <-
                     priorityData[i,]$COHORT_END_DATE
                   newpatientData <- rbind(newpatientData, tail)
                 }
               }
-              else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_END_DATE &
-                       priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_END_DATE) {
+              else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_END_DATE &
+                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_END_DATE) {
                 head <- patientData[j,]
                 head$COHORT_END_DATE <-
                   priorityData[i,]$COHORT_START_DATE
                 newpatientData <- rbind(newpatientData, head)
               }
-              else if (priorityData[i,]$COHORT_START_DATE < patientData[j,]$COHORT_START_DATE &
-                       priorityData[i,]$COHORT_END_DATE > patientData[j,]$COHORT_START_DATE) {
+              else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_START_DATE &
+                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_START_DATE) {
                 tail <- patientData[j,]
                 tail$COHORT_START_DATE <-
                   priorityData[i,]$COHORT_END_DATE
@@ -882,7 +881,7 @@ getTrajectoriesContinuous <- function(connection,
   #
   ################################################################################
   
-  if (stateSelection == 2) {
+  if (stateSelection == 3) {
     save_object(data,
                 path = paste(
                   pathToResults,
