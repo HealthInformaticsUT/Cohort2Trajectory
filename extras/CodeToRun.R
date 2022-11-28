@@ -3,10 +3,10 @@
 # Study settings
 #
 ################################################################################
-# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory@v1.0.0") # Run for installing release v1.0.0
-# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory) # Run for installing the HEAD
+# devtools::install_github("HealthInformaticsUT/Cohort2Trajectory@v1.1.0") # Run for installing release v1.0.0
+ devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run for installing the HEAD
 library(Cohort2Trajectory)
-studyName <- "TestStudy" # TODO
+studyName <- "TempStudy" # TODO
 pathToResults <- getwd()   # TODO
 
 ################################################################################
@@ -61,8 +61,6 @@ runGUI(
   cdmResultsSchema = cdmResultsSchema,
   studyName = studyName,
   baseUrl = baseUrl
-  
-  
 )
 
 ################################################################################
@@ -160,28 +158,35 @@ allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transition
 #
 ################################################################################
 
-# Cohort2Trajectory(
-#   studyName = studyName,
-#   stateCohortPriorityOrder = c("State1", "State3", "State2"), # Priority order of states
-#   stateCohortMandatory = c("State2"), # Mandatory states
-#   stateCohortAbsorbing = c("State3"), # Absorbing states
-#   ##############################################################################
-#   # stateSelectionTypes
-#   # 1 - First occurring
-#   # 2 - Largest overlap
-#   # 3 - Priority ordering
-#   ##############################################################################
-#   stateSelectionType = 3,
-#   ##############################################################################
-#   # trajectoryType
-#   # 0 - Discrete time
-#   # 1 - Continuous time
-#   ##############################################################################
-#   trajectoryType = 1,
-#   lengthOfStay = 30,
-#   outOfCohortAllowed = TRUE,
-#   runSavedStudy = FALSE,
-#   pathToResults = pathToResults,
-#     useCDM = FALSE,
-#     pathToData = paste(getwd(),'/tmp/datasets/importedData.csv', sep = "")
-# )
+
+stateCohortLabels = c("Hospitalized", "Death", "Discharge")
+allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "Discharge", transitionTail = "Hospitalized") # removes possibility to move from state1 to state2
+
+Cohort2Trajectory(
+  studyName = studyName,
+  stateCohortPriorityOrder = c("Death", "Hospitalized", "Discharge"), # Priority order of states
+  stateCohortMandatory = c("Hospitalized"), # Mandatory states
+  stateCohortAbsorbing = c("Death"), # Absorbing states
+  ##############################################################################
+  # stateSelectionTypes
+  # 1 - First occurring
+  # 2 - Largest overlap
+  # 3 - Priority ordering
+  ##############################################################################
+  stateSelectionType = 2,
+  ##############################################################################
+  # trajectoryType
+  # 0 - Discrete time
+  # 1 - Continuous time
+  ##############################################################################
+  trajectoryType = 1,
+  lengthOfStay = 30,
+  outOfCohortAllowed = TRUE,
+  runSavedStudy = FALSE,
+  pathToResults = pathToResults,
+    useCDM = FALSE,
+    pathToData = "/home/mhaug/R-packages/HealthInformaticsUT/Releases/Cohort2Trajectory/tmp/datasets/PSACovidimportedData.csv",
+  allowedStatesList = allowedStatesList,
+  oocFix = "None"
+)

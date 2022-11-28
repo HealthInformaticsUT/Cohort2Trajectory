@@ -77,7 +77,6 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
         //std::string nextState = patientsStates[index+1];
         // Control: is the next state allowed
         auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-        // Rcpp::Rcout << allowedStates << '\n';
         if(isPresent != allowedStates.end()){
           // Add info to vectors
           outpatientIDs.push_back(patientID);

@@ -238,7 +238,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     ParallelLogger::logInfo("Importing data ...")
     data = readr::read_csv(pathToData)
     ParallelLogger::logInfo("Read complete!")
-    
   }
   
   data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
@@ -254,7 +253,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     object = data
   )
   
-  
   ParallelLogger::logInfo("Cleaning data ...")
   data <- cleanCohortData(
     cohortData = data,
@@ -264,7 +262,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   ParallelLogger::logInfo("Data cleaning completed!")
   
   ParallelLogger::logInfo("Generating trajectories ...")
-
   result <- NULL
   if (trajectoryType == 0) {
     result <- getTrajectoriesDiscrete(

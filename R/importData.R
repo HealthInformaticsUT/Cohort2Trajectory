@@ -332,6 +332,7 @@ cleanCohortData <- function(cohortData,
       ) /
         365.25
     ), 3))
+  
   data_tmp <- dplyr::select(
     data_tmp,
     SUBJECT_ID,
@@ -340,7 +341,6 @@ cleanCohortData <- function(cohortData,
     COHORT_END_DATE,
     TIME_IN_COHORT
   )
-  
   return(data_tmp)
 }
 
@@ -674,7 +674,7 @@ getTrajectoriesContinuous <- function(connection,
   )
   
   # data$COHORT_DEFINITION_ID = as.character(data$COHORT_DEFINITION_ID)
-  
+  # Adding "EXIT" state
   data <- dplyr::arrange(dplyr::bind_rows(
     dplyr::mutate(
       dplyr::summarise(
@@ -692,6 +692,8 @@ getTrajectoriesContinuous <- function(connection,
   ),
   SUBJECT_ID,
   COHORT_START_DATE)
+  
+
   ##############################################################################
   #
   # When we have prioritized states, we have to make sure that a state with smaller
@@ -718,28 +720,35 @@ getTrajectoriesContinuous <- function(connection,
         if (nrow(priorityData) == 0) {
           next
         }
-        
         patientData <- dplyr::filter(patientData,
                                      COHORT_DEFINITION_ID != statePriorityVector[p])
         if (nrow(patientData) > 0) {
           for (i in 1:nrow(priorityData)) {
             newpatientData <- patientData[0,]
             for (j in 1:nrow(patientData)) {
-              if (priorityData[i,]$COHORT_START_DATE >= patientData[j,]$COHORT_START_DATE &
+              if (nrow(patientData) == 0) {
+                break
+              }
+              if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_START_DATE &
+                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_END_DATE
+              ){
+                # In this case the smaller priority state is absorbed by a higher priority state
+                next
+              }
+              else if (priorityData[i,]$COHORT_START_DATE >= patientData[j,]$COHORT_START_DATE &
                   priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
-                if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
+               if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
                   head <- patientData[j,]
                   head$COHORT_END_DATE <-
                     priorityData[i,]$COHORT_START_DATE
                   newpatientData <- rbind(newpatientData, head)
                 }
-                
-                if (priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
+               if (priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
                   tail <- patientData[j,]
                   tail$COHORT_START_DATE <-
                     priorityData[i,]$COHORT_END_DATE
                   newpatientData <- rbind(newpatientData, tail)
-                }
+              }
               }
               else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_END_DATE &
                        priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_END_DATE) {
@@ -747,6 +756,7 @@ getTrajectoriesContinuous <- function(connection,
                 head$COHORT_END_DATE <-
                   priorityData[i,]$COHORT_START_DATE
                 newpatientData <- rbind(newpatientData, head)
+                next
               }
               else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_START_DATE &
                        priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_START_DATE) {
@@ -757,15 +767,15 @@ getTrajectoriesContinuous <- function(connection,
               }
               else {
                 newpatientData <- rbind(newpatientData, patientData[j,])
-              }
+                }
               
             }
             patientData <- newpatientData
           }
         }
-        
+
         newData <- rbind(newData, priorityData)
-        
+
       }
       
       
@@ -774,32 +784,41 @@ getTrajectoriesContinuous <- function(connection,
     data <- newData
   }
   
-  # We should make sure that the time_in_cohort column has differing values for each state for the same patient
-  # for developement case, let's just create an artificial difference of 1 day for each colliding date
-  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
-  paient_id <- NA
-  last_patient_id <- data$SUBJECT_ID[1]
-  last_observed_ts <- data$TIME_IN_COHORT[1]
-  coef <- 1
-  impact <- 1 / 365.25
+  # Calculating other TIME_IN_COHORT values
+  data_target <- dplyr::slice(dplyr::arrange(
+    dplyr::group_by(
+      dplyr::filter(data, COHORT_DEFINITION_ID == "START"),
+      SUBJECT_ID
+    ),
+    COHORT_START_DATE
+  ), 1L)
+  # Selecting information about the states
+  data_states <-
+    dplyr::filter(data, COHORT_DEFINITION_ID != "START")
+  data <- rbind(data_target, data_states)
+  data_target <-
+    dplyr::select(data_target, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
+  colnames(data_target) <-
+    c("SUBJECT_ID", "REFERENCE_START_DATE", "REFERENCE_END_DATE")
+  data <- merge(data, data_target, by = "SUBJECT_ID")
+  data <- dplyr::mutate(data, TIME_IN_COHORT = round(as.numeric(
+    difftime(
+      as.Date(COHORT_START_DATE),
+      as.Date(REFERENCE_START_DATE),
+      units = "days"
+    ) /
+      365.25
+  ), 3))
+  data <- dplyr::select(
+    data,
+    SUBJECT_ID,
+    COHORT_DEFINITION_ID,
+    COHORT_START_DATE,
+    COHORT_END_DATE,
+    TIME_IN_COHORT
+  )
   
-  data$TIME_IN_COHORT <- round(data$TIME_IN_COHORT, 6)
-  
-  for (row in 2:nrow(data)) {
-    patient_id <- data$SUBJECT_ID[row]
-    if (patient_id != last_patient_id |
-        last_observed_ts < data$TIME_IN_COHORT[row]) {
-      last_patient_id <- patient_id
-      last_observed_ts <- data$TIME_IN_COHORT[row]
-      coef <- 1
-    }
-    else {
-      data$TIME_IN_COHORT[row] <- data$TIME_IN_COHORT[row] + impact * coef
-      last_patient_id <- patient_id
-      coef <- coef + 1
-      last_observed_ts <- data$TIME_IN_COHORT[row]
-    }
-  }
+  data <- dplyr::arrange(data,SUBJECT_ID,TIME_IN_COHORT)
   # We have to map states to 1,..., n.
   states <- as.character(c("START", setdiff(
     unique(data$COHORT_DEFINITION_ID), c('START', 'EXIT')
@@ -812,7 +831,6 @@ getTrajectoriesContinuous <- function(connection,
       to = 1:n,
       warn_missing = FALSE
     )
-  
   data <- dplyr::mutate(data, STATE = as.numeric(STATE))
   data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
   data <- dplyr::select(
@@ -834,7 +852,32 @@ getTrajectoriesContinuous <- function(connection,
     "STATE_ID",
     "TIME_IN_COHORT"
   )
+  # We should make sure that the time_in_cohort column has differing values for each state for the same patient
+  # for developement case, let's just create an artificial difference of 1 day for each colliding date
+  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE_ID)
+  paient_id <- NA
+  last_patient_id <- data$SUBJECT_ID[1]
+  last_observed_ts <- data$TIME_IN_COHORT[1]
+  coef <- 1
+  impact <- 1/365.25
   
+  data$TIME_IN_COHORT <- round(data$TIME_IN_COHORT, 6)
+  
+  for (row in 2:nrow(data)) {
+    patient_id <- data$SUBJECT_ID[row]
+    if (patient_id != last_patient_id |
+        last_observed_ts < data$TIME_IN_COHORT[row]) {
+      last_patient_id <- patient_id
+      last_observed_ts <- data$TIME_IN_COHORT[row]
+      coef <- 1
+    }
+    else {
+      data$TIME_IN_COHORT[row] <- data$TIME_IN_COHORT[row] + impact * coef
+      last_patient_id <- patient_id
+      coef <- coef + 1
+      last_observed_ts <- data$TIME_IN_COHORT[row]
+    }
+  }
   ################################################################################
   #
   # Removing absorbing states
@@ -856,7 +899,6 @@ getTrajectoriesContinuous <- function(connection,
   # Remove prohibited transitions
   #
   ##############################################################################
-  
   data <- removeProhibitedTransitionsContinuous(
     patientData = data,
     patientIDs = unique(data$SUBJECT_ID),
@@ -880,7 +922,6 @@ getTrajectoriesContinuous <- function(connection,
   # Saving data
   #
   ################################################################################
-  
   if (stateSelection == 3) {
     save_object(data,
                 path = paste(

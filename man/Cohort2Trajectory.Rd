@@ -106,7 +106,6 @@ connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 conn <- DatabaseConnector::connect(connectionDetails)
 Eunomia::createCohorts(connectionDetails)
 
-
 ################################################################################
 #
 # Run the study
@@ -140,12 +139,12 @@ Cohort2Trajectory::Cohort2Trajectory(
   # 1 - Continuous time
   ##############################################################################
   trajectoryType = 0,
- ##############################################################################
- # oocFix --> Out of cohort fix
- # None
- # Last present state
- # any of the defined states
- ##############################################################################
+  ##############################################################################
+  # oocFix --> Out of cohort fix
+  # None
+  # Last present state
+  # any of the defined states
+  ##############################################################################
   oocFix = "None",
   lengthOfStay = 30,
   outOfCohortAllowed = TRUE,

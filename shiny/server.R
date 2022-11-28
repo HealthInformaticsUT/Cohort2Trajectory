@@ -872,7 +872,6 @@ server <- function(input, output, session) {
     })
     names(allowedTransitions_ids) = stateVector
     for (state in stateVector) {
-    #  print(allowedTransitions_ids[[state]])
       targets = sprintf(input[[allowedTransitions_ids[[state]]]])
       v$allowedTransitions[[state]] <- sprintf(input[[allowedTransitions_ids[[state]]]])
       if((length(targets) == 0)){
@@ -881,16 +880,14 @@ server <- function(input, output, session) {
       }
       
     }
-    # print(v$allowedTransitions)
     names(v$allowedTransitions) = stateVector
-    # print(v$allowedTransitions)
+
     ############################################################################
     #
     # Generation
     #
     ############################################################################
     if (input$trajectoryType == 0) {
-      # print(v$allowedTransitions)
       result <- getTrajectoriesDiscrete(
         connection = conn,
         cohortData = cohortData,
