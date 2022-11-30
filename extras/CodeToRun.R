@@ -70,9 +70,9 @@ runGUI(
 #
 ################################################################################
 
-stateCohortLabels = c("State1", "State2", "State3")
-allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State3") # removes possibility to move from state1 to state2
+# stateCohortLabels = c("State1", "State2", "State3")
+# allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State3") # removes possibility to move from state1 to state2
 
 ################################################################################
 #
@@ -159,34 +159,34 @@ allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transition
 ################################################################################
 
 
-stateCohortLabels = c("Hospitalized", "Death", "Discharge")
-allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
-allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "Discharge", transitionTail = "Hospitalized") # removes possibility to move from state1 to state2
-
-Cohort2Trajectory(
-  studyName = studyName,
-  stateCohortPriorityOrder = c("Death", "Hospitalized", "Discharge"), # Priority order of states
-  stateCohortMandatory = c("Hospitalized"), # Mandatory states
-  stateCohortAbsorbing = c("Death"), # Absorbing states
-  ##############################################################################
-  # stateSelectionTypes
-  # 1 - First occurring
-  # 2 - Largest overlap
-  # 3 - Priority ordering
-  ##############################################################################
-  stateSelectionType = 2,
-  ##############################################################################
-  # trajectoryType
-  # 0 - Discrete time
-  # 1 - Continuous time
-  ##############################################################################
-  trajectoryType = 1,
-  lengthOfStay = 30,
-  outOfCohortAllowed = TRUE,
-  runSavedStudy = FALSE,
-  pathToResults = pathToResults,
-    useCDM = FALSE,
-    pathToData = "/home/mhaug/R-packages/HealthInformaticsUT/Releases/Cohort2Trajectory/tmp/datasets/PSACovidimportedData.csv",
-  allowedStatesList = allowedStatesList,
-  oocFix = "None"
-)
+# stateCohortLabels = c("State1", "State2", "State3")
+# allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State2") # removes possibility to move from state1 to state2
+# 
+# Cohort2Trajectory(
+#   studyName = studyName,
+#   stateCohortPriorityOrder = c("State3", "State1", "State2"), # Priority order of states
+#   stateCohortMandatory = c("State1"), # Mandatory states
+#   stateCohortAbsorbing = c("State3"), # Absorbing states
+#   ##############################################################################
+#   # stateSelectionTypes
+#   # 1 - First occurring
+#   # 2 - Largest overlap
+#   # 3 - Priority ordering
+#   ##############################################################################
+#   stateSelectionType = 2,
+#   ##############################################################################
+#   # trajectoryType
+#   # 0 - Discrete time
+#   # 1 - Continuous time
+#   ##############################################################################
+#   trajectoryType = 1,
+#   lengthOfStay = 30,
+#   outOfCohortAllowed = TRUE,
+#   runSavedStudy = FALSE,
+#   pathToResults = pathToResults,
+#     useCDM = FALSE,
+#     pathToData = "Path to data .csv file",
+#   allowedStatesList = allowedStatesList,
+#   oocFix = "None"
+# )
