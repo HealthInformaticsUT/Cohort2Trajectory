@@ -33,7 +33,7 @@ Getting Started
 
 Package manual: [Cohort2Trajectory.pdf](https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/main/Cohort2Trajectory_1.0.pdf)
 
-Package guide: [Cohort2Trajectory_guide.pdf](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis/blob/main/Cohort2Trajectory_guide_1.0.pdf)
+Package guide: [Cohort2Trajectory_guide.pdf](https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/main/Cohort2Trajectory_guide_1.0.pdf)
  
 License
 =======
