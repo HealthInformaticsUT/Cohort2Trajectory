@@ -242,6 +242,10 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
   
+  if(nrow(data) == 0){
+    return(ParallelLogger::logInfo("There were no patients imported! Check your target cohort!"))
+    }
+  
   save_object(
     path =  paste(
       pathToResults,
