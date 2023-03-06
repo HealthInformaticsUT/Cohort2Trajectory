@@ -45,4 +45,4 @@ Cohort2Trajectory is being developed in R Studio.
 
 # Acknowledgements
 
-
+Research group of Health-Informatics in University of Tartu https://health-informatics.cs.ut.ee/
