@@ -250,6 +250,7 @@ server <- function(input, output, session) {
         jsons = v$insertedJSONs ,
         names = v$customisedStates,
         cdmDataSchema =  cdmSchema,
+        cdmVocabSchema =  cdmVocabSchema,
         cdmTempSchema = cdmTmpSchema,
         studyName = studyName
       )

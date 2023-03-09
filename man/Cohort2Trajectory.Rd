@@ -8,6 +8,7 @@ Cohort2Trajectory(
   dbms = "postgresql",
   connection = NULL,
   cdmSchema = "ohdsi_cdm",
+  cdmVocabSchema = "ohdsi_vocab",
   cdmTmpSchema = "ohdsi_temp",
   cdmResultsSchema = "ohdsi_results",
   studyName = "Cohort2Trajectory",
@@ -36,6 +37,8 @@ Cohort2Trajectory(
 \item{connection}{Connection to database}
 
 \item{cdmSchema}{Schema which contains the OHDSI Common Data Model.}
+
+\item{cdmVocabSchema}{Schema which contains the OHDSI Common Data Model vocabulary tables.}
 
 \item{cdmTmpSchema}{Schema for temporary tables, will be deleted.}
 

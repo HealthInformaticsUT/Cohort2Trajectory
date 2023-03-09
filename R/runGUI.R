@@ -25,6 +25,7 @@ runGUI <- function(conn,
                    # server = 'localhost/postgres',
                    # port = '5432',
                    cdmSchema = "ohdsi_cdm",
+                   cdmVocabSchema = "ohdsi_vocab",
                    cdmTmpSchema = "ohdsi_temp",
                    cdmResultsSchema = "ohdsi_results",
                    studyName = "Cohort2Trajectory",
@@ -43,6 +44,7 @@ runGUI <- function(conn,
   connectionDetails <<- connectionDetails
   conn <<- conn
   cdmSchema <<- cdmSchema
+  cdmVocabSchema <<- cdmVocabSchema
   cdmTmpSchema <<- cdmTmpSchema
   cdmResultsSchema <<- cdmResultsSchema
   if (!is.null(pathToResults)) {

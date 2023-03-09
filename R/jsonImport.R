@@ -14,6 +14,7 @@ getJSONData <- function(connection,
                         jsons,
                         names,
                         cdmDataSchema,
+                        cdmDatabaseSchema,
                         cdmTempSchema,
                         studyName) {
   cohortsToCreate <- CohortGenerator::createEmptyCohortDefinitionSet()
@@ -45,9 +46,10 @@ getJSONData <- function(connection,
     cohortTableNames = cohortTableNames
   )
   # Generate the cohorts
-  CohortGenerator::generateCohortSet(
+  generateCohortSet(
     connection = connection,
     cdmDatabaseSchema = cdmDataSchema,
+    cdmVocabSchema = cdmVocabSchema,
     cohortDatabaseSchema = cdmTempSchema,
     cohortTableNames = cohortTableNames,
     cohortDefinitionSet = cohortsToCreate

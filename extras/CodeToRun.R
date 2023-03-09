@@ -4,7 +4,7 @@
 #
 ################################################################################
 # devtools::install_github("HealthInformaticsUT/Cohort2Trajectory@v1.1.0") # Run for installing release v1.0.0
- devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run for installing the HEAD
+devtools::install_github("HealthInformaticsUT/Cohort2Trajectory") # Run for installing the HEAD
 library(Cohort2Trajectory)
 studyName <- "TempStudy" # TODO
 pathToResults <- getwd()   # TODO
@@ -22,6 +22,7 @@ server <- 'ip/database' #TODO
 port <- '5432' #TODO
 
 cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
+cdmVocabSchema <- "ohdsi_vocab" #TODO # Schema which contains the OHDSI Common Data Model vocabulary tables.
 cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
 cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
 
@@ -57,6 +58,7 @@ runGUI(
   pathToResults = pathToResults,
   dbms = dbms,
   cdmSchema = cdmSchema,
+  cdmVocabSchema = cdmVocabSchema,
   cdmTmpSchema = cdmTmpSchema,
   cdmResultsSchema = cdmResultsSchema,
   studyName = studyName,
@@ -84,6 +86,7 @@ runGUI(
 #   dbms = dbms,
 #   connection = conn,
 #   cdmSchema = cdmSchema,
+#   cdmVocabSchema = cdmVocabSchema,
 #   cdmTmpSchema = cdmTmpSchema,
 #   cdmResultsSchema = cdmResultsSchema,
 #   studyName = studyName,
@@ -131,6 +134,7 @@ runGUI(
 #   dbms = dbms,
 #   connection = conn,
 #   cdmSchema = cdmSchema,
+#   cdmVocabSchema = cdmVocabSchema,
 #   cdmTmpSchema = cdmTmpSchema,
 #   cdmResultsSchema = cdmResultsSchema,
 #   studyName = studyName,

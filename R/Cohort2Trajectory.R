@@ -9,6 +9,7 @@
 #' @param connection Connection to database
 #' @param dbms The type of DBMS running on the server. Valid values are: 'oracle','postgresql','redshift','sql server','pdw', 'netezza','bigquery','sqlite', 'sqlite extended','spark'
 #' @param cdmSchema Schema which contains the OHDSI Common Data Model.
+#' @param cdmVocabSchema Schema which contains the OHDSI Common Data Model vocabulary tables.
 #' @param cdmTmpSchema Schema for temporary tables, will be deleted.
 #' @param cdmResultsSchema Schema which has the information about the cohorts created in Atlas
 #' @param atlasTargetCohort The id of the target cohort defined in OHDSI tool ATLAS
@@ -31,6 +32,7 @@
 Cohort2Trajectory <- function(dbms = "postgresql",
                               connection = NULL,
                               cdmSchema = "ohdsi_cdm",
+                              cdmVocabSchema = "ohdsi_vocab",
                               cdmTmpSchema = "ohdsi_temp",
                               cdmResultsSchema = "ohdsi_results",
                               studyName = "Cohort2Trajectory",
@@ -119,9 +121,10 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       cohortTableNames = cohortTableNames
     )
     # Generate the cohorts
-    CohortGenerator::generateCohortSet(
+    generateCohortSet(
       connection = connection,
       cdmDatabaseSchema = cdmSchema,
+      cdmVocabSchema = cdmVocabSchema,
       cohortDatabaseSchema = cdmTmpSchema,
       cohortTableNames = cohortTableNames,
       cohortDefinitionSet = cohortsToCreate
@@ -155,7 +158,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     }
     lengthOfStay <- settings$savedLengthOfStay
     outOfCohortAllowed <- settings$savedOutOfCohortAllowed
-    
     
     data <- DatabaseConnector::querySql(connection, sql)
     # data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE)

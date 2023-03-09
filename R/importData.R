@@ -431,7 +431,6 @@ getTrajectoriesDiscrete <- function(connection,
     dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$SUBJECT_ID)
-
   newPatientData <- getDiscreteStates(
     stateSelection = as.numeric(stateSelection),
     oocFix = oocFix,
