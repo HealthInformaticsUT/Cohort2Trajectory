@@ -21,7 +21,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
   DateVector patientsStart = patientData["STATE_START_DATE"];
   DateVector patientsEnd = patientData["STATE_END_DATE"];
-  std::vector<std::string> patientsStates = patientData["STATE"];
+  std::vector<std::string> patientsStates = patientData["STATE_LABEL"];
   std::vector<double> timeCohort = patientData["TIME_IN_COHORT"];
   
   for (int p=0; p < (int) patientIDs.size(); p++){
@@ -86,7 +86,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
     seqOrdinal.push_back(1);
   }
   DataFrame outPatientData = DataFrame::create( Named("SUBJECT_ID") = outpatientIDs,
-                                                _["STATE"] = outStates,
+                                                _["STATE_LABEL"] = outStates,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["TIME_IN_COHORT"] = outtimeCohort,

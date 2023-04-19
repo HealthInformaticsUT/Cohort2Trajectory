@@ -24,7 +24,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   std::vector<int> patientsIDs = patientData["SUBJECT_ID"];
   DateVector patientsStart = patientData["STATE_START_DATE"];
   DateVector patientsEnd = patientData["STATE_END_DATE"];
-  std::vector<std::string> patientsStates = patientData["STATE"];
+  std::vector<std::string> patientsStates = patientData["STATE_LABEL"];
   NumericVector stateIDs = patientData["STATE_ID"];
   std::vector<double> timeCohort = patientData["TIME_IN_COHORT"];
   NumericVector seqOrdinal = patientData["SEQ_ORDINAL"];
@@ -95,7 +95,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
     }
   }
   DataFrame outPatientData = DataFrame::create( Named("SUBJECT_ID") = outpatientIDs,
-                                                _["STATE"] = outStates,
+                                                _["STATE_LABEL"] = outStates,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["STATE_ID"] = outstateIDs,

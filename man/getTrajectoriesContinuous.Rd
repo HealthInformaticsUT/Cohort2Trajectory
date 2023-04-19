@@ -19,7 +19,7 @@ getTrajectoriesContinuous(
 \arguments{
 \item{connection}{Connection to the database}
 
-\item{patientData}{Object of class data.frame with columns SUBJECT_ID, STATE, STATE_START_DATE, STATE_END_DATE}
+\item{patientData}{Object of class data.frame with columns SUBJECT_ID, STATE_LABEL, STATE_START_DATE, STATE_END_DATE}
 
 \item{stateSelection}{Selection of the type of ordering}
 

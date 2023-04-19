@@ -368,7 +368,7 @@ DataFrame getDiscreteStates(int stateSelection,
     }
   }
   DataFrame outPatientData = DataFrame::create( Named("SUBJECT_ID") = outpatientIDs,
-                                                _["STATE"] = outStates,
+                                                _["STATE_LABEL"] = outStates,
                                                 _["STATE_START_DATE"] = outStartDates,
                                                 _["STATE_END_DATE"] = outEndDates,
                                                 _["TIME_IN_COHORT"] = outtimeCohort);

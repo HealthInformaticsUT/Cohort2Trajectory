@@ -485,13 +485,13 @@ getTrajectoriesDiscrete <- function(connection,
   }
   
   states = as.character(c("START", setdiff(
-    unique(newPatientData$STATE), c('START', 'EXIT')
+    unique(newPatientData$STATE_LABEL), c('START', 'EXIT')
   ), "EXIT"))
   n = length(states)
   
   newPatientData$STATE_ID =
     plyr::mapvalues(
-      x = newPatientData$STATE,
+      x = newPatientData$STATE_LABEL,
       from = states,
       to = 1:n,
       warn_missing = FALSE
@@ -628,7 +628,7 @@ getChronologicalMatrix <- function(cohortData,
 #' This function prepares patientData dataframe for msm package
 #'
 #' @param connection Connection to the database
-#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE, STATE_START_DATE, STATE_END_DATE
+#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE_LABEL, STATE_START_DATE, STATE_END_DATE
 #' @param stateSelection Selection of the type of ordering
 #' @param statePriorityVector All states in prioritized order
 #' @param absorbingStates Absorbing states in dataframe
@@ -823,29 +823,29 @@ getTrajectoriesContinuous <- function(connection,
     unique(data$COHORT_DEFINITION_ID), c('START', 'EXIT')
   ), "EXIT"))
   n <- length(states)
-  data$STATE <-
+  data$STATE_LABEL <-
     plyr::mapvalues(
       x = data$COHORT_DEFINITION_ID,
       from = states,
       to = 1:n,
       warn_missing = FALSE
     )
-  data <- dplyr::mutate(data, STATE = as.numeric(STATE))
-  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE)
+  data <- dplyr::mutate(data, STATE_LABEL = as.numeric(STATE_LABEL))
+  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE_LABEL)
   data <- dplyr::select(
     data,
     SUBJECT_ID,
     COHORT_DEFINITION_ID,
     COHORT_START_DATE,
     COHORT_END_DATE,
-    STATE,
+    STATE_LABEL,
     TIME_IN_COHORT
   )
   
   
   colnames(data) <- c(
     "SUBJECT_ID",
-    "STATE",
+    "STATE_LABEL",
     "STATE_START_DATE",
     "STATE_END_DATE",
     "STATE_ID",

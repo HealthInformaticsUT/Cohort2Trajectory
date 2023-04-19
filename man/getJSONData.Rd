@@ -10,6 +10,7 @@ getJSONData(
   jsons,
   names,
   cdmDataSchema,
+  cdmDatabaseSchema,
   cdmTempSchema,
   studyName
 )

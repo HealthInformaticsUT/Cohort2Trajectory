@@ -10,7 +10,7 @@
 #'
 #' This function outputs a patient oriented plot
 #'
-#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE, STATE_START_DATE, STATE_END_DATE
+#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE_LABEL, STATE_START_DATE, STATE_END_DATE
 #' @param patientId Patient's id
 #' @param trajectoryStopDays Number of days which will determine the possible split between trajectories
 #' @param theme Plot's theme indicator
@@ -21,7 +21,7 @@ visualisePatient <- function(patientData,
                              theme = 1) {
                              newPatientData <- dplyr::select(patientData,
                                                              SUBJECT_ID,
-                                                             STATE,
+                                                             STATE_LABEL,
                                                              STATE_START_DATE,
                                                              STATE_END_DATE)
                              newPatientData <-
@@ -83,12 +83,12 @@ visualisePatient <- function(patientData,
                                else {
                                  countOther <- 0
                                  for (index in  1:n) {
-                                   if (as.character(newPatientData$STATE[index]) == "0" |
-                                       as.character(newPatientData$STATE[index]) == "OUT OF COHORTS") {
+                                   if (as.character(newPatientData$STATE_LABEL[index]) == "0" |
+                                       as.character(newPatientData$STATE_LABEL[index]) == "OUT OF COHORTS") {
                                      countOther <- countOther + momentDuration[index]
                                      if (countOther > trajectoryStopDays) {
                                        momentInclusion[index] <- FALSE
-                                       if (!(as.character(newPatientData$STATE[index + 1]) %in% c("0", "OUT OF COHORTS"))) {
+                                       if (!(as.character(newPatientData$STATE_LABEL[index + 1]) %in% c("0", "OUT OF COHORTS"))) {
                                          group <- group + 1
                                          
                                          # Let's crop the trajectories' durations so that every trajectory start's from 0 not some x value
@@ -115,7 +115,7 @@ visualisePatient <- function(patientData,
                              momentEnd <- as.vector(na.exclude(momentEnd))
                              
                              # Color for visualisation
-                             n_states <- length(unique(newPatientData$STATE))
+                             n_states <- length(unique(newPatientData$STATE_LABEL))
                              colors <- NULL
                              # Due to RColorBrewer limitations we repeat if > 12 classes
                              if (n_states > 12) {
@@ -132,8 +132,8 @@ visualisePatient <- function(patientData,
                                colors <- RColorBrewer::brewer.pal(n = n_states, name = 'Paired')
                              }
                              colorTable <-
-                               cbind(unique(as.vector(newPatientData$STATE)), colors)
-                             colnames(colorTable) = c("STATE", "COLOR")
+                               cbind(unique(as.vector(newPatientData$STATE_LABEL)), colors)
+                             colnames(colorTable) = c("STATE_LABEL", "COLOR")
                              
                              ##############################################################################
                              #
@@ -148,7 +148,7 @@ visualisePatient <- function(patientData,
                                                      momentInclusion)
                              colnames(newPatientData) <- c(
                                "SUBJECT_ID",
-                               "STATE",
+                               "STATE_LABEL",
                                "STATE_START_DATE",
                                "STATE_END_DATE",
                                "MOMENT_START",
@@ -160,13 +160,13 @@ visualisePatient <- function(patientData,
                              newPatientData <- dplyr::filter(newPatientData, INCLUDE == TRUE)
                              newPatientData <- merge(x = newPatientData,
                                                      y = colorTable,
-                                                     by = "STATE",
+                                                     by = "STATE_LABEL",
                                                      all.x = TRUE)
                              newPatientData <-
                                dplyr::arrange(newPatientData, STATE_START_DATE, STATE_END_DATE)
                              newPatientData <-  dplyr::mutate(newPatientData,
                                                               MOMENT_START = ifelse(MOMENT_START == 0 &
-                                                                                      STATE != 'START', 1,
+                                                                                      STATE_LABEL != 'START', 1,
                                                                                     MOMENT_START))
                              blank_data <- data.frame(GROUP = sort(unique(groups)),
                                                       y = 1,
@@ -190,7 +190,7 @@ visualisePatient <- function(patientData,
                              p <- p + ggplot2::geom_text(ggplot2::aes(
                                x = MOMENT_START + (MOMENT_END - MOMENT_START) / 2,
                                y = h,
-                               label = STATE,
+                               label = STATE_LABEL,
                                angle  = 90
                              ),
                              size = 4) +  # ggplot2::scale_x_continuous(expand = c(0, 0)) +
@@ -203,14 +203,14 @@ visualisePatient <- function(patientData,
 #'
 #' This function outputs a pheatmap
 #'
-#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE, STATE_START_DATE, STATE_END_DATE
+#' @param patientData Object of class data.frame with columns SUBJECT_ID, STATE_LABEL, STATE_START_DATE, STATE_END_DATE
 #' @param stateLabels Labels for state notation
 #' @keywords internal
 visualiseStateOverlap <- function(patientData, stateLabels) {
   patientDataCopy <- data.frame(patientData[, 1:4])
   colnames(patientDataCopy) <-
-    c("SUBJECT_ID", "STATE", "STATE_START_DATE", "STATE_END_DATE")
-  patientDataCopy <- dplyr::filter(patientDataCopy, STATE != '0')
+    c("SUBJECT_ID", "STATE_LABEL", "STATE_START_DATE", "STATE_END_DATE")
+  patientDataCopy <- dplyr::filter(patientDataCopy, STATE_LABEL != '0')
   
   matrix <- matrix(0,
                    ncol = length(stateLabels),
@@ -238,9 +238,9 @@ visualiseStateOverlap <- function(patientData, stateLabels) {
         controlEnd = patientObservedData$STATE_END_DATE[(row + 1):size_patientDf]
       )
       if (sum(intervalOverlaps) > 0) {
-        matrix[as.character(patientObservedData$STATE[row]), as.character(patientObservedData$STATE[(row +
+        matrix[as.character(patientObservedData$STATE_LABEL[row]), as.character(patientObservedData$STATE_LABEL[(row +
                                                                                                        1):size_patientDf])] <-
-          matrix[as.character(patientObservedData$STATE[row]), as.character(patientObservedData$STATE[(row +
+          matrix[as.character(patientObservedData$STATE_LABEL[row]), as.character(patientObservedData$STATE_LABEL[(row +
                                                                                                          1):size_patientDf])] + as.numeric(intervalOverlaps > 0)
       }
     }
