@@ -17,6 +17,7 @@ dbms <- "sqlite" #TODO
 cdmSchema <- "main" #TODO # Schema which contains the OHDSI Common Data Model
 cdmTmpSchema <- "main" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
 cdmResultsSchema <- "main" #TODO # Schema which will contain the final results
+cdmVocabSchema <- "main"
 
 baseUrl <- NULL #TODO # WebAPI URL is not needed when jsons' are already imported
 
@@ -41,6 +42,7 @@ Cohort2Trajectory::Cohort2Trajectory(
   dbms = "sqlite",
   connection = conn,
   cdmSchema = cdmSchema,
+  cdmVocabSchema = cdmVocabSchema,
   cdmTmpSchema = cdmTmpSchema,
   cdmResultsSchema = cdmResultsSchema,
   studyName = studyName,
