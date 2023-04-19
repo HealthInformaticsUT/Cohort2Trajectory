@@ -983,7 +983,7 @@ server <- function(input, output, session) {
     progress$set(message = "Creating statistics tables", value = 4 / 5)
     
     tmpDataState <-
-      dplyr::filter(result,!STATE %in% c("START", "EXIT"))
+      dplyr::filter(result,!STATE_LABEL %in% c("START", "EXIT"))
     
     table <- prop.table(table(tmpDataState$STATE_LABEL))
     table <- as.data.frame(table)
