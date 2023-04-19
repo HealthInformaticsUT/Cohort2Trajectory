@@ -509,7 +509,7 @@ server <- function(input, output, session) {
       sortable::rank_list(
         text = "Drag the states in the desired prioritization order (ascending)",
         labels =  if (is.null(v$customisedStates))
-          unique(v$patientData$STATE)
+          unique(v$patientData$STATE_LABEL)
         else
           v$customisedStates,
         input_id = "rankListPriority",
@@ -985,9 +985,9 @@ server <- function(input, output, session) {
     tmpDataState <-
       dplyr::filter(result,!STATE %in% c("START", "EXIT"))
     
-    table <- prop.table(table(tmpDataState$STATE))
+    table <- prop.table(table(tmpDataState$STATE_LABEL))
     table <- as.data.frame(table)
-    colnames(table) <- c("STATE", "PERCENTAGE")
+    colnames(table) <- c("STATE_LABEL", "PERCENTAGE")
     table$PERCENTAGE <- round(table$PERCENTAGE * 100, 3)
     v$trajectoryTable1 <- table
     
@@ -996,9 +996,9 @@ server <- function(input, output, session) {
     tmpDataState <-
       dplyr::slice(dplyr::group_by(tmpDataState, SUBJECT_ID), 1)
     
-    table <- prop.table(table(tmpDataState$STATE))
+    table <- prop.table(table(tmpDataState$STATE_LABEL))
     table <- as.data.frame(table)
-    colnames(table) <- c("STATE", "PERCENTAGE")
+    colnames(table) <- c("STATE_LABEL", "PERCENTAGE")
     table$PERCENTAGE <- round(table$PERCENTAGE * 100, 3)
     v$trajectoryTable2 <- table
     
