@@ -7,7 +7,7 @@
 visualiseStateOverlap(patientData, stateLabels)
 }
 \arguments{
-\item{patientData}{Object of class data.frame with columns SUBJECT_ID, STATE, STATE_START_DATE, STATE_END_DATE}
+\item{patientData}{Object of class data.frame with columns SUBJECT_ID, STATE_LABEL, STATE_START_DATE, STATE_END_DATE}
 
 \item{stateLabels}{Labels for state notation}
 }

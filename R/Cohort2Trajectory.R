@@ -53,7 +53,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               useCDM = TRUE,
                               pathToData = './tmp/datasets/importedData.csv',
                               allowedStatesList = createStateList(stateCohortLabels)
-                              ) {
+) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -173,7 +173,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                           COHORT_DEFINITION_ID,
                           COHORT_START_DATE,
                           COHORT_END_DATE)
-
+    
   }
   else if (useCDM) {
     ParallelLogger::logInfo("Importing data ...")
@@ -246,7 +246,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   if(nrow(data) == 0){
     return(ParallelLogger::logInfo("There were no patients imported! Check your target cohort!"))
-    }
+  }
   
   save_object(
     path =  paste(
@@ -300,6 +300,18 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   
   ParallelLogger::logInfo("Trajectory generation completed!")
+  
+  ParallelLogger::logInfo("Saving trajectories to the specified temp schema ...")
+  
+  dropRelation(connection = connection, dbms = dbms, schema = cdmTmpSchema, relationName = paste(studyName, "patient_trajectories", sep = "_"))
+  
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = paste(studyName, "patient_trajectories", sep = "_"),
+                                 databaseSchema = cdmTmpSchema,
+                                 data = result)
+  
+  ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")
+  
   ############################################################################
   #
   # Saving study settings as new row
@@ -369,6 +381,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       sep = ""
     ))
   }
+  
+  
   
   return(ParallelLogger::logInfo("Trajectories generated!"))
 }

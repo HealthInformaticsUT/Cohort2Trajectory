@@ -134,7 +134,7 @@ dropRelation <-
       DatabaseConnector::executeSql(connection,
                                     SqlRender::translate(
                                       targetDialect = dbms,
-                                      sql = SqlRender::render(sql = "DROP TABLE IF EXISTS @relationName CASCADE",
+                                      sql = SqlRender::render(sql = "IF OBJECT_ID('table', 'U') IS NOT NULL DROP TABLE @relationName;",
                                                               relationName = relationName)
                                     ))
     }
@@ -143,7 +143,7 @@ dropRelation <-
                                     SqlRender::translate(
                                       targetDialect = dbms,
                                       sql = SqlRender::render(
-                                        sql = "DROP TABLE IF EXISTS @cdmTmpSchema.@relationName CASCADE",
+                                        sql = "IF OBJECT_ID('table', 'U') IS NOT NULL DROP TABLE @cdmTmpSchema.@relationName;",
                                         cdmTmpSchema = schema,
                                         relationName = relationName
                                       )

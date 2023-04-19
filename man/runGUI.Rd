@@ -11,6 +11,7 @@ runGUI(
   pathToResults = NULL,
   dbms = "postgresql",
   cdmSchema = "ohdsi_cdm",
+  cdmVocabSchema = "ohdsi_vocab",
   cdmTmpSchema = "ohdsi_temp",
   cdmResultsSchema = "ohdsi_results",
   studyName = "Cohort2Trajectory",
