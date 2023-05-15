@@ -282,7 +282,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   # As we may have new state labels (if mergeStates = TRUE) we now will modify some settings:
   if (mergeStates) {
     stateCohortPriorityOrder <-
-      ordered_combinations(stateCohortPriorityOrder, n = length(mergeTreshold) + 1)
+      ordered_combinations(stateCohortPriorityOrder, n = length(mergeThreshold) + 1)
     
     allowedStatesList_updated <-
       lapply(names(allowedStatesList), function(state_name) {
