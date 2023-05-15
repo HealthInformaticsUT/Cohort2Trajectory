@@ -72,8 +72,8 @@ runGUI(
 #
 ################################################################################
 
- stateCohortLabels = c("State1", "State2", "State3")
- allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
+# stateCohortLabels = c("State1", "State2", "State3")
+# allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
 # allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State3") # removes possibility to move from state1 to state2
 
 ################################################################################
