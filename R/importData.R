@@ -202,7 +202,7 @@ addPersonalData <- function(cohortData, connection, cdmSchema) {
              as.Date(BIRTH_DATETIME),
              units = "days") / 365.25
   ), 3))
-  data_merged <- dplyr::select(data_merged,!BIRTH_DATETIME)
+  data_merged <- dplyr::select(data_merged, !BIRTH_DATETIME)
   return(data_merged)
 }
 #' This function eliminates patients which do not fulfill the inclusion criteria
@@ -219,7 +219,7 @@ cleanCohortData <- function(cohortData,
                             mergeStates = FALSE,
                             mergeThreshold = 0.5) {
   data_tmp <- cohortData
-
+  
   ##############################################################################
   #
   # Preserving only patients which are present in the target cohort
@@ -249,16 +249,19 @@ cleanCohortData <- function(cohortData,
     ),
     COHORT_START_DATE
   ), 1L)
-    # Selecting information about the states
+  # Selecting information about the states
   data_states <-
     dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
   
-  if (mergeStates){ 
-  ParallelLogger::logInfo("Merging labels according to the specified treshold!")
-  
-  data_states <- combineCohorts(data_states, mergeThreshold, unique(data_states$SUBJECT_ID))
-  
-  ParallelLogger::logInfo("Label merging completed!")
+  if (mergeStates) {
+    ParallelLogger::logInfo("Merging labels according to the specified treshold!")
+    
+    data_states <-
+      combineCohorts(data_states,
+                     mergeThreshold,
+                     unique(data_states$SUBJECT_ID))
+    
+    ParallelLogger::logInfo("Label merging completed!")
   }
   data_tmp <- rbind(data_target, data_states)
   data_target <-
@@ -266,14 +269,14 @@ cleanCohortData <- function(cohortData,
   colnames(data_target) <-
     c("SUBJECT_ID", "REFERENCE_START_DATE", "REFERENCE_END_DATE")
   data_tmp <- merge(data_tmp, data_target, by = "SUBJECT_ID")
-    # If the state start date is after inclusion criteria end date then let's filter it out
+  # If the state start date is after inclusion criteria end date then let's filter it out
   if (!outOfCohortAllowed) {
     data_tmp <-
-      dplyr::filter(data_tmp,!(REFERENCE_END_DATE < COHORT_START_DATE))
+      dplyr::filter(data_tmp, !(REFERENCE_END_DATE < COHORT_START_DATE))
   }
   # If the state end date is before inclusion criteria start date then let's filter it out
   data_tmp <-
-    dplyr::filter(data_tmp,!(REFERENCE_START_DATE > COHORT_END_DATE))
+    dplyr::filter(data_tmp, !(REFERENCE_START_DATE > COHORT_END_DATE))
   
   data_tmp$COHORT_END_DATE <- as.Date(data_tmp$COHORT_END_DATE)
   
@@ -308,7 +311,7 @@ cleanCohortData <- function(cohortData,
                             PRIORITY = dplyr::if_else(COHORT_DEFINITION_ID == "0", 0, 1))
   data_tmp <-
     dplyr::arrange(data_tmp, SUBJECT_ID, PRIORITY, COHORT_START_DATE)
-
+  
   ##############################################################################
   #
   # Preserving only patients which have the mandatory state(s)
@@ -400,7 +403,7 @@ getInclusionTable <- function(cohortData,
     prc_in_target <-
       ifelse(nr_of_patients == 0, 0.00, round((nr_in_target /
                                                  nr_of_patients) * 100, 2))
-    cohortbyinclusion[toString(cohortID),] = c(nr_of_patients, nr_in_target, prc_in_target)
+    cohortbyinclusion[toString(cohortID), ] = c(nr_of_patients, nr_in_target, prc_in_target)
   }
   
   cohortbyinclusion[, 2] <- as.integer(cohortbyinclusion[, 2])
@@ -425,7 +428,7 @@ getInclusionTable <- function(cohortData,
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
-#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient 
+#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @keywords internal
 getTrajectoriesDiscrete <- function(connection,
                                     cohortData,
@@ -472,12 +475,12 @@ getTrajectoriesDiscrete <- function(connection,
   ##############################################################################
   
   if (addPersonalData) {
-  newPatientData <-
-    addPersonalData(newPatientData, connection, cdmSchema)
+    newPatientData <-
+      addPersonalData(newPatientData, connection, cdmSchema)
   }
   else {
     newPatientData$GENDER_CONCEPT_ID = 0
-    newPatientData$BIRTH_DATETIME = "1900-01-01" 
+    newPatientData$BIRTH_DATETIME = "1900-01-01"
   }
   ################################################################################
   #
@@ -508,7 +511,7 @@ getTrajectoriesDiscrete <- function(connection,
       to = 1:n,
       warn_missing = FALSE
     )
-
+  
   save_object(newPatientData,
               path = paste(
                 pathToResults,
@@ -606,7 +609,7 @@ getChronologicalMatrix <- function(cohortData,
   tmp_data <- dplyr::filter(tmp_data, COHORT_DEFINITION_ID != "0")
   # Order by patientId, start & end date
   tmp_data <-
-    as.data.frame(tmp_data[order(tmp_data[, 1], tmp_data[, 3], tmp_data[, 4]),])
+    as.data.frame(tmp_data[order(tmp_data[, 1], tmp_data[, 3], tmp_data[, 4]), ])
   # Getting cohorts' ID's
   states <- as.character(sort(stateCohorts))
   tmp_data <-
@@ -644,7 +647,7 @@ getChronologicalMatrix <- function(cohortData,
 #' @param stateSelection Selection of the type of ordering
 #' @param statePriorityVector All states in prioritized order
 #' @param absorbingStates Absorbing states in dataframe
-#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient 
+#' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @return A dataframe ready for using msm package
 #' @keywords internal
 getTrajectoriesContinuous <- function(connection,
@@ -704,7 +707,7 @@ getTrajectoriesContinuous <- function(connection,
   SUBJECT_ID,
   COHORT_START_DATE)
   
-
+  
   ##############################################################################
   #
   # When we have prioritized states, we have to make sure that a state with smaller
@@ -735,58 +738,57 @@ getTrajectoriesContinuous <- function(connection,
                                      COHORT_DEFINITION_ID != statePriorityVector[p])
         if (nrow(patientData) > 0) {
           for (i in 1:nrow(priorityData)) {
-            newpatientData <- patientData[0,]
+            newpatientData <- patientData[0, ]
             for (j in 1:nrow(patientData)) {
               if (nrow(patientData) == 0) {
                 break
               }
-              if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_START_DATE &
-                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_END_DATE
-              ){
+              if (priorityData[i, ]$COHORT_START_DATE <= patientData[j, ]$COHORT_START_DATE &
+                  priorityData[i, ]$COHORT_END_DATE >= patientData[j, ]$COHORT_END_DATE) {
                 # In this case the smaller priority state is absorbed by a higher priority state
                 next
               }
-              else if (priorityData[i,]$COHORT_START_DATE >= patientData[j,]$COHORT_START_DATE &
-                  priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
-               if (priorityData[i,]$COHORT_START_DATE > patientData[j,]$COHORT_START_DATE) {
-                  head <- patientData[j,]
+              else if (priorityData[i, ]$COHORT_START_DATE >= patientData[j, ]$COHORT_START_DATE &
+                       priorityData[i, ]$COHORT_END_DATE <= patientData[j, ]$COHORT_END_DATE) {
+                if (priorityData[i, ]$COHORT_START_DATE > patientData[j, ]$COHORT_START_DATE) {
+                  head <- patientData[j, ]
                   head$COHORT_END_DATE <-
-                    priorityData[i,]$COHORT_START_DATE
+                    priorityData[i, ]$COHORT_START_DATE
                   newpatientData <- rbind(newpatientData, head)
                 }
-               if (priorityData[i,]$COHORT_END_DATE <= patientData[j,]$COHORT_END_DATE) {
-                  tail <- patientData[j,]
+                if (priorityData[i, ]$COHORT_END_DATE <= patientData[j, ]$COHORT_END_DATE) {
+                  tail <- patientData[j, ]
                   tail$COHORT_START_DATE <-
-                    priorityData[i,]$COHORT_END_DATE
+                    priorityData[i, ]$COHORT_END_DATE
                   newpatientData <- rbind(newpatientData, tail)
+                }
               }
-              }
-              else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_END_DATE &
-                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_END_DATE) {
-                head <- patientData[j,]
+              else if (priorityData[i, ]$COHORT_START_DATE <= patientData[j, ]$COHORT_END_DATE &
+                       priorityData[i, ]$COHORT_END_DATE >= patientData[j, ]$COHORT_END_DATE) {
+                head <- patientData[j, ]
                 head$COHORT_END_DATE <-
-                  priorityData[i,]$COHORT_START_DATE
+                  priorityData[i, ]$COHORT_START_DATE
                 newpatientData <- rbind(newpatientData, head)
                 next
               }
-              else if (priorityData[i,]$COHORT_START_DATE <= patientData[j,]$COHORT_START_DATE &
-                       priorityData[i,]$COHORT_END_DATE >= patientData[j,]$COHORT_START_DATE) {
-                tail <- patientData[j,]
+              else if (priorityData[i, ]$COHORT_START_DATE <= patientData[j, ]$COHORT_START_DATE &
+                       priorityData[i, ]$COHORT_END_DATE >= patientData[j, ]$COHORT_START_DATE) {
+                tail <- patientData[j, ]
                 tail$COHORT_START_DATE <-
-                  priorityData[i,]$COHORT_END_DATE
+                  priorityData[i, ]$COHORT_END_DATE
                 newpatientData <- rbind(newpatientData, tail)
               }
               else {
-                newpatientData <- rbind(newpatientData, patientData[j,])
-                }
+                newpatientData <- rbind(newpatientData, patientData[j, ])
+              }
               
             }
             patientData <- newpatientData
           }
         }
-
+        
         newData <- rbind(newData, priorityData)
-
+        
       }
       
       
@@ -829,7 +831,7 @@ getTrajectoriesContinuous <- function(connection,
     TIME_IN_COHORT
   )
   
-  data <- dplyr::arrange(data,SUBJECT_ID,TIME_IN_COHORT)
+  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
   # We have to map states to 1,..., n.
   states <- as.character(c("START", setdiff(
     unique(data$COHORT_DEFINITION_ID), c('START', 'EXIT')
@@ -843,7 +845,8 @@ getTrajectoriesContinuous <- function(connection,
       warn_missing = FALSE
     )
   data <- dplyr::mutate(data, STATE_LABEL = as.numeric(STATE_LABEL))
-  data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE_LABEL)
+  data <-
+    dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE_LABEL)
   data <- dplyr::select(
     data,
     SUBJECT_ID,
@@ -870,7 +873,7 @@ getTrajectoriesContinuous <- function(connection,
   last_patient_id <- data$SUBJECT_ID[1]
   last_observed_ts <- data$TIME_IN_COHORT[1]
   coef <- 1
-  impact <- 1/365.25
+  impact <- 1 / 365.25
   
   data$TIME_IN_COHORT <- round(data$TIME_IN_COHORT, 6)
   
@@ -922,11 +925,11 @@ getTrajectoriesContinuous <- function(connection,
   #
   ##############################################################################
   if (addPersonalData) {
-  data <- addPersonalData(data, connection, cdmSchema)
+    data <- addPersonalData(data, connection, cdmSchema)
   }
   else {
     data$GENDER_CONCEPT_ID = 0
-    data$BIRTH_DATETIME = "1900-01-01" 
+    data$BIRTH_DATETIME = "1900-01-01"
   }
   ################################################################################
   #
@@ -1064,7 +1067,8 @@ loadSettings <- function(studyName) {
   env$savedAbsorbingStates <- settings$absorbingStates[studyIndex]
   env$savedMandatoryStates <- settings$mandatoryStates[studyIndex]
   env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
-  env$savedOutOfCohortAllowed <- settings$outOfCohortAllowed[studyIndex]
+  env$savedOutOfCohortAllowed <-
+    settings$outOfCohortAllowed[studyIndex]
   env$outOfCohortFix <- settings$outOfCohortFix[studyIndex]
   
   return(env)

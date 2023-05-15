@@ -275,108 +275,131 @@ body <- shinydashboard::dashboardBody(
     # Trajectories generation content
     #
     ################################################################################
-    shinydashboard::tabItem(tabName = "trajectories",
-                            shiny::fluidPage(
-                              shinydashboard::box(
-                                width = 12,
-                                title = "Trajectory generation settings",
-                                status = "primary",
-                                solidHeader = T,
-                                shiny::fluidRow(
-                                  shiny::column(
-                                    width = 4,
-                                    shiny::radioButtons(
-                                      inputId = "trajectoryType",
-                                      label = "Trajectory type:",
-                                      choices = c("Discrete time" = 0,
-                                                  "Continuous time" = 1),
-                                      selected = if (studyHasBeenSaved) {
-                                        if (savedTrajectoryType == "Discrete") {
-                                          0
-                                        }
-                                        else {
-                                          1
-                                        }
-                                      }
-                                      else {
-                                        0
-                                      }
-                                    )
-                                  ),
-                                  shiny::column(
-                                    width = 4,
-                                    shiny::numericInput(
-                                      inputId = "stateDuration",
-                                      label = tags$div(
-                                        HTML(
-                                          '<i class="	fas fa-user-cog" style = "color:#00000;"></i><span style = "color:#00000"> Length of a state stay in days (only discrete case) </span>'
-                                        )
-                                      ),
-                                      value = if (studyHasBeenSaved) {
-                                        savedLengthOfStay
-                                      }
-                                      else {
-                                        30
-                                      },
-                                      min = 0
-                                    )
-                                  ),
-                                  shiny::column(
-                                    width = 4,
-                                    shiny::radioButtons(
-                                      inputId = "stateSelectionType",
-                                      label = "State selection type",
-                                      choices = c(
-                                        "First occurring" = 1,
-                                        "Largest overlap" = 2,
-                                        "Priority first" = 3
-                                      ),
-                                      selected = if (studyHasBeenSaved) {
-                                        savedStateSelectionType
-                                      }
-                                      else {
-                                        1
-                                      }
-                                    )
-                                  )
-                                ),
-                                shiny::fluidRow(
-                                  shiny::column(width = 4,
-                                                uiOutput("absorbingStateChoices")),
-                                  shiny::column(width = 4,
-                                                uiOutput("mandatoryStateChoices")),
-                                  shiny::column(
-                                    width = 4,
-                                    shiny::radioButtons(
-                                      inputId = "outOfCohortAllowed",
-                                      label = "Allow states out of observation period",
-                                      choices = c("No" = FALSE,
-                                                  "Yes" = TRUE),
-                                      selected = if (studyHasBeenSaved) {
-                                        as.logical(savedOutOfCohortAllowed)
-                                      }
-                                      else {
-                                        FALSE
-                                      }
-                                    ),
-                                    shiny::actionButton("trajectoriesButton", "Generate")
-                                  )
-                                ),
-                                shiny::fluidRow(
-                                  shiny::column(
-                                    width = 4,
-                                    uiOutput("fixOutOfCohort")
-                                  )
-                                )
-                              ),
-                              shinydashboard::box(
-                                width = 12,
-                                title = "Allowed transitions",
-                                status = "primary",
-                                solidHeader = T,
-                                uiOutput("allowedTransitsionChoices"))
-                                )
-                            ),
+    shinydashboard::tabItem(
+      tabName = "trajectories",
+      shiny::fluidPage(
+        shinydashboard::box(
+          width = 12,
+          title = "Trajectory generation settings",
+          status = "primary",
+          solidHeader = T,
+          shiny::fluidRow(
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = "trajectoryType",
+                label = "Trajectory type:",
+                choices = c("Discrete time" = 0,
+                            "Continuous time" = 1),
+                selected = if (studyHasBeenSaved) {
+                  if (savedTrajectoryType == "Discrete") {
+                    0
+                  }
+                  else {
+                    1
+                  }
+                }
+                else {
+                  0
+                }
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::numericInput(
+                inputId = "stateDuration",
+                label = tags$div(
+                  HTML(
+                    '<i class="	fas fa-user-cog" style = "color:#00000;"></i><span style = "color:#00000"> Length of a state stay in days (only discrete case) </span>'
+                  )
+                ),
+                value = if (studyHasBeenSaved) {
+                  savedLengthOfStay
+                }
+                else {
+                  30
+                },
+                min = 0
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = "stateSelectionType",
+                label = "State selection type",
+                choices = c(
+                  "First occurring" = 1,
+                  "Largest overlap" = 2,
+                  "Priority first" = 3
+                ),
+                selected = if (studyHasBeenSaved) {
+                  savedStateSelectionType
+                }
+                else {
+                  1
+                }
+              )
+            )
+          ),
+          shiny::fluidRow(
+            shiny::column(width = 4,
+                          uiOutput("absorbingStateChoices")),
+            shiny::column(width = 4,
+                          uiOutput("mandatoryStateChoices")),
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = "outOfCohortAllowed",
+                label = "Allow states out of observation period",
+                choices = c("No" = FALSE,
+                            "Yes" = TRUE),
+                selected = if (studyHasBeenSaved) {
+                  as.logical(savedOutOfCohortAllowed)
+                }
+                else {
+                  FALSE
+                }
+              ),
+              shiny::actionButton("trajectoriesButton", "Generate")
+            )
+          ),
+          shiny::fluidRow(
+            shiny::column(width = 4,
+                          uiOutput("fixOutOfCohort")),
+            shiny::column(
+              width = 4,
+              shiny::radioButtons(
+                inputId = "allowMerging",
+                label = "Allow merging states",
+                choices = c("No" = FALSE,
+                            "Yes" = TRUE)
+              )
+            ),
+            shiny::column(
+              width = 4,
+              shiny::numericInput(
+                inputId = "mergingThreshold",
+                label = tags$div(
+                  HTML(
+                    '<i class="	fas fa-user-cog" style = "color:#00000;"></i><span style = "color:#00000"> Threshold (0-1) </span>'
+                  )
+                ),
+                value = 0.5,
+                min = 0,
+                max = 1
+              )
+            )
+          )
+        ),
+        shinydashboard::box(
+          width = 12,
+          title = "Allowed transitions",
+          status = "primary",
+          solidHeader = T,
+          uiOutput("allowedTransitsionChoices")
+        )
+      )
+    ),
     
     
     ################################################################################

@@ -33,7 +33,6 @@ DataFrame mergeCohorts(DataFrame data, double threshold,  std::vector<int> patie
     std::vector<std::string> states;
     // Getting patient id
     int patientID = patientIDs[p];
-    Rcout <<  patientID << "\n";
     // Let's get data of this person
     std::vector<int>::iterator iter = subjects.begin();
     while ((iter = std::find(iter, subjects.end(), patientID)) != subjects.end())
@@ -80,7 +79,6 @@ DataFrame mergeCohorts(DataFrame data, double threshold,  std::vector<int> patie
 DataFrame combineCohorts(DataFrame data, NumericVector threshold, std::vector<int> patientIDs) {
   int n = threshold.size();
   for (int i = 0; i < n; ++i) {
-    Rcout <<  "THRESHOLD "<< threshold[i] << "\n";
     data = mergeCohorts(data, threshold[i], patientIDs);
   }
   return data;

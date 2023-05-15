@@ -56,8 +56,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               pathToData = './tmp/datasets/importedData.csv',
                               allowedStatesList = createStateList(stateCohortLabels),
                               mergeStates = FALSE,
-                              mergeThreshold = 0.5
-) {
+                              mergeThreshold = 0.5) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -72,11 +71,11 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   #
   ##############################################################################
   
-   dbms <<- dbms
-   conn <<- connection
-   cdmSchema <<- cdmSchema
-   cdmTmpSchema <<- cdmTmpSchema
-   cdmResultsSchema <<- cdmResultsSchema
+  dbms <<- dbms
+  conn <<- connection
+  cdmSchema <<- cdmSchema
+  cdmTmpSchema <<- cdmTmpSchema
+  cdmResultsSchema <<- cdmResultsSchema
   
   ##############################################################################
   
@@ -246,10 +245,17 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     ParallelLogger::logInfo("Read complete!")
   }
   
-  data <- dplyr::arrange(data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+  data <-
+    dplyr::arrange(data,
+                   SUBJECT_ID,
+                   COHORT_START_DATE,
+                   COHORT_END_DATE,
+                   COHORT_DEFINITION_ID)
   
-  if(nrow(data) == 0){
-    return(ParallelLogger::logInfo("There were no patients imported! Check your target cohort!"))
+  if (nrow(data) == 0) {
+    return(
+      ParallelLogger::logInfo("There were no patients imported! Check your target cohort!")
+    )
   }
   
   save_object(
@@ -275,22 +281,26 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   # As we may have new state labels (if mergeStates = TRUE) we now will modify some settings:
   if (mergeStates) {
-    stateCohortPriorityOrder <- ordered_combinations(stateCohortPriorityOrder, n = length(mergeTreshold) + 1)
+    stateCohortPriorityOrder <-
+      ordered_combinations(stateCohortPriorityOrder, n = length(mergeTreshold) + 1)
     
-    allowedStatesList_updated <-  lapply(names(allowedStatesList), function(state_name) {
-      c(allowedStatesList[[state_name]], stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)])
-    })
+    allowedStatesList_updated <-
+      lapply(names(allowedStatesList), function(state_name) {
+        c(allowedStatesList[[state_name]], stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)])
+      })
     names(allowedStatesList_updated) <- names(allowedStatesList)
     
     for (state_name in stateCohortPriorityOrder) {
-      allowedStatesList_updated[[state_name]] <- allowedStatesList_updated[[strsplit(state_name, split = "\\+")[[1]][1]]]
+      allowedStatesList_updated[[state_name]] <-
+        allowedStatesList_updated[[strsplit(state_name, split = "\\+")[[1]][1]]]
     }
     
     allowedStatesList <- allowedStatesList_updated
     
-    stateCohortAbsorbing <- unique(unlist(lapply(stateCohortAbsorbing, function(state_name) {
-      stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)]
-    })))
+    stateCohortAbsorbing <-
+      unique(unlist(lapply(stateCohortAbsorbing, function(state_name) {
+        stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)]
+      })))
   }
   
   ParallelLogger::logInfo("Data cleaning completed!")
@@ -331,12 +341,19 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   ParallelLogger::logInfo("Saving trajectories to the specified temp schema ...")
   
-  dropRelation(connection = connection, dbms = dbms, schema = cdmTmpSchema, relationName = paste(studyName, "patient_trajectories", sep = "_"))
+  dropRelation(
+    connection = connection,
+    dbms = dbms,
+    schema = cdmTmpSchema,
+    relationName = paste(studyName, "patient_trajectories", sep = "_")
+  )
   
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = paste(studyName, "patient_trajectories", sep = "_"),
-                                 databaseSchema = cdmTmpSchema,
-                                 data = result)
+  DatabaseConnector::insertTable(
+    connection = connection,
+    tableName = paste(studyName, "patient_trajectories", sep = "_"),
+    databaseSchema = cdmTmpSchema,
+    data = result
+  )
   
   ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")
   
@@ -383,7 +400,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       ))
     if (studyName %in% settings$studyName) {
       studyIndex <- which(settings$studyName == studyName)
-      settings[studyIndex,] <- newSettings
+      settings[studyIndex, ] <- newSettings
     }
     else {
       colnames(newSettings) <- colnames(settings)
@@ -414,5 +431,3 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   return(ParallelLogger::logInfo("Trajectories generated!"))
 }
-
-

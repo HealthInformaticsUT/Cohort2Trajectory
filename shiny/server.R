@@ -56,7 +56,9 @@ server <- function(input, output, session) {
       generatedData = NULL,
       trajectoryTable1 = NULL,
       trajectoryTable2 = NULL,
-      allowedTransitions = NULL
+      allowedTransitions = NULL,
+      rankListPriority = NULL,
+      absorbingStates = NULL
     )
   ################################################################################
   #
@@ -78,10 +80,21 @@ server <- function(input, output, session) {
       )
     v$customisedStates <- input$cstateCohorts
     v$customisedTarget <- 0
-    v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+    v$data <-
+      dplyr::arrange(v$data,
+                     SUBJECT_ID,
+                     COHORT_START_DATE,
+                     COHORT_END_DATE,
+                     COHORT_DEFINITION_ID)
     
     save_object(
-      path =  paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
+      path =  paste(
+        pathToResults,
+        "/tmp/datasets/",
+        studyName,
+        "importedData.csv",
+        sep = ""
+      ),
       object = v$data
     )
   })
@@ -254,9 +267,20 @@ server <- function(input, output, session) {
         cdmTempSchema = cdmTmpSchema,
         studyName = studyName
       )
-    v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+    v$data <-
+      dplyr::arrange(v$data,
+                     SUBJECT_ID,
+                     COHORT_START_DATE,
+                     COHORT_END_DATE,
+                     COHORT_DEFINITION_ID)
     save_object(
-      path =  paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
+      path =  paste(
+        pathToResults,
+        "/tmp/datasets/",
+        studyName,
+        "importedData.csv",
+        sep = ""
+      ),
       object = v$data
     )
     dropRelation(
@@ -440,9 +464,22 @@ server <- function(input, output, session) {
           to = c("0", v$customisedStates),
           warn_missing = FALSE
         )
-        v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+        v$data <-
+          dplyr::arrange(
+            v$data,
+            SUBJECT_ID,
+            COHORT_START_DATE,
+            COHORT_END_DATE,
+            COHORT_DEFINITION_ID
+          )
         save_object(
-          paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
+          paste(
+            pathToResults,
+            "/tmp/datasets/",
+            studyName,
+            "importedData.csv",
+            sep = ""
+          ),
           object = v$data
         )
         Sys.sleep(0.5)
@@ -489,9 +526,22 @@ server <- function(input, output, session) {
             )
           )
         }
-        v$data <- dplyr::arrange(v$data, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE, COHORT_DEFINITION_ID)
+        v$data <-
+          dplyr::arrange(
+            v$data,
+            SUBJECT_ID,
+            COHORT_START_DATE,
+            COHORT_END_DATE,
+            COHORT_DEFINITION_ID
+          )
         save_object(
-          path = paste(pathToResults, "/tmp/datasets/",studyName, "importedData.csv", sep = ""),
+          path = paste(
+            pathToResults,
+            "/tmp/datasets/",
+            studyName,
+            "importedData.csv",
+            sep = ""
+          ),
           object = v$data
         )
       }
@@ -766,21 +816,25 @@ server <- function(input, output, session) {
   })
   
   output$fixOutOfCohort <- renderUI({
-    shiny::radioButtons("fixOutOfCohort",
-                              "Choose how to fix OUT OF COHORT cases:",
-                              as.list(c("None", "Last present state",
-                                        if (is.null(v$customisedStates)) {
-                                          input$cstateCohorts
-                                        }
-                                        else {
-                                          v$customisedStates
-                                        })),
-                              selected = if (studyHasBeenSaved) {
-                                savedOutOfCohortFix
-                              }
-                              else {
-                                c("None")
-                              })
+    shiny::radioButtons(
+      "fixOutOfCohort",
+      "Choose how to fix OUT OF COHORT cases:",
+      as.list(c(
+        "None", "Last present state",
+        if (is.null(v$customisedStates)) {
+          input$cstateCohorts
+        }
+        else {
+          v$customisedStates
+        }
+      )),
+      selected = if (studyHasBeenSaved) {
+        savedOutOfCohortFix
+      }
+      else {
+        c("None")
+      }
+    )
   })
   
   output$allowedTransitsionChoices  <- renderUI({
@@ -802,11 +856,11 @@ server <- function(input, output, session) {
     # })
     
     states <- as.list(if (is.null(v$customisedStates)) {
-                          input$cstateCohorts
-                        }
-                        else {
-                          v$customisedStates
-                        })
+      input$cstateCohorts
+    }
+    else {
+      v$customisedStates
+    })
     tagList(lapply(1:length(states), function(i) {
       checkboxGroupInput(
         paste0("allowedTransitions", states[i]),
@@ -816,20 +870,20 @@ server <- function(input, output, session) {
       ) # choices = v$customisedStates
     }))
   })
-   
-   
- #   for (state in if (is.null(states)) {
- #     input$cstateCohorts
- #   }
- #   else {
- #     states
- #   }) {
- #     shiny::checkboxGroupInput("allowedTransitions",
- #                               paste("Allowed transitsion states for ", state),
- #                               states,
- #                               selected = c("S1","S2"))
- #   }
- # })
+  
+  
+  #   for (state in if (is.null(states)) {
+  #     input$cstateCohorts
+  #   }
+  #   else {
+  #     states
+  #   }) {
+  #     shiny::checkboxGroupInput("allowedTransitions",
+  #                               paste("Allowed transitsion states for ", state),
+  #                               states,
+  #                               selected = c("S1","S2"))
+  #   }
+  # })
   
   
   
@@ -844,15 +898,6 @@ server <- function(input, output, session) {
     
     progress$set(message = "Cleaning data", value = 0)
     
-    
-    cohortData <- cleanCohortData(
-      cohortData = v$data,
-      mandatoryStates = input$mandatoryStates,
-      outOfCohortAllowed = as.logical(input$outOfCohortAllowed)
-    )
-    progress$set(message = "Generating trajectories", value = 1 /
-                   3)
-    result <- NULL
     ############################################################################
     #
     # Reassemble allowed transitions to a list of vectors
@@ -868,21 +913,61 @@ server <- function(input, output, session) {
     
     v$allowedTransitions = list()
     
-    allowedTransitions_ids <- lapply(1:length(stateVector), function(i) {
-      paste("allowedTransitions", stateVector[i], sep = "")
-    })
+    allowedTransitions_ids <-
+      lapply(1:length(stateVector), function(i) {
+        paste("allowedTransitions", stateVector[i], sep = "")
+      })
     names(allowedTransitions_ids) = stateVector
     for (state in stateVector) {
       targets = sprintf(input[[allowedTransitions_ids[[state]]]])
-      v$allowedTransitions[[state]] <- sprintf(input[[allowedTransitions_ids[[state]]]])
-      if((length(targets) == 0)){
+      v$allowedTransitions[[state]] <-
+        sprintf(input[[allowedTransitions_ids[[state]]]])
+      if ((length(targets) == 0)) {
         # If there are no allowed targets, then the state is absorbing.
         input$absorbingStates = union(input$absorbingStates, state)
       }
       
     }
     names(v$allowedTransitions) = stateVector
-
+    
+    cohortData <- cleanCohortData(
+      cohortData = v$data,
+      mandatoryStates = input$mandatoryStates,
+      outOfCohortAllowed = as.logical(input$outOfCohortAllowed),
+      mergeStates = input$allowMerging,
+      mergeThreshold = input$mergingThreshold
+    )
+    
+    
+    # As we may have new state labels (if mergeStates = TRUE) we now will modify some settings:
+    if (input$allowMerging) {
+      v$rankListPriority <-
+        ordered_combinations(input$rankListPriority, n = length(c(input$mergingThreshold)) + 1)
+      
+      allowedStatesList_updated <-
+        lapply(names(v$allowedTransitions), function(state_name) {
+          c(v$allowedTransitions[[state_name]], v$rankListPriority[grepl(state_name, v$rankListPriority)])
+        })
+      names(allowedStatesList_updated) <-
+        names(v$allowedTransitions)
+      
+      for (state_name in v$rankListPriority) {
+        allowedStatesList_updated[[state_name]] <-
+          allowedStatesList_updated[[strsplit(state_name, split = "\\+")[[1]][1]]]
+      }
+      
+      v$allowedTransitions <- allowedStatesList_updated
+      
+      v$absorbingStates <-
+        unique(unlist(lapply(input$absorbingStates, function(state_name) {
+          v$rankListPriority[grepl(state_name, v$rankListPriority)]
+        })))
+    }
+    
+    progress$set(message = "Generating trajectories", value = 1 /
+                   3)
+    result <- NULL
+    
     ############################################################################
     #
     # Generation
@@ -894,8 +979,8 @@ server <- function(input, output, session) {
         cohortData = cohortData,
         stateDuration = v$stateLength,
         stateSelection = input$stateSelectionType,
-        statePriorityVector = input$rankListPriority,
-        absorbingStates = input$absorbingStates,
+        statePriorityVector = v$rankListPriority,
+        absorbingStates = v$absorbingStates,
         oocFix = input$fixOutOfCohort,
         studyName = studyName,
         pathToResults = pathToResults,
@@ -907,8 +992,8 @@ server <- function(input, output, session) {
         connection = conn,
         stateSelection = input$stateSelectionType,
         patientData =  cohortData,
-        statePriorityVector = input$rankListPriority,
-        absorbingStates = input$absorbingStates,
+        statePriorityVector = v$rankListPriority,
+        absorbingStates = v$absorbingStates,
         studyName = studyName,
         pathToResults = pathToResults,
         allowedStatesList = v$allowedTransitions
@@ -927,10 +1012,10 @@ server <- function(input, output, session) {
     else {
       "Continuous"
     }
-    savedTrajectoryStates <- input$rankListPriority
-    savedPriorityOrder <- input$rankListPriority
+    savedTrajectoryStates <- v$rankListPriority
+    savedPriorityOrder <- v$rankListPriority
     savedStateSelectionType <- input$stateSelectionType
-    savedAbsorbingStates <- input$absorbingStates
+    savedAbsorbingStates <- v$absorbingStates
     savedMandatoryStates <- input$mandatoryStates
     savedOutOfCohortFix <- input$fixOutOfCohort
     savedLengthOfStay <- v$stateLength
@@ -949,7 +1034,7 @@ server <- function(input, output, session) {
       savedOutOfCohortFix
     )
     if (studyName %in% settings$studyName) {
-      settings[studyIndex,] <- newSettings
+      settings[studyIndex, ] <- newSettings
     }
     else {
       colnames(newSettings) <- colnames(settings)
@@ -983,7 +1068,7 @@ server <- function(input, output, session) {
     progress$set(message = "Creating statistics tables", value = 4 / 5)
     
     tmpDataState <-
-      dplyr::filter(result,!STATE_LABEL %in% c("START", "EXIT"))
+      dplyr::filter(result, !STATE_LABEL %in% c("START", "EXIT"))
     
     table <- prop.table(table(tmpDataState$STATE_LABEL))
     table <- as.data.frame(table)
@@ -1036,8 +1121,7 @@ server <- function(input, output, session) {
     if (idExists(v$patientData, input$profiles_personIdInput)) {
       v$profileStochasticPlot <-
         visualisePatient(v$patientData,
-                         as.numeric(input$profiles_personIdInput),
-        )
+                         as.numeric(input$profiles_personIdInput),)
     }
   })
   
