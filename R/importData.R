@@ -209,11 +209,15 @@ addPersonalData <- function(cohortData, connection, cdmSchema) {
 #'
 #' @param cohortData Imported cohort data
 #' @param mandatoryStates States which have to be present in the trajectory, otherwise dropped#'
+#' @param mergeStates Boolean, if you want to merge states when they overlap
+#' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
 cleanCohortData <- function(cohortData,
                             mandatoryStates,
-                            outOfCohortAllowed = FALSE) {
+                            outOfCohortAllowed = FALSE,
+                            mergeStates = FALSE,
+                            mergeThreshold = 0.5) {
   data_tmp <- cohortData
 
   ##############################################################################
@@ -248,6 +252,14 @@ cleanCohortData <- function(cohortData,
     # Selecting information about the states
   data_states <-
     dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
+  
+  if (mergeStates){ 
+  ParallelLogger::logInfo("Merging labels according to the specified treshold!")
+  
+  data_states <- combineCohorts(data_states, mergeThreshold, unique(data_states$SUBJECT_ID))
+  
+  ParallelLogger::logInfo("Label merging completed!")
+  }
   data_tmp <- rbind(data_target, data_states)
   data_target <-
     dplyr::select(data_target, SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)

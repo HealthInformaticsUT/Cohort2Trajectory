@@ -223,3 +223,33 @@ addListVectorEl <- function(stateList, transitionHead, transitionTail) {
   stateList[[transitionHead]] = c(stateList[[transitionHead]], transitionTail)
   return(stateList)
 }
+
+
+# Load required library
+library(gtools)
+
+#' Create a vector with all possible combinations preserving the priority order
+#'
+#' @param states Vector of states
+#' @param n The largest number of combinations possible
+#' @keywords internal
+ordered_combinations <- function(states, n) {
+  # Generate combinations
+  combs <- unlist(lapply(1:n, function(x) combn(states, x, simplify = FALSE)), recursive = FALSE)
+  
+  # Generate permutations for each combination
+  perms <- lapply(combs, function(x) gtools::permutations(length(x), length(x), x))
+  
+  # Concatenate elements of each permutation and collapse list
+  result <- unlist(lapply(perms, function(x) apply(x, 1, paste, collapse = "+")))
+  
+  # Create a data frame with the numeric order of the first state in each combination
+  df <- data.frame(result = result, 
+                   first_state = as.numeric(sapply(strsplit(result, "\\+"), function(x) which(states == x[1]))))
+  
+  # Sort by the numeric order of the first state
+  df <- df[order(df$first_state, df$result), ]
+  
+  return(df$result)
+}
+

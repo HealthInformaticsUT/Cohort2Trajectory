@@ -1,7 +1,7 @@
 Package: Cohort2Trajectory
 Type: Package
 Title: Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS
-Version: 1.1.3
+Version: 1.2.0
 Date: 2023-05-09
 Author: Markus Haug
 Maintainer: Markus Haug <markus.haug@ut.ee>
@@ -20,7 +20,8 @@ Imports:
     plyr,
     utils,
     sortable,
-    RJSONIO
+    RJSONIO,
+    gtools
 Remotes:
     OHDSI/CirceR,
     OHDSI/CohortGenerator,
