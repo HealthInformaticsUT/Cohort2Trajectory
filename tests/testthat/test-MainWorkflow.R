@@ -12,7 +12,6 @@ pathToResults <<- dirname(dirname(getwd())) #
 #
 ################################################################################
 pathToDriver <- './Drivers'
-dbms <- "sqlite" 
 
 cdmSchema <- "main"  # Schema which contains the OHDSI Common Data Model
 cdmTmpSchema <- "main" # Schema for temporary tables, will be deleted # should be ohdsi_temp
@@ -39,7 +38,7 @@ Eunomia::createCohorts(connectionDetails)
 ################################################################################
 
 Cohort2Trajectory(
-  dbms = dbms,
+  dbms = "sqlite",
   connection = conn,
   cdmSchema = cdmSchema,
   cdmVocabSchema = cdmVocabSchema,

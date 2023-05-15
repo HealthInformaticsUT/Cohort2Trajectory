@@ -195,7 +195,9 @@ createMandatorySubDirs <- function(pathToResults) {
 #' @param stateVector Vector with the defines state labels
 #' @keywords internal
 createStateList <- function(stateVector) {
-  stateList = replicate(n = length(stateVector), expr = stateVector, simplify = FALSE)
+  stateList = replicate(n = length(stateVector),
+                        expr = stateVector,
+                        simplify = FALSE)
   names(stateList) = stateVector
   return(stateList)
 }
@@ -207,10 +209,13 @@ createStateList <- function(stateVector) {
 #' @param transitionHead State label which is the state where the transition is coming from
 #' @param transitionTail State label which is the state where the transition is going to
 #' @keywords internal
-removeListVectorEl <- function(stateList, transitionHead, transitionTail) {
-  stateList[[transitionHead]] = stateList[[transitionHead]][-which(stateList[[transitionHead]] == transitionTail)]
-  return(stateList)
-}
+removeListVectorEl <-
+  function(stateList,
+           transitionHead,
+           transitionTail) {
+    stateList[[transitionHead]] = stateList[[transitionHead]][-which(stateList[[transitionHead]] == transitionTail)]
+    return(stateList)
+  }
 
 
 #' Add element from list element's vector
@@ -219,7 +224,48 @@ removeListVectorEl <- function(stateList, transitionHead, transitionTail) {
 #' @param transitionHead State label which is the state where the transition is coming from
 #' @param transitionTail State label which is the state where the transition is going to
 #' @keywords internal
-addListVectorEl <- function(stateList, transitionHead, transitionTail) {
-  stateList[[transitionHead]] = c(stateList[[transitionHead]], transitionTail)
-  return(stateList)
+addListVectorEl <-
+  function(stateList,
+           transitionHead,
+           transitionTail) {
+    stateList[[transitionHead]] = c(stateList[[transitionHead]], transitionTail)
+    return(stateList)
+  }
+
+
+# Load required library
+library(gtools)
+
+#' Create a vector with all possible combinations preserving the priority order
+#'
+#' @param states Vector of states
+#' @param n The largest number of combinations possible
+#' @keywords internal
+ordered_combinations <- function(states, n) {
+  # Generate combinations
+  combs <-
+    unlist(lapply(1:n, function(x)
+      combn(states, x, simplify = FALSE)), recursive = FALSE)
+  
+  # Generate permutations for each combination
+  perms <-
+    lapply(combs, function(x)
+      gtools::permutations(length(x), length(x), x))
+  
+  # Concatenate elements of each permutation and collapse list
+  result <-
+    unlist(lapply(perms, function(x)
+      apply(x, 1, paste, collapse = "+")))
+  
+  # Create a data frame with the numeric order of the first state in each combination
+  df <- data.frame(
+    result = result,
+    first_state = as.numeric(sapply(strsplit(result, "\\+"), function(x)
+      which(states == x[1]))),
+    count = sapply(strsplit(result, "\\+"), length)
+  )
+  
+  # Sort by the numeric order of the first state
+  df <- df[order(df$first_state,-df$count, df$result),]
+  return(df$result)
 }

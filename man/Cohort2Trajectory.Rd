@@ -28,7 +28,9 @@ Cohort2Trajectory(
   pathToResults = getwd(),
   useCDM = TRUE,
   pathToData = "./tmp/datasets/importedData.csv",
-  allowedStatesList = createStateList(stateCohortLabels)
+  allowedStatesList = createStateList(stateCohortLabels),
+  mergeStates = FALSE,
+  mergeThreshold = 0.5
 )
 }
 \arguments{
@@ -71,6 +73,10 @@ Cohort2Trajectory(
 \item{pathToData}{When using without OMOP CDM specify the path to data file}
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
+
+\item{mergeStates}{Boolean, if you want to merge states when they overlap}
+
+\item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
 }
 \description{
 This function creates patient treatment trajectories
