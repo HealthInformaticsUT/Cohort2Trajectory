@@ -43,6 +43,12 @@ Development
 ===========
 Cohort2Trajectory is being developed in R Studio.
 
+Citation
+===========
+Haug, M. (2023, May). Cohort2Trajectory, v1.1.3. GitHub. https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.3
+
+
 # Acknowledgements
 
 Research group of Health-Informatics in University of Tartu https://health-informatics.cs.ut.ee/
+
