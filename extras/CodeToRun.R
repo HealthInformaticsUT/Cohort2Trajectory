@@ -51,19 +51,19 @@ conn <- DatabaseConnector::connect(connectionDetails)
 #
 ################################################################################
 
-runGUI(
-  conn,
-  connectionDetails,
-  pathToDriver = pathToDriver,
-  pathToResults = pathToResults,
-  dbms = dbms,
-  cdmSchema = cdmSchema,
-  cdmVocabSchema = cdmVocabSchema,
-  cdmTmpSchema = cdmTmpSchema,
-  cdmResultsSchema = cdmResultsSchema,
-  studyName = studyName,
-  baseUrl = baseUrl
-)
+# runGUI(
+#   conn,
+#   connectionDetails,
+#   pathToDriver = pathToDriver,
+#   pathToResults = pathToResults,
+#   dbms = dbms,
+#   cdmSchema = cdmSchema,
+#   cdmVocabSchema = cdmVocabSchema,
+#   cdmTmpSchema = cdmTmpSchema,
+#   cdmResultsSchema = cdmResultsSchema,
+#   studyName = studyName,
+#   baseUrl = baseUrl
+# )
 
 ################################################################################
 #
@@ -123,7 +123,8 @@ runGUI(
 #   pathToResults = pathToResults,
 #   allowedStatesList = allowedStatesList,
 #   mergeStates = FALSE,
-#   mergeThreshold = 0.5
+#   mergeThreshold = 0.5,
+#   runGeneration = TRUE # Change to FALSE, if you only want to import data from database
 # )
 
 ################################################################################
@@ -199,4 +200,29 @@ runGUI(
 #   oocFix = "None",
 #   mergeStates = FALSE,
 #   mergeThreshold = 0.5
+# )
+
+
+################################################################################
+#
+# Only import data from database, clean related to target cohort
+#
+################################################################################
+# 
+# Cohort2Trajectory(
+#   dbms = dbms,
+#   connection = conn,
+#   cdmSchema = cdmSchema,
+#   cdmVocabSchema = cdmVocabSchema,
+#   cdmTmpSchema = cdmTmpSchema,
+#   cdmResultsSchema = cdmResultsSchema,
+#   studyName = studyName,
+#   baseUrl = baseUrl,
+#   atlasTargetCohort = 1, # Target cohort id from ATLAS
+#   atlasStateCohorts = c(2,3), # State cohorts' ids from ATLAS
+#   stateCohortLabels = c("State2","State3"), # Customized labels in import order
+#   outOfCohortAllowed = TRUE,
+#   runSavedStudy = FALSE,
+#   pathToResults = pathToResults,
+#   runGeneration = FALSE # Change to FALSE, if you only want to import data from database
 # )

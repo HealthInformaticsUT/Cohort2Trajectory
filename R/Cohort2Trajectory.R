@@ -28,6 +28,7 @@
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
+#' @param runGeneration TRUE/FALSE if FALSE no data tranfromation will be run, only the imported dataset will be cleaned
 #' @example man/examples/Cohort2Trajectory.R
 #'
 #' @export
@@ -56,7 +57,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               pathToData = './tmp/datasets/importedData.csv',
                               allowedStatesList = createStateList(stateCohortLabels),
                               mergeStates = FALSE,
-                              mergeThreshold = 0.5) {
+                              mergeThreshold = 0.5,
+                              runGeneration = TRUE) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -304,6 +306,21 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   }
   
   ParallelLogger::logInfo("Data cleaning completed!")
+  
+  save_object(
+    path =  paste(
+      pathToResults,
+      "/tmp/datasets/",
+      studyName,
+      "CleanedImportedData.csv",
+      sep = ""
+    ),
+    object = data
+  )
+  
+  if (!runGeneration){
+    return(ParallelLogger::logInfo("Completed with only cleaning the trajectories!"))
+  }
   
   ParallelLogger::logInfo("Generating trajectories ...")
   result <- NULL

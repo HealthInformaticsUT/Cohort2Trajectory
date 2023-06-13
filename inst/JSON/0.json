@@ -13,40 +13,8 @@
 			"PostDays" : 0
 		},
 		"PrimaryCriteriaLimit" : {
-			"Type" : "First"
+			"Type" : "Last"
 		}
-	},
-	"AdditionalCriteria" : {
-		"Type" : "ALL",
-		"CriteriaList" : [
-			{
-				"Criteria" : {
-					"ConditionEra" : {
-						"CodesetId" : 2
-					}
-				},
-				"StartWindow" : {
-					"Start" : {
-						"Days" : 0,
-						"Coeff" : -1
-					},
-					"End" : {
-						"Coeff" : 1
-					},
-					"UseIndexEnd" : false,
-					"UseEventEnd" : false
-				},
-				"RestrictVisit" : false,
-				"IgnoreObservationPeriod" : false,
-				"Occurrence" : {
-					"Type" : 2,
-					"Count" : 1,
-					"IsDistinct" : false
-				}
-			}
-		],
-		"DemographicCriteriaList" : [],
-		"Groups" : []
 	},
 	"ConceptSets" : [
 		{
@@ -555,72 +523,29 @@
 					}
 				]
 			}
-		},
-		{
-			"id" : 6,
-			"name" : "Telemonitoring",
-			"expression" : {
-				"items" : [
-					{
-						"concept" : {
-							"CONCEPT_ID" : 2721439,
-							"CONCEPT_NAME" : "Congestive heart failure telemonitoring, equipment rental, including telescale, computer system and software, telephone connections, and maintenance, per month",
-							"STANDARD_CONCEPT" : "S",
-							"STANDARD_CONCEPT_CAPTION" : "Standard",
-							"INVALID_REASON" : "V",
-							"INVALID_REASON_CAPTION" : "Valid",
-							"CONCEPT_CODE" : "S9109",
-							"DOMAIN_ID" : "Procedure",
-							"VOCABULARY_ID" : "HCPCS",
-							"CONCEPT_CLASS_ID" : "HCPCS"
-						},
-						"isExcluded" : false,
-						"includeDescendants" : true,
-						"includeMapped" : false
-					},
-					{
-						"concept" : {
-							"CONCEPT_ID" : 43533372,
-							"CONCEPT_NAME" : "Telemonitoring of patient in their home, including all necessary equipment; computer system, connections, and software; maintenance; patient education and support; per month",
-							"STANDARD_CONCEPT" : "S",
-							"STANDARD_CONCEPT_CAPTION" : "Standard",
-							"INVALID_REASON" : "V",
-							"INVALID_REASON_CAPTION" : "Valid",
-							"CONCEPT_CODE" : "S9110",
-							"DOMAIN_ID" : "Procedure",
-							"VOCABULARY_ID" : "HCPCS",
-							"CONCEPT_CLASS_ID" : "HCPCS"
-						},
-						"isExcluded" : false,
-						"includeDescendants" : true,
-						"includeMapped" : false
-					}
-				]
-			}
 		}
 	],
 	"QualifiedLimit" : {
-		"Type" : "First"
+		"Type" : "Last"
 	},
 	"ExpressionLimit" : {
-		"Type" : "First"
+		"Type" : "All"
 	},
 	"InclusionRules" : [
 		{
-			"name" : "No telemonitoring",
+			"name" : "Heart failure",
 			"expression" : {
 				"Type" : "ALL",
 				"CriteriaList" : [
 					{
 						"Criteria" : {
-							"ProcedureOccurrence" : {
-								"CodesetId" : 6,
-								"ProcedureTypeExclude" : false
+							"ConditionOccurrence" : {
+								"CodesetId" : 2,
+								"ConditionTypeExclude" : false
 							}
 						},
 						"StartWindow" : {
 							"Start" : {
-								"Days" : 0,
 								"Coeff" : -1
 							},
 							"End" : {
@@ -632,8 +557,8 @@
 						"RestrictVisit" : false,
 						"IgnoreObservationPeriod" : false,
 						"Occurrence" : {
-							"Type" : 0,
-							"Count" : 0,
+							"Type" : 2,
+							"Count" : 1,
 							"IsDistinct" : false
 						}
 					}
@@ -643,6 +568,12 @@
 			}
 		}
 	],
+	"EndStrategy" : {
+		"DateOffset" : {
+			"DateField" : "StartDate",
+			"Offset" : 1
+		}
+	},
 	"CensoringCriteria" : [],
 	"CollapseSettings" : {
 		"CollapseType" : "ERA",

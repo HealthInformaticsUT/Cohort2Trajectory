@@ -4,6 +4,73 @@
 		"CriteriaList" : [
 			{
 				"VisitOccurrence" : {
+					"CorrelatedCriteria" : {
+						"Type" : "ALL",
+						"CriteriaList" : [
+							{
+								"Criteria" : {
+									"VisitOccurrence" : {
+										"CorrelatedCriteria" : {
+											"Type" : "ALL",
+											"CriteriaList" : [
+												{
+													"Criteria" : {
+														"ConditionOccurrence" : {
+															"CodesetId" : 6,
+															"ConditionTypeExclude" : false
+														}
+													},
+													"StartWindow" : {
+														"Start" : {
+															"Coeff" : -1
+														},
+														"End" : {
+															"Coeff" : 1
+														},
+														"UseIndexEnd" : false,
+														"UseEventEnd" : false
+													},
+													"RestrictVisit" : true,
+													"IgnoreObservationPeriod" : false,
+													"Occurrence" : {
+														"Type" : 2,
+														"Count" : 1,
+														"IsDistinct" : false
+													}
+												}
+											],
+											"DemographicCriteriaList" : [],
+											"Groups" : []
+										},
+										"CodesetId" : 5,
+										"VisitTypeExclude" : false
+									}
+								},
+								"StartWindow" : {
+									"Start" : {
+										"Days" : 365,
+										"Coeff" : -1
+									},
+									"End" : {
+										"Days" : 1,
+										"Coeff" : -1
+									},
+									"UseIndexEnd" : false,
+									"UseEventEnd" : false
+								},
+								"RestrictVisit" : false,
+								"IgnoreObservationPeriod" : true,
+								"Occurrence" : {
+									"Type" : 0,
+									"Count" : 2,
+									"IsDistinct" : false
+								}
+							}
+						],
+						"DemographicCriteriaList" : [],
+						"Groups" : []
+					},
+					"CodesetId" : 5,
 					"VisitTypeExclude" : false
 				}
 			}
@@ -13,40 +80,8 @@
 			"PostDays" : 0
 		},
 		"PrimaryCriteriaLimit" : {
-			"Type" : "First"
+			"Type" : "All"
 		}
-	},
-	"AdditionalCriteria" : {
-		"Type" : "ALL",
-		"CriteriaList" : [
-			{
-				"Criteria" : {
-					"ConditionEra" : {
-						"CodesetId" : 2
-					}
-				},
-				"StartWindow" : {
-					"Start" : {
-						"Days" : 0,
-						"Coeff" : -1
-					},
-					"End" : {
-						"Coeff" : 1
-					},
-					"UseIndexEnd" : false,
-					"UseEventEnd" : false
-				},
-				"RestrictVisit" : false,
-				"IgnoreObservationPeriod" : false,
-				"Occurrence" : {
-					"Type" : 2,
-					"Count" : 1,
-					"IsDistinct" : false
-				}
-			}
-		],
-		"DemographicCriteriaList" : [],
-		"Groups" : []
 	},
 	"ConceptSets" : [
 		{
@@ -143,7 +178,7 @@
 							"VOCABULARY_ID" : "Visit",
 							"CONCEPT_CLASS_ID" : "Visit"
 						},
-						"isExcluded" : false,
+						"isExcluded" : true,
 						"includeDescendants" : false,
 						"includeMapped" : false
 					},
@@ -161,7 +196,7 @@
 							"CONCEPT_CLASS_ID" : "Visit"
 						},
 						"isExcluded" : false,
-						"includeDescendants" : false,
+						"includeDescendants" : true,
 						"includeMapped" : false
 					}
 				]
@@ -304,6 +339,31 @@
 		},
 		{
 			"id" : 4,
+			"name" : "Outpatient visit",
+			"expression" : {
+				"items" : [
+					{
+						"concept" : {
+							"CONCEPT_ID" : 9202,
+							"CONCEPT_NAME" : "Outpatient Visit",
+							"STANDARD_CONCEPT" : "S",
+							"STANDARD_CONCEPT_CAPTION" : "Standard",
+							"INVALID_REASON" : "V",
+							"INVALID_REASON_CAPTION" : "Valid",
+							"CONCEPT_CODE" : "OP",
+							"DOMAIN_ID" : "Visit",
+							"VOCABULARY_ID" : "Visit",
+							"CONCEPT_CLASS_ID" : "Visit"
+						},
+						"isExcluded" : false,
+						"includeDescendants" : false,
+						"includeMapped" : false
+					}
+				]
+			}
+		},
+		{
+			"id" : 5,
 			"name" : "Outpatient & Inpatient visits",
 			"expression" : {
 				"items" : [
@@ -345,7 +405,7 @@
 			}
 		},
 		{
-			"id" : 5,
+			"id" : 6,
 			"name" : "HF",
 			"expression" : {
 				"items" : [
@@ -555,98 +615,58 @@
 					}
 				]
 			}
-		},
-		{
-			"id" : 6,
-			"name" : "Telemonitoring",
-			"expression" : {
-				"items" : [
-					{
-						"concept" : {
-							"CONCEPT_ID" : 2721439,
-							"CONCEPT_NAME" : "Congestive heart failure telemonitoring, equipment rental, including telescale, computer system and software, telephone connections, and maintenance, per month",
-							"STANDARD_CONCEPT" : "S",
-							"STANDARD_CONCEPT_CAPTION" : "Standard",
-							"INVALID_REASON" : "V",
-							"INVALID_REASON_CAPTION" : "Valid",
-							"CONCEPT_CODE" : "S9109",
-							"DOMAIN_ID" : "Procedure",
-							"VOCABULARY_ID" : "HCPCS",
-							"CONCEPT_CLASS_ID" : "HCPCS"
-						},
-						"isExcluded" : false,
-						"includeDescendants" : true,
-						"includeMapped" : false
-					},
-					{
-						"concept" : {
-							"CONCEPT_ID" : 43533372,
-							"CONCEPT_NAME" : "Telemonitoring of patient in their home, including all necessary equipment; computer system, connections, and software; maintenance; patient education and support; per month",
-							"STANDARD_CONCEPT" : "S",
-							"STANDARD_CONCEPT_CAPTION" : "Standard",
-							"INVALID_REASON" : "V",
-							"INVALID_REASON_CAPTION" : "Valid",
-							"CONCEPT_CODE" : "S9110",
-							"DOMAIN_ID" : "Procedure",
-							"VOCABULARY_ID" : "HCPCS",
-							"CONCEPT_CLASS_ID" : "HCPCS"
-						},
-						"isExcluded" : false,
-						"includeDescendants" : true,
-						"includeMapped" : false
-					}
-				]
-			}
 		}
 	],
 	"QualifiedLimit" : {
 		"Type" : "First"
 	},
 	"ExpressionLimit" : {
-		"Type" : "First"
+		"Type" : "All"
 	},
-	"InclusionRules" : [
+	"InclusionRules" : [],
+	"EndStrategy" : {
+		"DateOffset" : {
+			"DateField" : "StartDate",
+			"Offset" : 365
+		}
+	},
+	"CensoringCriteria" : [
 		{
-			"name" : "No telemonitoring",
-			"expression" : {
-				"Type" : "ALL",
-				"CriteriaList" : [
+			"ConditionOccurrence" : {
+				"CodesetId" : 6,
+				"ConditionTypeExclude" : false,
+				"VisitType" : [
 					{
-						"Criteria" : {
-							"ProcedureOccurrence" : {
-								"CodesetId" : 6,
-								"ProcedureTypeExclude" : false
-							}
-						},
-						"StartWindow" : {
-							"Start" : {
-								"Days" : 0,
-								"Coeff" : -1
-							},
-							"End" : {
-								"Coeff" : 1
-							},
-							"UseIndexEnd" : false,
-							"UseEventEnd" : false
-						},
-						"RestrictVisit" : false,
-						"IgnoreObservationPeriod" : false,
-						"Occurrence" : {
-							"Type" : 0,
-							"Count" : 0,
-							"IsDistinct" : false
-						}
+						"CONCEPT_ID" : 9201,
+						"CONCEPT_NAME" : "Inpatient Visit",
+						"STANDARD_CONCEPT" : null,
+						"STANDARD_CONCEPT_CAPTION" : "Unknown",
+						"INVALID_REASON" : null,
+						"INVALID_REASON_CAPTION" : "Unknown",
+						"CONCEPT_CODE" : "IP",
+						"DOMAIN_ID" : "Visit",
+						"VOCABULARY_ID" : "Visit",
+						"CONCEPT_CLASS_ID" : null
+					},
+					{
+						"CONCEPT_ID" : 9202,
+						"CONCEPT_NAME" : "Outpatient Visit",
+						"STANDARD_CONCEPT" : null,
+						"STANDARD_CONCEPT_CAPTION" : "Unknown",
+						"INVALID_REASON" : null,
+						"INVALID_REASON_CAPTION" : "Unknown",
+						"CONCEPT_CODE" : "OP",
+						"DOMAIN_ID" : "Visit",
+						"VOCABULARY_ID" : "Visit",
+						"CONCEPT_CLASS_ID" : null
 					}
-				],
-				"DemographicCriteriaList" : [],
-				"Groups" : []
+				]
 			}
 		}
 	],
-	"CensoringCriteria" : [],
 	"CollapseSettings" : {
 		"CollapseType" : "ERA",
-		"EraPad" : 0
+		"EraPad" : 31
 	},
 	"CensorWindow" : {}
 }
