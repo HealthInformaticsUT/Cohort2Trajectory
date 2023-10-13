@@ -16,7 +16,20 @@ header <-
                                       style = "padding-top:0px; padding-bottom:0px;"
                                     ),
                                     class = "dropdown"
-                                  ))
+                                  ),
+                                  tags$li(
+                                    div(
+                                      img(
+                                        src = 'images/UT.png',
+                                        title = "UNIVERSITY OF TARTU",
+                                        height = "40px",
+                                        width = "184px"
+                                      ),
+                                      style = "padding-top:0px; padding-bottom:0px;"
+                                    ),
+                                    class = "dropdown"
+                                  )                           
+                                 )
 
 
 ################################################################################
