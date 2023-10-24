@@ -919,14 +919,16 @@ server <- function(input, output, session) {
       })
     names(allowedTransitions_ids) = stateVector
     for (state in stateVector) {
-      targets = sprintf(input[[allowedTransitions_ids[[state]]]])
+      if (length(input[[allowedTransitions_ids[[state]]]]) == 0) {
+        # If there are no allowed targets, then the state is absorbing and we allow transition only to that state just in case.
+        v$allowedTransitions[[state]] <- c(state)
+        v$absorbingStates = union(input$absorbingStates, state)
+      }
+      else{
+      # targets = sprintf(input[[allowedTransitions_ids[[state]]]])
       v$allowedTransitions[[state]] <-
         sprintf(input[[allowedTransitions_ids[[state]]]])
-      if ((length(targets) == 0)) {
-        # If there are no allowed targets, then the state is absorbing.
-        input$absorbingStates = union(input$absorbingStates, state)
       }
-      
     }
     names(v$allowedTransitions) = stateVector
     
@@ -958,13 +960,14 @@ server <- function(input, output, session) {
       
       v$allowedTransitions <- allowedStatesList_updated
       
+      v$absorbingStates <- if(is.null(input$absorbingStates)) c("No absorbing state") else input$absorbingStates
       v$absorbingStates <-
-        unique(unlist(lapply(input$absorbingStates, function(state_name) {
+        unique(unlist(lapply(v$absorbingStates, function(state_name) {
           v$rankListPriority[grepl(state_name, v$rankListPriority)]
         })))
     } else {
       v$rankListPriority <- input$rankListPriority
-      v$absorbingStates <- input$absorbingStates
+      v$absorbingStates <- if(is.null(input$absorbingStates)) c("No absorbing state") else input$absorbingStates
     }
     
     progress$set(message = "Generating trajectories", value = 1 /
@@ -993,6 +996,11 @@ server <- function(input, output, session) {
         # Filter the data based on the current batch of SUBJECT_ID values
         batch_data <- subset(cohortData, SUBJECT_ID %in% batch)
       
+        # print(v$stateLength)
+        # print(input$stateSelectionType)
+        # print(v$rankListPriority)
+        # print(v$absorbingStates)
+        # print(input$fixOutOfCohort)
       result <- getTrajectoriesDiscrete(
         connection = conn,
         cohortData = batch_data,

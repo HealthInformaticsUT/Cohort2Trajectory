@@ -110,7 +110,9 @@ body <- shinydashboard::dashboardBody(
         solidHeader = TRUE,
         uiOutput("stateCohorts")
       ),
-      
+      tags$head(
+        tags$style(HTML('#importDataButton{background-color:orange}'))
+      ),
       shiny::actionButton("importDataButton", "Import data"),
       
       shinydashboard::tabBox(
@@ -161,6 +163,9 @@ body <- shinydashboard::dashboardBody(
                                 ),
                                 placeholder = "State 1, State 2, ..."
                               ),
+                              tags$head(
+                                tags$style(HTML('#customiseButton{background-color:orange}'))
+                              ),
                               actionButton("customiseButton", "Apply")
                             )
                           )
@@ -188,9 +193,21 @@ body <- shinydashboard::dashboardBody(
           placeholder = "Target cohort JSON...",
           height = '300px'
         ),
+        tags$head(
+          tags$style(HTML('#importInstButtonJSON{background-color:orange}'))
+        ),
         shiny::actionButton("importInstButtonJSON", "Show saved JSONs"),
+        tags$head(
+          tags$style(HTML('#addButtonJSON{background-color:orange}'))
+        ),
         shiny::actionButton("addButtonJSON", "Add state"),
+        tags$head(
+          tags$style(HTML('#rmButtonJSON{background-color:orange}'))
+        ),
         shiny::actionButton("rmButtonJSON", "Remove state"),
+        tags$head(
+          tags$style(HTML('#importDataButtonJSON{background-color:orange}'))
+        ),
         shiny::actionButton("importDataButtonJSON", "Import data")
       ),
       shiny::fluidRow(shiny::column(
@@ -267,6 +284,9 @@ body <- shinydashboard::dashboardBody(
                             status = "primary",
                             solidHeader = T,
                             shinycssloaders::withSpinner(shiny::plotOutput("stateOverlapHeatmap")),
+                            tags$head(
+                              tags$style(HTML('#heatmapButton{background-color:orange}'))
+                            ),
                             shiny::actionButton("heatmapButton", "Show heatmap!"),
                           )
                         )
@@ -438,6 +458,9 @@ body <- shinydashboard::dashboardBody(
           placeholder = "Person Id"
         )
       )),
+      tags$head(
+        tags$style(HTML('#profileSearchButton{background-color:orange}'))
+      ),
       actionButton("profileSearchButton", "Search"),
       shinydashboard::tabBox(
         title = "Profile's overview",
@@ -482,6 +505,9 @@ body <- shinydashboard::dashboardBody(
               value = 30,
               min = 0
             )
+          ),
+          tags$head(
+            tags$style(HTML('#refreshPlotButton{background-color:orange}'))
           ),
           actionButton("refreshPlotButton", "Refresh")
         )
