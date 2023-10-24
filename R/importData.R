@@ -488,22 +488,22 @@ getTrajectoriesDiscrete <- function(connection,
   #
   ################################################################################
   
-  stateSelectionName <- NULL
-  if (stateSelection == "1") {
-    stateSelectionName <- "FirstOccurring"
-  }
-  else if (stateSelection == "2") {
-    stateSelectionName <- "Overlap"
-  }
-  else if (stateSelection == "3") {
-    stateSelectionName <- "Priority"
-  }
-  
+  # stateSelectionName <- NULL
+  # if (stateSelection == "1") {
+  #   stateSelectionName <- "FirstOccurring"
+  # }
+  # else if (stateSelection == "2") {
+  #   stateSelectionName <- "Overlap"
+  # }
+  # else if (stateSelection == "3") {
+  #   stateSelectionName <- "Priority"
+  # }
+  # 
   states = as.character(c("START", setdiff(
     unique(newPatientData$STATE_LABEL), c('START', 'EXIT')
   ), "EXIT"))
   n = length(states)
-  
+
   newPatientData$STATE_ID =
     plyr::mapvalues(
       x = newPatientData$STATE_LABEL,
@@ -511,34 +511,34 @@ getTrajectoriesDiscrete <- function(connection,
       to = 1:n,
       warn_missing = FALSE
     )
-  
-  save_object(newPatientData,
-              path = paste(
-                pathToResults,
-                paste(
-                  "/tmp/datasets/",
-                  studyName,
-                  "patientData",
-                  stateSelectionName,
-                  ".csv",
-                  sep = ""
-                ),
-                sep = ""
-              ))
-  ParallelLogger::logInfo(paste(
-    "Saved trajectory dataframe: ",
-    pathToResults,
-    paste(
-      "/tmp/datasets/",
-      studyName,
-      "patientData",
-      stateSelectionName,
-      ".csv",
-      sep = ""
-    ),
-    sep = ""
-  ))
-  
+  # 
+  # save_object(newPatientData,
+  #             path = paste(
+  #               pathToResults,
+  #               paste(
+  #                 "/tmp/datasets/",
+  #                 studyName,
+  #                 "patientData",
+  #                 stateSelectionName,
+  #                 ".csv",
+  #                 sep = ""
+  #               ),
+  #               sep = ""
+  #             ))
+  # ParallelLogger::logInfo(paste(
+  #   "Saved trajectory dataframe: ",
+  #   pathToResults,
+  #   paste(
+  #     "/tmp/datasets/",
+  #     studyName,
+  #     "patientData",
+  #     stateSelectionName,
+  #     ".csv",
+  #     sep = ""
+  #   ),
+  #   sep = ""
+  # ))
+  # 
   
   return(newPatientData)
 }

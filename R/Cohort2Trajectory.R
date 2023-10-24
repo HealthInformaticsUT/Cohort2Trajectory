@@ -324,33 +324,111 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   ParallelLogger::logInfo("Generating trajectories ...")
   result <- NULL
+  unique_subject_ids <- unique(data$SUBJECT_ID)
+  batch_size <- 1000
+  batches <- split(unique_subject_ids, ceiling(seq_along(unique_subject_ids) / batch_size))
+  
+  # Create an empty dataframe to store the combined results
+  combined_results <- data.frame()
+  i = 0
+  
   if (trajectoryType == 0) {
-    result <- getTrajectoriesDiscrete(
-      connection = connection,
-      cohortData = data,
-      stateDuration = lengthOfStay,
-      pathToResults = pathToResults,
-      oocFix = oocFix,
-      stateSelection = stateSelectionType,
-      statePriorityVector = stateCohortPriorityOrder,
-      absorbingStates = stateCohortAbsorbing,
-      studyName = studyName,
-      addPersonalData = useCDM,
-      allowedStatesList = allowedStatesList
-    )
+    for (batch in batches) {
+      i = i + 1
+      ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
+      # Filter the data based on the current batch of SUBJECT_ID values
+      batch_data <- subset(data, SUBJECT_ID %in% batch)
+      
+      # Call your function with the filtered data
+      result <- getTrajectoriesDiscrete(
+        connection = connection,
+        cohortData = batch_data,
+        stateDuration = lengthOfStay,
+        pathToResults = pathToResults,
+        oocFix = oocFix,
+        stateSelection = stateSelectionType,
+        statePriorityVector = stateCohortPriorityOrder,
+        absorbingStates = stateCohortAbsorbing,
+        studyName = studyName,
+        addPersonalData = useCDM,
+        allowedStatesList = allowedStatesList
+      )
+      
+      # Bind the result to the combined_results dataframe
+      combined_results <- rbind(combined_results, result)
+      save_object(combined_results,
+                  path = paste(
+                    pathToResults,
+                    paste(
+                      "/tmp/datasets/",
+                      studyName,
+                      "patientDataDiscrete.csv",
+                      sep = ""
+                    ),
+                    sep = ""
+                  ))
+
+    }
+    
+    ParallelLogger::logInfo(paste(
+      "Saved trajectory dataframe: ",
+      pathToResults,
+      paste(
+        "/tmp/datasets/",
+        studyName,
+        "patientDataDiscrete.csv",
+        sep = ""
+      ),
+      sep = ""
+    ))
+    
   }
   else if (trajectoryType == 1) {
-    result <- getTrajectoriesContinuous(
-      connection = connection,
-      patientData =  data,
-      pathToResults = pathToResults,
-      stateSelection = stateSelectionType,
-      statePriorityVector = stateCohortPriorityOrder,
-      absorbingStates = stateCohortAbsorbing,
-      studyName = studyName,
-      addPersonalData = useCDM,
-      allowedStatesList = allowedStatesList
-    )
+    for (batch in batches) {
+      i = i + 1
+      ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
+      # Filter the data based on the current batch of SUBJECT_ID values
+      batch_data <- subset(data, SUBJECT_ID %in% batch)
+      
+      # Call your function with the filtered data
+      result <- getTrajectoriesContinuous(
+        connection = connection,
+        patientData =  batch_data,
+        pathToResults = pathToResults,
+        stateSelection = stateSelectionType,
+        statePriorityVector = stateCohortPriorityOrder,
+        absorbingStates = stateCohortAbsorbing,
+        studyName = studyName,
+        addPersonalData = useCDM,
+        allowedStatesList = allowedStatesList
+      )
+      
+      # Bind the result to the combined_results dataframe
+      combined_results <- rbind(combined_results, result)
+      save_object(combined_results,
+                  path = paste(
+                    pathToResults,
+                    paste(
+                      "/tmp/datasets/",
+                      studyName,
+                      "patientDataContinuous.csv",
+                      sep = ""
+                    ),
+                    sep = ""
+                  ))
+      
+    }
+    ParallelLogger::logInfo(paste(
+      "Saved trajectory dataframe: ",
+      pathToResults,
+      paste(
+        "/tmp/datasets/",
+        studyName,
+        "patientDataContinuous.csv",
+        sep = ""
+      ),
+      sep = ""
+    ))
   }
   
   
@@ -369,7 +447,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     connection = connection,
     tableName = paste(studyName, "patient_trajectories", sep = "_"),
     databaseSchema = cdmTmpSchema,
-    data = result
+    data = combined_results
   )
   
   ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")

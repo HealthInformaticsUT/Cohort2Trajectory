@@ -962,6 +962,9 @@ server <- function(input, output, session) {
         unique(unlist(lapply(input$absorbingStates, function(state_name) {
           v$rankListPriority[grepl(state_name, v$rankListPriority)]
         })))
+    } else {
+      v$rankListPriority <- input$rankListPriority
+      v$absorbingStates <- input$absorbingStates
     }
     
     progress$set(message = "Generating trajectories", value = 1 /
@@ -973,10 +976,26 @@ server <- function(input, output, session) {
     # Generation
     #
     ############################################################################
+    ParallelLogger::logInfo("Generating trajectories ...")
+    result <- NULL
+    unique_subject_ids <- unique(cohortData$SUBJECT_ID)
+    batch_size <- 1000
+    batches <- split(unique_subject_ids, ceiling(seq_along(unique_subject_ids) / batch_size))
+    
+    # Create an empty dataframe to store the combined results
+    combined_results <- data.frame()
+    i = 0
+    
     if (input$trajectoryType == 0) {
+      for (batch in batches) {
+        i = i + 1
+        ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
+        # Filter the data based on the current batch of SUBJECT_ID values
+        batch_data <- subset(cohortData, SUBJECT_ID %in% batch)
+      
       result <- getTrajectoriesDiscrete(
         connection = conn,
-        cohortData = cohortData,
+        cohortData = batch_data,
         stateDuration = v$stateLength,
         stateSelection = input$stateSelectionType,
         statePriorityVector = v$rankListPriority,
@@ -986,18 +1005,75 @@ server <- function(input, output, session) {
         pathToResults = pathToResults,
         allowedStatesList = v$allowedTransitions
       )
+      # Bind the result to the combined_results dataframe
+      combined_results <- rbind(combined_results, result)
+      save_object(combined_results,
+                  path = paste(
+                    pathToResults,
+                    paste(
+                      "/tmp/datasets/",
+                      studyName,
+                      "patientDataDiscrete.csv",
+                      sep = ""
+                    ),
+                    sep = ""
+                  ))
+      
+      }
+      ParallelLogger::logInfo(paste(
+        "Saved trajectory dataframe: ",
+        pathToResults,
+        paste(
+          "/tmp/datasets/",
+          studyName,
+          "patientDataDiscrete.csv",
+          sep = ""
+        ),
+        sep = ""
+      ))
     }
     else if (input$trajectoryType == 1) {
+      for (batch in batches) {
+        i = i + 1
+        ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
+        # Filter the data based on the current batch of SUBJECT_ID values
+        batch_data <- subset(cohortData, SUBJECT_ID %in% batch)
       result <- getTrajectoriesContinuous(
         connection = conn,
         stateSelection = input$stateSelectionType,
-        patientData =  cohortData,
+        patientData =  batch_data,
         statePriorityVector = v$rankListPriority,
         absorbingStates = v$absorbingStates,
         studyName = studyName,
         pathToResults = pathToResults,
         allowedStatesList = v$allowedTransitions
       )
+      # Bind the result to the combined_results dataframe
+      combined_results <- rbind(combined_results, result)
+      save_object(combined_results,
+                  path = paste(
+                    pathToResults,
+                    paste(
+                      "/tmp/datasets/",
+                      studyName,
+                      "patientDataContinuous.csv",
+                      sep = ""
+                    ),
+                    sep = ""
+                  ))
+      }
+      
+      ParallelLogger::logInfo(paste(
+        "Saved trajectory dataframe: ",
+        pathToResults,
+        paste(
+          "/tmp/datasets/",
+          studyName,
+          "patientDataContinuous.csv",
+          sep = ""
+        ),
+        sep = ""
+      ))
     }
     ############################################################################
     #

@@ -4,7 +4,7 @@ library(Eunomia)
 connectionDetails <- getEunomiaConnectionDetails()
 
 test_that("Get connection details", {
-  expect_s3_class(connectionDetails, "ConnectionDetails")
+  expect_s3_class(connectionDetails, "connectionDetails")
 })
 
 test_that("Connect", {
