@@ -46,13 +46,16 @@ DataFrame mergeCohorts(DataFrame data, double threshold,  std::vector<int> patie
     
     int n = states.size();
     if (n < 2) {
+      // Rcout << "The value of v : " << patientID << "\n";
       outpatientIDs.push_back(patientID);
       outStates.push_back(states[0]);
+      // Rcout << "The value of v : " << states[0] << "\n";
       outStartDates.push_back(controlStart[0]);
       outEndDates.push_back(controlEnd[0]);
-      continue;
+      //continue;
     }
-    for (int i = 0; i < n - 1; ++i) {
+    else{
+    for (int i = 0; i < n; ++i) {
       // We add every state, user can later choose the priority
       outpatientIDs.push_back(patientID);
       outStates.push_back(states[i]);
@@ -71,6 +74,7 @@ DataFrame mergeCohorts(DataFrame data, double threshold,  std::vector<int> patie
         }
       }
     }
+  }
   }
   return DataFrame::create(_["SUBJECT_ID"] = outpatientIDs, _["COHORT_DEFINITION_ID"] = outStates, _["COHORT_START_DATE"] = outStartDates, _["COHORT_END_DATE"] = outEndDates);
 }

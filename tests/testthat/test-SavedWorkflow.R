@@ -2,7 +2,7 @@ library(testthat)
 library(Eunomia)
 library(Cohort2Trajectory)
 
-test_that("Constructed trajectory data nrow is equal to expected (5532)", {
+test_that("Constructed trajectory data nrow is equal to expected (63)", {
 studyName <- "TestCohort2TrajectorySaved" # TODO
 pathToResults <<-  dirname(getwd()) # TODO # default value: paste(getwd(), "/tmp", sep = "")
 
@@ -54,6 +54,6 @@ Cohort2Trajectory::Cohort2Trajectory(
 
 data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorySavedpatientDataPriority.csv", sep = ""))
 
-  expect_equal(nrow(data), 63)
+  expect_equal(nrow(data), 65)
 })
 #> Test passed 🥇

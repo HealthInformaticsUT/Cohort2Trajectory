@@ -218,8 +218,9 @@ cleanCohortData <- function(cohortData,
                             outOfCohortAllowed = FALSE,
                             mergeStates = FALSE,
                             mergeThreshold = 0.5) {
-  data_tmp <- cohortData
   
+  data_tmp <- cohortData
+
   ##############################################################################
   #
   # Preserving only patients which are present in the target cohort
@@ -252,7 +253,6 @@ cleanCohortData <- function(cohortData,
   # Selecting information about the states
   data_states <-
     dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
-  
   if (mergeStates) {
     ParallelLogger::logInfo("Merging labels according to the specified treshold!")
     
@@ -260,7 +260,7 @@ cleanCohortData <- function(cohortData,
       combineCohorts(data_states,
                      mergeThreshold,
                      unique(data_states$SUBJECT_ID))
-    
+
     ParallelLogger::logInfo("Label merging completed!")
   }
   data_tmp <- rbind(data_target, data_states)
@@ -327,9 +327,9 @@ cleanCohortData <- function(cohortData,
       
     }
   }
+
   data_tmp <-
     dplyr::filter(data_tmp, SUBJECT_ID %in% patientsEligible)
-  
   ##############################################################################
   #
   # Adding feature "TIME IN COHORT"
