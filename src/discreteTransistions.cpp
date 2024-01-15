@@ -139,7 +139,7 @@ DataFrame getDiscreteStates(int stateSelection,
         state = "OUT OF COHORT";
         }
         else if (oocFix == "Last present state"){
-          state = lastState;
+          state = lastLegalState;
         }
         else{
           state = oocFix;
