@@ -41,7 +41,7 @@ Cohort2Trajectory is licensed under Apache License 2.0
 
 Development
 ===========
-Cohort2Trajectory is being developed in R Studio.
+Cohort2Trajectory is being developed in R Studio. Feel free to contact the maintainer with questions: markus.haug@ut.ee
 
 Citation
 ===========
