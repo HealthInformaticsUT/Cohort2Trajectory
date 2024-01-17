@@ -174,8 +174,26 @@ DataFrame getDiscreteStates(int stateSelection,
         // indexMax = which.max(daysShift)
         // state = states[maxElementIndex];;
         state = states[index];
-        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-        if (isPresent != allowedStates.end()){
+        
+        // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
+        std::string lowercaseState = state;
+        std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
+        
+        bool isPresent = false;
+        int numAllowedStates = allowedStates.size();
+        
+        for (int i = 0; i < numAllowedStates; i++) {
+          std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
+          std::string lowercaseAllowedState = allowedState;
+          std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
+          
+          if (lowercaseAllowedState == lowercaseState) {
+            isPresent = true;
+            break;
+          }
+        }
+        
+        if (isPresent){
           lastState = state;
           break;
         }
@@ -258,8 +276,26 @@ DataFrame getDiscreteStates(int stateSelection,
           int maxElementIndex = std::max_element(daysOverlapVector.begin(),daysOverlapVector.end()) - daysOverlapVector.begin();
           state = states[maxElementIndex];
           
-          auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-          if (isPresent != allowedStates.end()){
+          std::string lowercaseState = state;
+          std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
+          
+          bool isPresent = false;
+          int numAllowedStates = allowedStates.size();
+          
+          for (int i = 0; i < numAllowedStates; i++) {
+            std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
+            std::string lowercaseAllowedState = allowedState;
+            std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
+            
+            if (lowercaseAllowedState == lowercaseState) {
+              isPresent = true;
+              break;
+            }
+          }
+          // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
+          // Rcpp::Rcout << (isPresent != allowedStates.end()) << '\n';
+          //if (isPresent != allowedStates.end()){
+          if (isPresent){
             lastState = state;
             break;
           }
@@ -345,9 +381,26 @@ DataFrame getDiscreteStates(int stateSelection,
             // int index_result = index_result - statePriorityVector.end();
             std::string candidateState;
             candidateState = statePriorityVector[index_result];
-            auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), candidateState);
             
-            if(index_result < maxPriorityIndex && isPresent != allowedStates.end()){
+            //auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), candidateState);
+            std::string lowercaseState = candidateState;
+            std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
+            
+            bool isPresent = false;
+            int numAllowedStates = allowedStates.size();
+            
+            for (int i = 0; i < numAllowedStates; i++) {
+              std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
+              std::string lowercaseAllowedState = allowedState;
+              std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
+              
+              if (lowercaseAllowedState == lowercaseState) {
+                isPresent = true;
+                break;
+              }
+            }
+            
+            if(index_result < maxPriorityIndex && isPresent){
               maxPriorityIndex = index_result;
               state = candidateState;
             }
