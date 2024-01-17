@@ -139,6 +139,9 @@ DataFrame getDiscreteStates(int stateSelection,
         state = "OUT OF COHORT";
         }
         else if (oocFix == "Last present state"){
+          if (lastLegalState == "$$not_intialized_yet$$") {
+            lastLegalState =  "OUT OF COHORT";
+          }
           state = lastLegalState;
         }
         else{
@@ -182,6 +185,9 @@ DataFrame getDiscreteStates(int stateSelection,
             state = "OUT OF COHORT";
           }
           else if (oocFix == "Last present state"){
+            if (lastLegalState == "$$not_intialized_yet$$") {
+              lastLegalState =  "OUT OF COHORT";
+            }
             state = lastLegalState;
           }
           else{
@@ -228,6 +234,9 @@ DataFrame getDiscreteStates(int stateSelection,
           state = "OUT OF COHORT";
         }
         else if (oocFix == "Last present state"){
+          if (lastLegalState == "$$not_intialized_yet$$") {
+            lastLegalState =  "OUT OF COHORT";
+          }
           state = lastLegalState;
         }
         else{
@@ -261,6 +270,9 @@ DataFrame getDiscreteStates(int stateSelection,
                 state = "OUT OF COHORT";
               }
               else if (oocFix == "Last present state"){
+                if (lastLegalState == "$$not_intialized_yet$$") {
+                  lastLegalState =  "OUT OF COHORT";
+                }
                 state = lastLegalState;
               }
               else{
@@ -307,6 +319,9 @@ DataFrame getDiscreteStates(int stateSelection,
           state = "OUT OF COHORT";
         }
         else if (oocFix == "Last present state"){
+          if (lastLegalState == "$$not_intialized_yet$$") {
+            lastLegalState =  "OUT OF COHORT";
+          }
           state = lastLegalState;
         }
         else{
@@ -343,6 +358,9 @@ DataFrame getDiscreteStates(int stateSelection,
                 state = "OUT OF COHORT";
               }
               else if (oocFix == "Last present state"){
+                if (lastLegalState == "$$not_intialized_yet$$") {
+                  lastLegalState =  "OUT OF COHORT";
+                  }
                 state = lastLegalState;
               }
               else{
