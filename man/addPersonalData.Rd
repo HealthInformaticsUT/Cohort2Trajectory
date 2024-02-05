@@ -4,7 +4,7 @@
 \alias{addPersonalData}
 \title{This function adds personal data to subjects: age, gender}
 \usage{
-addPersonalData(cohortData, connection, cdmSchema)
+addPersonalData(cohortData, dbms, connection, cdmSchema)
 }
 \arguments{
 \item{cohortData}{Imported cohort data}

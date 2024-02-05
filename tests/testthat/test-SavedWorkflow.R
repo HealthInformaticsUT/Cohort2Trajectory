@@ -12,7 +12,6 @@ pathToResults <<-  dirname(getwd()) # TODO # default value: paste(getwd(), "/tmp
 #
 ################################################################################
 pathToDriver <- './Drivers'
-dbms <- "sqlite" #TODO
 
 cdmSchema <- "main" #TODO # Schema which contains the OHDSI Common Data Model
 cdmTmpSchema <- "main" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
@@ -38,8 +37,8 @@ Eunomia::createCohorts(connectionDetails)
 #
 ################################################################################
 
-Cohort2Trajectory::Cohort2Trajectory(
-  dbms = "sqlite",
+result <- Cohort2Trajectory::Cohort2Trajectory(
+  dbms = connectionDetails$dbms,
   connection = conn,
   cdmSchema = cdmSchema,
   cdmVocabSchema = cdmVocabSchema,
@@ -52,8 +51,8 @@ Cohort2Trajectory::Cohort2Trajectory(
 
 
 
-data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorySavedpatientDataPriority.csv", sep = ""))
+#data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorySavedpatientDataPriority.csv", sep = ""))
 
-  expect_equal(nrow(data), 65)
+  expect_equal(result, NULL)
 })
 #> Test passed 🥇

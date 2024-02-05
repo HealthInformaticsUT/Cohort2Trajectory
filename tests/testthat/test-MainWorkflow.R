@@ -38,7 +38,7 @@ Eunomia::createCohorts(connectionDetails)
 ################################################################################
 
 Cohort2Trajectory(
-  dbms = "sqlite",
+  dbms = connectionDetails$dbms,
   connection = conn,
   cdmSchema = cdmSchema,
   cdmVocabSchema = cdmVocabSchema,

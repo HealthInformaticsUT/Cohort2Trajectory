@@ -162,7 +162,7 @@ getCohortData <- function(connection,
 #' @param cdmSchema Schema where "person" table resides
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
-addPersonalData <- function(cohortData, connection, cdmSchema) {
+addPersonalData <- function(cohortData, dbms, connection, cdmSchema) {
   data <- cohortData
   ##############################################################################
   #
@@ -431,6 +431,7 @@ getInclusionTable <- function(cohortData,
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @keywords internal
 getTrajectoriesDiscrete <- function(connection,
+                                    dbms,
                                     cohortData,
                                     stateDuration = 30,
                                     pathToResults = getwd(),
@@ -476,7 +477,7 @@ getTrajectoriesDiscrete <- function(connection,
   
   if (addPersonalData) {
     newPatientData <-
-      addPersonalData(newPatientData, connection, cdmSchema)
+      addPersonalData(newPatientData, connection, dbms = dbms, cdmSchema)
   }
   else {
     newPatientData$GENDER_CONCEPT_ID = 0
