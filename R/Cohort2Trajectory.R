@@ -250,6 +250,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     data = readr::read_csv(pathToData)
     ParallelLogger::logInfo("Read complete!")}
     else{
+      trajectoryDataObject$COHORT_DEFINITION_ID = sanitize_filenames(trajectoryDataObject$COHORT_DEFINITION_ID)
     data = trajectoryDataObject
     }
   }
