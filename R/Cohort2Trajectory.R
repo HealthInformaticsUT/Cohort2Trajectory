@@ -24,7 +24,8 @@
 #' @param lengthOfStay The length of stay (days) in one state (Effect only in discrete case)
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param useCDM The package can also be run without the OMOP CDM
-#' @param pathToData When using without OMOP CDM specify the path to data file
+#' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
+#' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
@@ -54,6 +55,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               runSavedStudy = FALSE,
                               pathToResults = getwd(),
                               useCDM = TRUE,
+                              trajectoryDataObject = FALSE,
                               pathToData = './tmp/datasets/importedData.csv',
                               allowedStatesList = createStateList(stateCohortLabels),
                               mergeStates = FALSE,
@@ -243,9 +245,13 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     
   }
   else {
+    if (is.null(trajectoryDataObject)) {
     ParallelLogger::logInfo("Importing data ...")
     data = readr::read_csv(pathToData)
-    ParallelLogger::logInfo("Read complete!")
+    ParallelLogger::logInfo("Read complete!")}
+    else{
+    data = trajectoryDataObject
+    }
   }
   
   data <-

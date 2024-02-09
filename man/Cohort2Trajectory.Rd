@@ -27,6 +27,7 @@ Cohort2Trajectory(
   runSavedStudy = FALSE,
   pathToResults = getwd(),
   useCDM = TRUE,
+  trajectoryDataObject = FALSE,
   pathToData = "./tmp/datasets/importedData.csv",
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
@@ -71,7 +72,9 @@ Cohort2Trajectory(
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 
-\item{pathToData}{When using without OMOP CDM specify the path to data file}
+\item{trajectoryDataObject}{When using without OMOP CDM specify the data file  (if specified no need for pathToData)}
+
+\item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
 

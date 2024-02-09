@@ -16,17 +16,17 @@ pathToResults <- getwd()   # TODO
 ################################################################################
 pathToDriver <- './Drivers'
 dbms <- "postgresql" #TODO
-user <- 'user' #TODO
-pw <- "password" #TODO
-server <- 'ip/database' #TODO
-port <- '5432' #TODO
+user <- 'markus' #TODO
+pw <- "Maarjaviktoria90" #TODO
+server <- 'localhost/maitt' #TODO
+port <- '63333' #TODO
 
-cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
-cdmVocabSchema <- "ohdsi_vocab" #TODO # Schema which contains the OHDSI Common Data Model vocabulary tables.
-cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
+cdmSchema <- "ohdsi_cdm_202207" #TODO # Schema which contains the OHDSI Common Data Model
+cdmVocabSchema <- "ohdsi_cdm_202207" #TODO # Schema which contains the OHDSI Common Data Model vocabulary tables.
+cdmTmpSchema <- "user_markus" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
+cdmResultsSchema <- "ohdsi_results_202207" #TODO # Schema which will contain the final results
 
-baseUrl <- "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
+baseUrl <- "http://localhost:63344/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
 ################################################################################
 #
 # Initiate the database connection
@@ -45,6 +45,59 @@ connectionDetails <-
 
 conn <- DatabaseConnector::connect(connectionDetails)
 
+stateCohortLabels = c("Depressioon", "Muud Ärevushäired", "Rasked stressireaktsioonid", "Ainete kuritarvitamine", "Unehäired", "ADHD")
+allowedStatesList = createStateList(c("Depressioon", "Muud Ärevushäired", "Rasked stressireaktsioonid", "Ainete kuritarvitamine", "Unehäired", "ADHD")) # Creates a list allowing all transitions from each state
+#allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State3") # removes possibility to move from state1 to state2
+################################################################################
+#
+# Create the trajectories without using GUI
+#
+################################################################################
+# 
+Cohort2Trajectory(
+  dbms = dbms,
+  connection = conn,
+  cdmSchema = cdmSchema,
+  cdmVocabSchema = cdmVocabSchema,
+  cdmTmpSchema = cdmTmpSchema,
+  cdmResultsSchema = cdmResultsSchema,
+  studyName = studyName,
+  baseUrl = baseUrl,
+  atlasTargetCohort = 1070, # Target cohort id from ATLAS
+  atlasStateCohorts = c(1024, 1025, 1026, 1027, 1028, 1029), # State cohorts' ids from ATLAS
+  stateCohortLabels = c("Depressioon", "Muud Ärevushäired", "Rasked stressireaktsioonid", "Ainete kuritarvitamine", "Unehäired", "ADHD"), # Customized labels in import order
+  stateCohortPriorityOrder = c("Unehäired", "Depressioon", "Muud Ärevushäired", "Rasked stressireaktsioonid", "Ainete kuritarvitamine", "ADHD"), # Priority order of states
+  stateCohortMandatory = NULL, # Mandatory states
+  #stateCohortAbsorbing = c("State3"), # Absorbing states
+  ##############################################################################
+  # stateSelectionTypes
+  # 1 - First occurring
+  # 2 - Largest overlap
+  # 3 - Priority ordering
+  ##############################################################################
+  stateSelectionType = 1,
+  ##############################################################################
+  # trajectoryType
+  # 0 - Discrete time
+  # 1 - Continuous time
+  ##############################################################################
+  trajectoryType = 0,
+  ##############################################################################
+  # oocFix --> Out of cohort fix
+  # None - The "OUT OF COHORT" state remains
+  # Last present state - The "OUT OF COHORT" state is replaced with the latest present state
+  # any of the defined states - The "OUT OF COHORT" state is replaced with the declared state
+  ##############################################################################
+  oocFix = "Last present state",
+  lengthOfStay = 30,
+  outOfCohortAllowed = TRUE,
+  runSavedStudy = FALSE,
+  pathToResults = pathToResults,
+  allowedStatesList = allowedStatesList,
+  mergeStates = FALSE,
+  mergeThreshold = 0.5,
+  runGeneration = TRUE # Change to FALSE, if you only want to import data from database
+)
 ################################################################################
 #
 # Start the GUI application
