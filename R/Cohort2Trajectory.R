@@ -345,7 +345,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   
   # Create an empty dataframe to store the combined results
-  combined_results <- data.frame()
   i = 0
   if (as.numeric(trajectoryType) == 0) {
     for (batch in batches) {
@@ -369,13 +368,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
         addPersonalData = useCDM,
         allowedStatesList = allowedStatesList
       )
-      # Bind the result to the combined_results dataframe
-      combined_results <- rbind(combined_results, result)
-      if (nrow(combined_results == 0)){
+
+      if (nrow(result)== 0){
         ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
         return(NULL)
       }
-      save_object(combined_results,
+      save_object(result,
                   path = paste(
                     pathToResults,
                     paste(
@@ -422,15 +420,13 @@ Cohort2Trajectory <- function(dbms = "postgresql",
         allowedStatesList = allowedStatesList
       )
       
-      # Bind the result to the combined_results dataframe
-      combined_results <- rbind(combined_results, result)
-      
-      if (nrow(combined_results == 0)){
+
+      if (nrow(result) == 0){
         ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
         return(NULL)
       }
       
-      save_object(combined_results,
+      save_object(result,
                   path = paste(
                     pathToResults,
                     paste(
@@ -458,6 +454,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   ParallelLogger::logInfo("Trajectory generation completed!")
   
+  if(useCDM){
+  
   ParallelLogger::logInfo("Saving trajectories to the specified temp schema ...")
   
   dropRelation(
@@ -471,10 +469,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     connection = connection,
     tableName = paste(studyName, "patient_trajectories", sep = "_"),
     databaseSchema = cdmTmpSchema,
-    data = combined_results
+    data = result
   )
 
   ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")
+  
+  }
 
   ############################################################################
   #
@@ -520,8 +520,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     if (studyName %in% settings$studyName) {
       studyIndex <- which(settings$studyName == studyName)
       settings[studyIndex, ] <- newSettings
-    }
-    else {
+    } else {
       colnames(newSettings) <- colnames(settings)
       settings <- rbind(settings, newSettings)
     }
