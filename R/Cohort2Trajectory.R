@@ -332,6 +332,9 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   if (!runGeneration){
     return(ParallelLogger::logInfo("Completed with only cleaning the trajectories!"))
   }
+  else if (length(unique(data$COHORT_DEFINITION_ID)) < 2){
+    return(ParallelLogger::logInfo("No state data left after cleaning the imported data! Exiting ..."))
+  }
   
   ParallelLogger::logInfo("Generating trajectories ...")
   result <- NULL
