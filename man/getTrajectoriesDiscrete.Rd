@@ -6,7 +6,7 @@
 \usage{
 getTrajectoriesDiscrete(
   connection,
-  dbms,
+  dbms = "postgresql",
   cohortData,
   stateDuration = 30,
   pathToResults = getwd(),

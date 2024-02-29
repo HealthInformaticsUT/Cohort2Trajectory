@@ -79,9 +79,9 @@ data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2Trajectory
 #> Test passed 🥇
 
 test_that("Constructed trajectory data nrow is equal to expected (5532)", {
-data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorypatientDataPriority.csv", sep = ""))
+data <- readr::read_csv(paste(pathToResults,"/tmp/datasets/TestCohort2TrajectorypatientDataDiscrete.csv", sep = ""))
 
-  expect_equal(nrow(data), 5532)
+  expect_equal(nrow(data), 2532)
 })
 #> Test passed 🥇
 

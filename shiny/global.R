@@ -40,8 +40,8 @@ for (jsonFile in jsonFiles) {
 
 settings <-
   read.csv(paste(pathToResults, "/inst/Settings/trajectorySettings.csv", sep = ""))
-
-savedStudyName <- settings$studyName
+pathToResults <<- pathToResults
+savedStudyName <<- settings$studyName
 studyIndex <- which(studyName == savedStudyName)
 studyHasBeenSaved <- if (length(studyIndex) == 0) {
   FALSE

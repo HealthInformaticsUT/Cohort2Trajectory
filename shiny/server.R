@@ -945,6 +945,10 @@ server <- function(input, output, session) {
     if (input$allowMerging) {
       v$rankListPriority <-
         ordered_combinations(input$rankListPriority, n = length(c(input$mergingThreshold)) + 1)
+      # In case not initialized
+      if(is.null(v$rankListPriority)) {
+        v$rankListPriority = stateVector
+      }
       
       allowedStatesList_updated <-
         lapply(names(v$allowedTransitions), function(state_name) {
@@ -967,6 +971,10 @@ server <- function(input, output, session) {
         })))
     } else {
       v$rankListPriority <- input$rankListPriority
+      # In case not initialized
+      if(is.null(v$rankListPriority)) {
+        v$rankListPriority = stateVector
+      }
       v$absorbingStates <- if(is.null(input$absorbingStates)) c("No absorbing state") else input$absorbingStates
     }
     
@@ -995,12 +1003,6 @@ server <- function(input, output, session) {
         ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
         # Filter the data based on the current batch of SUBJECT_ID values
         batch_data <- subset(cohortData, SUBJECT_ID %in% batch)
-      
-        # print(v$stateLength)
-        # print(input$stateSelectionType)
-        # print(v$rankListPriority)
-        # print(v$absorbingStates)
-        # print(input$fixOutOfCohort)
       result <- getTrajectoriesDiscrete(
         connection = conn,
         cohortData = batch_data,

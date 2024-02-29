@@ -352,6 +352,12 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
       # Filter the data based on the current batch of SUBJECT_ID values
       batch_data <- subset(data, SUBJECT_ID %in% batch)
+      print(stateSelectionType)
+      print(stateCohortPriorityOrder)
+      print(stateCohortAbsorbing)
+      print(studyName)
+      print(useCDM)
+      print(allowedStatesList)
       
       # Call your function with the filtered data
       result <- getTrajectoriesDiscrete(
@@ -406,7 +412,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
       # Filter the data based on the current batch of SUBJECT_ID values
       batch_data <- subset(data, SUBJECT_ID %in% batch)
-      
       # Call your function with the filtered data
       result <- getTrajectoriesContinuous(
         connection = connection,

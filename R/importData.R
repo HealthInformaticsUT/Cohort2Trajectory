@@ -431,7 +431,7 @@ getInclusionTable <- function(cohortData,
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @keywords internal
 getTrajectoriesDiscrete <- function(connection,
-                                    dbms,
+                                    dbms = "postgresql",
                                     cohortData,
                                     stateDuration = 30,
                                     pathToResults = getwd(),
@@ -447,6 +447,7 @@ getTrajectoriesDiscrete <- function(connection,
     dplyr::arrange(tmp_data, SUBJECT_ID, COHORT_START_DATE)
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$SUBJECT_ID)
+
   newPatientData <- getDiscreteStates(
     stateSelection = as.numeric(stateSelection),
     oocFix = oocFix,
@@ -456,6 +457,7 @@ getTrajectoriesDiscrete <- function(connection,
     statePriorityVector = statePriorityVector,
     allowedStatesList = allowedStatesList
   )
+
   ################################################################################
   #
   # Removing absorbing states
@@ -926,7 +928,7 @@ getTrajectoriesContinuous <- function(connection,
   #
   ##############################################################################
   if (addPersonalData) {
-    data <- addPersonalData(data, connection, cdmSchema)
+    data <- addPersonalData(data, dbms = dbms, connection, cdmSchema)
   }
   else {
     data$GENDER_CONCEPT_ID = 0
