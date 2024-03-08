@@ -346,18 +346,16 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   # Create an empty dataframe to store the combined results
   i = 0
+  if (nrow(dplyr::filter(data, COHORT_DEFINITION_ID != 0 ))== 0){
+    ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
+    return(NULL)
+  }
   if (as.numeric(trajectoryType) == 0) {
     for (batch in batches) {
       i = i + 1
       ParallelLogger::logInfo(paste(paste("Creating batch ", i, "!!!", sep = "")))
       # Filter the data based on the current batch of SUBJECT_ID values
       batch_data <- subset(data, SUBJECT_ID %in% batch)
-      print(stateSelectionType)
-      print(stateCohortPriorityOrder)
-      print(stateCohortAbsorbing)
-      print(studyName)
-      print(useCDM)
-      print(allowedStatesList)
       
       # Call your function with the filtered data
       result <- getTrajectoriesDiscrete(

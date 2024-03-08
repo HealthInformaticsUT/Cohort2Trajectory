@@ -996,7 +996,10 @@ server <- function(input, output, session) {
     # Create an empty dataframe to store the combined results
     combined_results <- data.frame()
     i = 0
-    
+    if (nrow(dplyr::filter(cohortData, COHORT_DEFINITION_ID != 0 ))== 0){
+      ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
+      return(NULL)
+    }
     if (input$trajectoryType == 0) {
       for (batch in batches) {
         i = i + 1
