@@ -16,15 +16,15 @@ pathToResults <- getwd()   # TODO
 ################################################################################
 pathToDriver <- './Drivers'
 dbms <- "postgresql" #TODO
-user <- 'markus' #TODO
-pw <- "Maarjaviktoria90" #TOOO
-server <- 'localhost/maitt' #TODO
-port <- '63333' #TODO
+user <- 'user' #TODO
+pw <- "password" #TODO
+server <- 'ip/database' #TODO
+port <- '5432' #TODO
 
-cdmSchema <- "ohdsi_cdm_202207" #TODO # Schema which contains the OHDSI Common Data Model
-cdmVocabSchema <- "ohdsi_cdm_202207" #TODO # Schema which contains the OHDSI Common Data Model vocabulary tables.
-cdmTmpSchema <- "user_markus" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
-cdmResultsSchema <- "ohdsi_results_202207" #TODO # Schema which will contain the final results
+cdmSchema <- "ohdsi_cdm" #TODO # Schema which contains the OHDSI Common Data Model
+cdmVocabSchema <- "ohdsi_vocab" #TODO # Schema which contains the OHDSI Common Data Model vocabulary tables.
+cdmTmpSchema <- "ohdsi_temp" #TODO # Schema for temporary tables, will be deleted # should be ohdsi_temp
+cdmResultsSchema <- "ohdsi_results" #TODO # Schema which will contain the final results
 
 baseUrl <- "http://localhost:8080/WebAPI" #TODO # WebAPI URL is not needed when jsons' are already imported
 ################################################################################
@@ -44,51 +44,6 @@ connectionDetails <-
   )
 
 conn <- DatabaseConnector::connect(connectionDetails)
-
-Cohort2Trajectory(
-  dbms = dbms,
-  connection = conn,
-  cdmSchema = cdmSchema,
-  cdmVocabSchema = cdmVocabSchema,
-  cdmTmpSchema = cdmTmpSchema,
-  cdmResultsSchema = cdmResultsSchema,
-  studyName = studyName,
-  baseUrl = baseUrl,
-  atlasTargetCohort = 957, # Target cohort id from ATLAS
-  atlasStateCohorts = c(957,1024,1025, 1026, 1027, 1028), # State cohorts' ids from ATLAS
-  stateCohortLabels = c("ADHD", "Depressioon", "Arevushaired", "Stressireaktsioonid", "AineteKuritarvitamine", "Unehaired"), # Customized labels in import order
-  stateCohortPriorityOrder = c("ADHD", "Depressioon", "Arevushaired", "Stressireaktsioonid", "AineteKuritarvitamine", "Unehaired"), # Priority order of states
-  stateCohortMandatory = c("ADHD"), # Mandatory states
-  #stateCohortAbsorbing = c("State3"), # Absorbing states
-  ##############################################################################
-  # stateSelectionTypes
-  # 1 - First occurring
-  # 2 - Largest overlap
-  # 3 - Priority ordering
-  ##############################################################################
-  stateSelectionType = 1,
-  ##############################################################################
-  # trajectoryType
-  # 0 - Discrete time
-  # 1 - Continuous time
-  ##############################################################################
-  trajectoryType = 0,
-  ##############################################################################
-  # oocFix --> Out of cohort fix
-  # None - The "OUT OF COHORT" state remains
-  # Last present state - The "OUT OF COHORT" state is replaced with the latest present state
-  # any of the defined states - The "OUT OF COHORT" state is replaced with the declared state
-  ##############################################################################
-  oocFix = "Last present state",
-  lengthOfStay = 30,
-  outOfCohortAllowed = FALSE,
-  runSavedStudy = FALSE,
-  pathToResults = pathToResults,
-  allowedStatesList = allowedStatesList,
-  mergeStates = TRUE,
-  mergeThreshold = 0.2,
-  runGeneration = TRUE # Change to FALSE, if you only want to import data from database
-)
 
 ################################################################################
 #
@@ -245,3 +200,4 @@ runGUI(
 #   mergeStates = FALSE,
 #   mergeThreshold = 0.5
 # )
+

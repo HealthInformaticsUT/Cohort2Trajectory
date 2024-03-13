@@ -55,7 +55,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               runSavedStudy = FALSE,
                               pathToResults = getwd(),
                               useCDM = TRUE,
-                              trajectoryDataObject = FALSE,
+                              trajectoryDataObject = NULL,
                               pathToData = './tmp/datasets/importedData.csv',
                               allowedStatesList = createStateList(stateCohortLabels),
                               mergeStates = FALSE,
@@ -151,10 +151,14 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     #
     ############################################################################
     
-    stateCohortLabels <- as.vector(sanitize_filenames(settings$savedTrajectoryStates))
-    stateCohortPriorityOrder <- as.vector(sanitize_filenames(settings$savedPriorityOrder))
-    stateCohortMandatory <- as.vector(sanitize_filenames(settings$savedMandatoryStates))
-    stateCohortAbsorbing <- as.vector(sanitize_filenames(settings$savedAbsorbingStates))
+    stateCohortLabels <-
+      as.vector(sanitize_filenames(settings$savedTrajectoryStates))
+    stateCohortPriorityOrder <-
+      as.vector(sanitize_filenames(settings$savedPriorityOrder))
+    stateCohortMandatory <-
+      as.vector(sanitize_filenames(settings$savedMandatoryStates))
+    stateCohortAbsorbing <-
+      as.vector(sanitize_filenames(settings$savedAbsorbingStates))
     stateSelectionType <- settings$savedStateSelectionType
     oocFix <- settings$outOfCohortFix
     trajectoryType <-
@@ -246,12 +250,13 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   }
   else {
     if (is.null(trajectoryDataObject)) {
-    ParallelLogger::logInfo("Importing data ...")
-    data = readr::read_csv(pathToData)
-    ParallelLogger::logInfo("Read complete!")}
+      ParallelLogger::logInfo("Importing data ...")
+      data = readr::read_csv(pathToData)
+      ParallelLogger::logInfo("Read complete!")
+    }
     else{
       trajectoryDataObject$COHORT_DEFINITION_ID = sanitize_filenames(trajectoryDataObject$COHORT_DEFINITION_ID)
-    data = trajectoryDataObject
+      data = trajectoryDataObject
     }
   }
   
@@ -313,7 +318,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   }
   
   ParallelLogger::logInfo("Data cleaning completed!")
-  if (nrow(data) == 0){
+  if (nrow(data) == 0) {
     ParallelLogger::logInfo("No patients left after cleaning the data!")
     return(NULL)
   }
@@ -329,24 +334,29 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     object = data
   )
   
-  if (!runGeneration){
+  if (!runGeneration) {
     return(ParallelLogger::logInfo("Completed with only cleaning the trajectories!"))
   }
-  else if (length(unique(data$COHORT_DEFINITION_ID)) < 2){
-    return(ParallelLogger::logInfo("No state data left after cleaning the imported data! Exiting ..."))
+  else if (length(unique(data$COHORT_DEFINITION_ID)) < 2) {
+    return(
+      ParallelLogger::logInfo(
+        "No state data left after cleaning the imported data! Exiting ..."
+      )
+    )
   }
   
   ParallelLogger::logInfo("Generating trajectories ...")
-  result <- NULL
+  result <- data.frame()
   unique_subject_ids <- unique(data$SUBJECT_ID)
   batch_size <- 1000
-  batches <- split(unique_subject_ids, ceiling(seq_along(unique_subject_ids) / batch_size))
+  batches <-
+    split(unique_subject_ids, ceiling(seq_along(unique_subject_ids) / batch_size))
   
   
   
   # Create an empty dataframe to store the combined results
   i = 0
-  if (nrow(dplyr::filter(data, COHORT_DEFINITION_ID != 0 ))== 0){
+  if (nrow(dplyr::filter(data, COHORT_DEFINITION_ID != 0)) == 0) {
     ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
     return(NULL)
   }
@@ -358,23 +368,28 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       batch_data <- subset(data, SUBJECT_ID %in% batch)
       
       # Call your function with the filtered data
-      result <- getTrajectoriesDiscrete(
-        connection = connection,
-        dbms = dbms,
-        cohortData = batch_data,
-        stateDuration = lengthOfStay,
-        pathToResults = pathToResults,
-        oocFix = oocFix,
-        stateSelection = stateSelectionType,
-        statePriorityVector = stateCohortPriorityOrder,
-        absorbingStates = stateCohortAbsorbing,
-        studyName = studyName,
-        addPersonalData = useCDM,
-        allowedStatesList = allowedStatesList
+      result <- rbind(
+        result,
+        getTrajectoriesDiscrete(
+          connection = connection,
+          dbms = dbms,
+          cohortData = batch_data,
+          stateDuration = lengthOfStay,
+          pathToResults = pathToResults,
+          oocFix = oocFix,
+          stateSelection = stateSelectionType,
+          statePriorityVector = stateCohortPriorityOrder,
+          absorbingStates = stateCohortAbsorbing,
+          studyName = studyName,
+          addPersonalData = useCDM,
+          allowedStatesList = allowedStatesList
+        )
       )
-
-      if (nrow(result)== 0){
-        ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
+      
+      if (nrow(result) == 0) {
+        ParallelLogger::logInfo(
+          "No trajectories generated as cohorts' do not increment any trajectory worthy data!"
+        )
         return(NULL)
       }
       save_object(result,
@@ -388,7 +403,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                     ),
                     sep = ""
                   ))
-
+      
     }
     
     ParallelLogger::logInfo(paste(
@@ -411,21 +426,26 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       # Filter the data based on the current batch of SUBJECT_ID values
       batch_data <- subset(data, SUBJECT_ID %in% batch)
       # Call your function with the filtered data
-      result <- getTrajectoriesContinuous(
-        connection = connection,
-        patientData =  batch_data,
-        pathToResults = pathToResults,
-        stateSelection = stateSelectionType,
-        statePriorityVector = stateCohortPriorityOrder,
-        absorbingStates = stateCohortAbsorbing,
-        studyName = studyName,
-        addPersonalData = useCDM,
-        allowedStatesList = allowedStatesList
+      result <- rbind(
+        result,
+        getTrajectoriesContinuous(
+          connection = connection,
+          patientData =  batch_data,
+          pathToResults = pathToResults,
+          stateSelection = stateSelectionType,
+          statePriorityVector = stateCohortPriorityOrder,
+          absorbingStates = stateCohortAbsorbing,
+          studyName = studyName,
+          addPersonalData = useCDM,
+          allowedStatesList = allowedStatesList
+        )
       )
       
-
-      if (nrow(result) == 0){
-        ParallelLogger::logInfo("No trajectories generated as cohorts' do not increment any trajectory worthy data!")
+      
+      if (nrow(result) == 0) {
+        ParallelLogger::logInfo(
+          "No trajectories generated as cohorts' do not increment any trajectory worthy data!"
+        )
         return(NULL)
       }
       
@@ -457,28 +477,27 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   
   ParallelLogger::logInfo("Trajectory generation completed!")
   
-  if(useCDM){
-  
-  ParallelLogger::logInfo("Saving trajectories to the specified temp schema ...")
-  
-  dropRelation(
-    connection = connection,
-    dbms = dbms,
-    schema = cdmTmpSchema,
-    relationName = paste(studyName, "patient_trajectories", sep = "_")
-  )
-
+  if (useCDM) {
+    ParallelLogger::logInfo("Saving trajectories to the specified temp schema ...")
+    
+    dropRelation(
+      connection = connection,
+      dbms = dbms,
+      schema = cdmTmpSchema,
+      relationName = paste(studyName, "patient_trajectories", sep = "_")
+    )
+    
     DatabaseConnector::insertTable(
-    connection = connection,
-    tableName = paste(studyName, "patient_trajectories", sep = "_"),
-    databaseSchema = cdmTmpSchema,
-    data = result
-  )
-
-  ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")
-  
+      connection = connection,
+      tableName = paste(studyName, "patient_trajectories", sep = "_"),
+      databaseSchema = cdmTmpSchema,
+      data = result
+    )
+    
+    ParallelLogger::logInfo("Trajectories saved to the specified temp schema!")
+    
   }
-
+  
   ############################################################################
   #
   # Saving study settings as new row
@@ -492,11 +511,16 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     else {
       "Continuous"
     }
-    savedTrajectoryStates <- as.vector(sanitize_filenames(stateCohortLabels))
-    savedPriorityOrder <- as.vector(sanitize_filenames(stateCohortPriorityOrder))
-    savedStateSelectionType <- as.vector(sanitize_filenames(stateSelectionType))
-    savedAbsorbingStates <- as.vector(sanitize_filenames(stateCohortAbsorbing))
-    savedMandatoryStates <- as.vector(sanitize_filenames(stateCohortMandatory))
+    savedTrajectoryStates <-
+      as.vector(sanitize_filenames(stateCohortLabels))
+    savedPriorityOrder <-
+      as.vector(sanitize_filenames(stateCohortPriorityOrder))
+    savedStateSelectionType <-
+      as.vector(sanitize_filenames(stateSelectionType))
+    savedAbsorbingStates <-
+      as.vector(sanitize_filenames(stateCohortAbsorbing))
+    savedMandatoryStates <-
+      as.vector(sanitize_filenames(stateCohortMandatory))
     savedLengthOfStay <- lengthOfStay
     savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
     savedOutOfCohortFix <- oocFix
@@ -522,7 +546,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       ))
     if (studyName %in% settings$studyName) {
       studyIndex <- which(settings$studyName == studyName)
-      settings[studyIndex, ] <- newSettings
+      settings[studyIndex,] <- newSettings
     } else {
       colnames(newSettings) <- colnames(settings)
       settings <- rbind(settings, newSettings)

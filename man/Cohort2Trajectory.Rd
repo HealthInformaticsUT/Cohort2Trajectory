@@ -27,7 +27,7 @@ Cohort2Trajectory(
   runSavedStudy = FALSE,
   pathToResults = getwd(),
   useCDM = TRUE,
-  trajectoryDataObject = FALSE,
+  trajectoryDataObject = NULL,
   pathToData = "./tmp/datasets/importedData.csv",
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
