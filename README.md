@@ -43,6 +43,10 @@ Development
 ===========
 Cohort2Trajectory is being developed in R Studio. Feel free to contact the maintainer with questions: markus.haug@ut.ee
 
+Publications
+============
+Markus Haug, Marek Oja, Maarja Pajusalu, Kerli Mooses, Sulev Reisberg, Jaak Vilo, Antonio Fernández Giménez, Thomas Falconer, Ana Danilović, Filip Maljkovic, Dalia Dawoud, Raivo Kolde, Markov modeling for cost-effectiveness using federated health data network, Journal of the American Medical Informatics Association, 2024;, ocae044, https://doi.org/10.1093/jamia/ocae044
+
 Citation
 ===========
 Haug, M. (2023, May). Cohort2Trajectory, v1.1.3. GitHub. https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.3
