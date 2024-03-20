@@ -939,64 +939,64 @@ getTrajectoriesContinuous <- function(connection,
   # Saving data
   #
   ################################################################################
-  if (stateSelection == 3) {
-    save_object(data,
-                path = paste(
-                  pathToResults,
-                  paste(
-                    "/tmp/datasets/",
-                    studyName,
-                    "patientData",
-                    "Continuous",
-                    "Priority",
-                    ".csv",
-                    sep = ""
-                  ),
-                  sep = ""
-                ))
-    ParallelLogger::logInfo(paste(
-      "Saved trajectory dataframe: ",
-      pathToResults,
-      paste(
-        "/tmp/datasets/",
-        studyName,
-        "patientData",
-        "Continuous",
-        "Priority",
-        ".csv",
-        sep = ""
-      ),
-      sep = ""
-    ))
-  }
-  else {
-    save_object(data,
-                path = paste(
-                  pathToResults,
-                  paste(
-                    "/tmp/datasets/",
-                    studyName,
-                    "patientData",
-                    "Continuous",
-                    ".csv",
-                    sep = ""
-                  ),
-                  sep = ""
-                ))
-    ParallelLogger::logInfo(paste(
-      "Saved trajectory dataframe: ",
-      pathToResults,
-      paste(
-        "/tmp/datasets/",
-        studyName,
-        "patientData",
-        "Continuous",
-        ".csv",
-        sep = ""
-      ),
-      sep = ""
-    ))
-  }
+  # if (stateSelection == 3) {
+  #   save_object(data,
+  #               path = paste(
+  #                 pathToResults,
+  #                 paste(
+  #                   "/tmp/datasets/",
+  #                   studyName,
+  #                   "patientData",
+  #                   "Continuous",
+  #                   "Priority",
+  #                   ".csv",
+  #                   sep = ""
+  #                 ),
+  #                 sep = ""
+  #               ))
+  #   ParallelLogger::logInfo(paste(
+  #     "Saved trajectory dataframe: ",
+  #     pathToResults,
+  #     paste(
+  #       "/tmp/datasets/",
+  #       studyName,
+  #       "patientData",
+  #       "Continuous",
+  #       "Priority",
+  #       ".csv",
+  #       sep = ""
+  #     ),
+  #     sep = ""
+  #   ))
+  # }
+  # else {
+  #   save_object(data,
+  #               path = paste(
+  #                 pathToResults,
+  #                 paste(
+  #                   "/tmp/datasets/",
+  #                   studyName,
+  #                   "patientData",
+  #                   "Continuous",
+  #                   ".csv",
+  #                   sep = ""
+  #                 ),
+  #                 sep = ""
+  #               ))
+  #   ParallelLogger::logInfo(paste(
+  #     "Saved trajectory dataframe: ",
+  #     pathToResults,
+  #     paste(
+  #       "/tmp/datasets/",
+  #       studyName,
+  #       "patientData",
+  #       "Continuous",
+  #       ".csv",
+  #       sep = ""
+  #     ),
+  #     sep = ""
+  #   ))
+  # }
   return(data)
 }
 
