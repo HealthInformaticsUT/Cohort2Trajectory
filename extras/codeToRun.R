@@ -167,22 +167,22 @@ runGUI(
 ################################################################################
 
 
-# stateCohortLabels = c("State1", "State2", "State3")
+# stateCohortLabels = c("TestState1", "TestState2")
 # allowedStatesList = createStateList(stateCohortLabels) # Creates a list allowing all transitions from each state
-# allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "State1", transitionTail = "State2") # removes possibility to move from state1 to state2
+# #allowedStatesList = removeListVectorEl(stateList = allowedStatesList, transitionHead = "TestState2", transitionTail = "TestState1") # removes possibility to move from state1 to state2
 # 
 # Cohort2Trajectory(
 #   studyName = studyName,
-#   stateCohortPriorityOrder = c("State3", "State1", "State2"), # Priority order of states
-#   stateCohortMandatory = c("State1"), # Mandatory states
-#   stateCohortAbsorbing = c("State3"), # Absorbing states
+#   stateCohortPriorityOrder = c("TestState2", "TestState1"), # Priority order of states
+#   stateCohortMandatory = NULL, # Mandatory states
+#   stateCohortAbsorbing = NULL, # Absorbing states
 #   ##############################################################################
 #   # stateSelectionTypes
 #   # 1 - First occurring
 #   # 2 - Largest overlap
 #   # 3 - Priority ordering
 #   ##############################################################################
-#   stateSelectionType = 2,
+#   stateSelectionType = 3,
 #   ##############################################################################
 #   # trajectoryType
 #   # 0 - Discrete time
@@ -194,7 +194,7 @@ runGUI(
 #   runSavedStudy = FALSE,
 #   pathToResults = pathToResults,
 #     useCDM = FALSE,
-#     pathToData = "Path to data .csv file",
+#     pathToData = "./tmp/datasets/TestCohort1RawCSV.csv", # Path to file
 #   allowedStatesList = allowedStatesList,
 #   oocFix = "None",
 #   mergeStates = FALSE,

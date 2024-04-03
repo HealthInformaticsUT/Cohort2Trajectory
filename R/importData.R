@@ -253,6 +253,11 @@ cleanCohortData <- function(cohortData,
   # Selecting information about the states
   data_states <-
     dplyr::filter(data_tmp, COHORT_DEFINITION_ID != "0")
+  
+  # Merging all cases where patient has same state overlaps' can occur with custom datasets not cohorts
+  data_states <- dplyr::arrange(dplyr::do(dplyr::group_by(data_states,SUBJECT_ID, COHORT_DEFINITION_ID), merge_overlaps(.)), SUBJECT_ID, COHORT_START_DATE, COHORT_END_DATE)
+  
+  # If mergeStates true
   if (mergeStates) {
     ParallelLogger::logInfo("Merging labels according to the specified treshold!")
     

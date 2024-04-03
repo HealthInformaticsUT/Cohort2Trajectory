@@ -106,6 +106,14 @@ daysOverlap <- function(dateStart,
   }
 }
 
+#' Function to check if two periods overlap
+#'
+#' @keywords internal
+is_overlap <- function(start1, end1, start2, end2) {
+  return(start1 <= end2 && start2 <= end1)
+}
+
+
 #' Function for deleting temporary tables from user's db
 #'
 #' @param connection Connection to the database (package DatabaseConnector)
@@ -291,3 +299,25 @@ sanitize_filenames <- function(input_strings) {
   sapply(input_strings, sanitize_single)
 }
 
+#' Custom function to merge overlapping date ranges within each group
+#'
+#' @param data A dataframe with raw cohort data
+#' @keywords internal
+merge_overlaps <- function(data) {
+  data <- data[order(data$COHORT_START_DATE), ]
+  i <- 1
+  while(i < nrow(data)) {
+    # Check if current row overlaps with the next one
+    if(is_overlap(data$COHORT_START_DATE[i], data$COHORT_END_DATE[i], data$COHORT_START_DATE[i+1], data$COHORT_END_DATE[i+1])) {
+      # Merge the date ranges
+      data$COHORT_START_DATE[i] <- min(data$COHORT_START_DATE[i], data$COHORT_START_DATE[i+1])
+      data$COHORT_END_DATE[i] <- max(data$COHORT_END_DATE[i], data$COHORT_END_DATE[i+1])
+      # Remove the next row since it's been merged
+      data <- data[-(i+1), ]
+    } else {
+      # Move to the next row if no overlap
+      i <- i + 1
+    }
+  }
+  return(data)
+}
