@@ -256,6 +256,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
     }
     else{
       trajectoryDataObject$COHORT_DEFINITION_ID = sanitize_filenames(trajectoryDataObject$COHORT_DEFINITION_ID)
+      trajectoryDataObject$SUBJECT_ID = as.integer(trajectoryDataObject$SUBJECT_ID)
       data = trajectoryDataObject
     }
   }
