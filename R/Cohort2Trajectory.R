@@ -507,7 +507,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
   #
   ############################################################################
   
-  if (!runSavedStudy) {
+  if (!runSavedStudy & saveSettings) {
     savedTrajectoryType <- if (trajectoryType == 0) {
       "Discrete"
     }
@@ -541,7 +541,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       savedOutOfCohortFix
     )
 
-    if (saveSettings) {
     settings <-
       read.csv(paste(
         pathToResults,
@@ -574,7 +573,6 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       ),
       sep = ""
     ))
-  }
   }
   ParallelLogger::logInfo("Trajectories generated!")
   return(result)
