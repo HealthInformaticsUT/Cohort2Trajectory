@@ -30,6 +30,7 @@
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
 #' @param runGeneration TRUE/FALSE if FALSE no data tranfromation will be run, only the imported dataset will be cleaned
+#' @param saveSettings boolean for saving settings
 #' @example man/examples/Cohort2Trajectory.R
 #'
 #' @export
@@ -60,7 +61,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
                               allowedStatesList = createStateList(stateCohortLabels),
                               mergeStates = FALSE,
                               mergeThreshold = 0.5,
-                              runGeneration = TRUE) {
+                              runGeneration = TRUE,
+                              saveSettings = FALSE) {
   ###############################################################################
   #
   # Creating mandatory directories if they do not exist
@@ -538,7 +540,8 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       savedOutOfCohortAllowed,
       savedOutOfCohortFix
     )
-    
+
+    if (saveSettings) {
     settings <-
       read.csv(paste(
         pathToResults,
@@ -572,8 +575,7 @@ Cohort2Trajectory <- function(dbms = "postgresql",
       sep = ""
     ))
   }
-  
-  
-  
-  return(ParallelLogger::logInfo("Trajectories generated!"))
+  }
+  ParallelLogger::logInfo("Trajectories generated!")
+  return(result)
 }

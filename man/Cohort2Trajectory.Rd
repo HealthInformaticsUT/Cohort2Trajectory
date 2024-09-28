@@ -32,7 +32,8 @@ Cohort2Trajectory(
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
   mergeThreshold = 0.5,
-  runGeneration = TRUE
+  runGeneration = TRUE,
+  saveSettings = FALSE
 )
 }
 \arguments{
@@ -83,6 +84,8 @@ Cohort2Trajectory(
 \item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
 
 \item{runGeneration}{TRUE/FALSE if FALSE no data tranfromation will be run, only the imported dataset will be cleaned}
+
+\item{saveSettings}{boolean for saving settings}
 }
 \description{
 This function creates patient treatment trajectories
