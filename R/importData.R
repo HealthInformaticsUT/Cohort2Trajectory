@@ -702,9 +702,6 @@ getTrajectoriesContinuous <- function(connection,
       dplyr::summarise(
         dplyr::group_by(data, SUBJECT_ID),
         LAST_STATE_DATE = max(LAST_STATE_DATE),
-        TIME_IN_COHORT = as.numeric(difftime(
-          LAST_STATE_DATE, min(COHORT_START_DATE)
-        )) / 365.25 + (1 / 365.25),
         COHORT_START_DATE = max(as.Date(LAST_STATE_DATE) + 1)
       ),
       COHORT_END_DATE = COHORT_START_DATE,
@@ -714,6 +711,7 @@ getTrajectoriesContinuous <- function(connection,
   ),
   SUBJECT_ID,
   COHORT_START_DATE)
+  
   
   
   ##############################################################################
@@ -767,7 +765,7 @@ getTrajectoriesContinuous <- function(connection,
                 if (priorityData[i, ]$COHORT_END_DATE <= patientData[j, ]$COHORT_END_DATE) {
                   tail <- patientData[j, ]
                   tail$COHORT_START_DATE <-
-                    priorityData[i, ]$COHORT_END_DATE
+                    priorityData[i, ]$COHORT_END_DATE + 1
                   newpatientData <- rbind(newpatientData, tail)
                 }
               }
@@ -803,8 +801,7 @@ getTrajectoriesContinuous <- function(connection,
     }
     # Inherit the new value
     data <- newData
-  }
-  
+  } 
   # Calculating other TIME_IN_COHORT values
   data_target <- dplyr::slice(dplyr::arrange(
     dplyr::group_by(
@@ -838,6 +835,7 @@ getTrajectoriesContinuous <- function(connection,
     COHORT_END_DATE,
     TIME_IN_COHORT
   )
+  
   
   data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT)
   # We have to map states to 1,..., n.
@@ -874,6 +872,7 @@ getTrajectoriesContinuous <- function(connection,
     "STATE_ID",
     "TIME_IN_COHORT"
   )
+  
   # We should make sure that the time_in_cohort column has differing values for each state for the same patient
   # for developement case, let's just create an artificial difference of 1 day for each colliding date
   data <- dplyr::arrange(data, SUBJECT_ID, TIME_IN_COHORT, STATE_ID)
@@ -884,7 +883,7 @@ getTrajectoriesContinuous <- function(connection,
   impact <- 1 / 365.25
   
   data$TIME_IN_COHORT <- round(data$TIME_IN_COHORT, 6)
-  
+
   for (row in 2:nrow(data)) {
     patient_id <- data$SUBJECT_ID[row]
     if (patient_id != last_patient_id |
@@ -900,6 +899,18 @@ getTrajectoriesContinuous <- function(connection,
       last_observed_ts <- data$TIME_IN_COHORT[row]
     }
   }
+
+  # Fix state end dates
+  data <- data %>%
+    dplyr::arrange(SUBJECT_ID, TIME_IN_COHORT) %>% # Arrange by SUBJECT_ID and TIME_IN_COHORT
+    dplyr::group_by(SUBJECT_ID) %>% # Group by SUBJECT_ID
+    dplyr::mutate(
+      STATE_END_DATE = dplyr::case_when(
+        STATE_LABEL %in% c("START", "EXIT") ~ STATE_END_DATE, # Keep START and EXIT as is
+        TRUE ~ dplyr::lead(STATE_START_DATE) # Use next STATE_START_DATE
+      )
+    ) %>%
+    dplyr::ungroup() # Ungroup for safety
   ################################################################################
   #
   # Removing absorbing states
