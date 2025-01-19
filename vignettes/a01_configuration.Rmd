@@ -1,0 +1,191 @@
+---
+title: "Configuration"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{a01_configuration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Initiating database connection
+
+We use the **CDMConnector** package to establish the database connection. You can configure the connection either by reading credentials from a `.Renviron` file or explicitly writing them in your script.
+
+```{r, echo=TRUE, eval=FALSE}
+################################################################################
+#
+# Initiate the database connection
+#
+#################################################################################
+
+user <- Sys.getenv("DB_USERNAME")
+pw <- Sys.getenv("DB_PASSWORD")
+server <- stringr::str_c(Sys.getenv("DB_HOST"), "/", Sys.getenv("DB_NAME"))
+port <- Sys.getenv("DB_PORT")
+
+cdmSchema <-
+  Sys.getenv("OHDSI_CDM") # Schema which contains the OHDSI Common Data Model
+cdmVocabSchema <-
+  Sys.getenv("OHDSI_VOCAB") # Schema which contains the OHDSI Common Data Model vocabulary tables.
+cdmResultsSchema <-
+  Sys.getenv("OHDSI_RESULTS") # Schema which contains "cohort" table (is not mandatory)
+writeSchema <-
+  Sys.getenv("OHDSI_WRITE") # Schema for temporary tables, will be deleted
+writePrefix <- "cc_"
+
+db = DBI::dbConnect(
+  RPostgres::Postgres(),
+  dbname = Sys.getenv("DB_NAME"),
+  host = Sys.getenv("DB_HOST"),
+  user = Sys.getenv("DB_USERNAME"),
+  password = Sys.getenv("DB_PASSWORD"),
+  port  = port
+)
+
+cdm <- CDMConnector::cdmFromCon(
+  con = db,
+  cdmSchema = cdmSchema,
+  achillesSchema = cdmResultsSchema,
+  writeSchema = c(schema = writeSchema, prefix = writePrefix),
+)
+```
+
+## Configuration
+
+To enhance the user experience, an R environment named `studyEnv` is created, which consolidates the necessary parameters required for running the study. This environment simplifies managing inputs and ensures consistency across functions. Input description available [here](../reference/cohort2TrajectoryConfiguration.html). Below is an example configuration with default values: 
+
+```{r, echo=TRUE, eval=FALSE}
+################################################################################
+#
+# Configure study settings
+#
+################################################################################
+
+studyEnv <- cohort2TrajectoryConfiguration(
+  cdm = cdm,
+  studyName = "Cohort2Trajectory",
+  baseUrl = "http://localhost:8080/WebAPI",
+  pathToStudy = getwd(),
+  atlasTargetCohort = NULL,
+  atlasStateCohorts = NULL,
+  stateCohortLabels = NULL,
+  stateCohortPriorityOrder = NULL,
+  stateCohortMandatory = NULL,
+  stateCohortAbsorbing = NULL,
+  stateSelectionType = NULL,
+  oocFix = "None",
+  trajectoryType = "Discrete",
+  lengthOfStay = NULL,
+  outOfCohortAllowed = FALSE,
+  runSavedStudy = FALSE,
+  useCDM = TRUE,
+  trajectoryDataObject = NULL,
+  pathToData = './Cohort2Trajectory/Data/importedData.csv',
+  allowedStatesList = createStateList(stateCohortLabels),
+  mergeStates = FALSE,
+  mergeThreshold = 0.5,
+  batchSize = 1000
+) 
+```
+
+<br>
+
+### Configuration with ATLAS
+
+```{r, echo = TRUE, eval = FALSE}
+
+studyEnv <- cohort2TrajectoryConfiguration(
+    baseUrl = "http://localhost:8080/WebAPI",     #<--- URL for API
+    useCDM = TRUE,                                #<--- set use CDM TRUE
+    studyName = "nameForStudy",
+    pathToStudy = getwd(),
+    atlasTargetCohort = 1,                 #<--- existing cohort's id
+    atlasStateCohorts = c(2, 3),           #<--- existing cohorts' ids
+    stateCohortLabels = c("label_for_cohort1", "label_for_cohort2"),
+    stateCohortMandatory = c("label_for_cohort2"),
+    stateCohortAbsorbing = c("label_for_cohort2"),
+    outOfCohortAllowed = FALSE,
+    trajectoryType = "Discrete",
+    lengthOfStay = 30,
+    stateSelectionType = "Priority",
+    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
+    runSavedStudy = FALSE,
+    batchSize = 10
+  )
+
+```
+
+<br>
+
+### Configuration with saved study 
+
+```{r, echo = TRUE, eval = FALSE}
+
+studyEnv <- cohort2TrajectoryConfiguration(
+    baseUrl = NULL,     
+    useCDM = FALSE,                                
+    studyName = "nameForStudy",                   #<--- name of the study in trajectorySettings.csv
+    pathToStudy = getwd(),
+    stateCohortLabels = c("label_for_cohort1", "label_for_cohort2"),
+    runSavedStudy = TRUE,                           #<--- set run saved study to true
+    batchSize = 10
+  )
+
+```
+
+<br>
+
+### Configuration with data as input
+
+```{r, echo = TRUE, eval = FALSE}
+
+studyEnv <- cohort2TrajectoryConfiguration(
+    baseUrl = NULL,   
+    useCDM = FALSE,                       
+    trajectoryDataObject = rawData,               #<--- eg output of read.csv
+    studyName = "nameForStudy",
+    pathToStudy = getwd(),
+    stateCohortMandatory = c("label_for_cohort2"),
+    stateCohortAbsorbing = c("label_for_cohort2"),
+    outOfCohortAllowed = FALSE,
+    trajectoryType = "Discrete",
+    lengthOfStay = 30,
+    stateSelectionType = "Priority",
+    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
+    runSavedStudy = FALSE,
+    batchSize = 10
+  )
+
+```
+
+<br>
+
+### Configuration with path to data as input
+
+```{r, echo = TRUE, eval = FALSE}
+
+studyEnv <- cohort2TrajectoryConfiguration(
+    baseUrl = NULL,   
+    useCDM = FALSE,                       
+    pathToData = paste0(getwd(), "/path/to/data/data.csv")), #<--- path to data as input
+    studyName = "nameForStudy",
+    pathToStudy = getwd(),
+    stateCohortMandatory = c("label_for_cohort2"),
+    stateCohortAbsorbing = c("label_for_cohort2"),
+    outOfCohortAllowed = FALSE,
+    trajectoryType = "Discrete",
+    lengthOfStay = 30,
+    stateSelectionType = "Priority",
+    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
+    runSavedStudy = FALSE,
+    batchSize = 10
+  )
+
+```

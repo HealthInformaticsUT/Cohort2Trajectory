@@ -1,0 +1,4 @@
+"studyName","trajectoryType","trajectoryStates","priorityOrder","stateSelectionType","absorbingStates","mandatoryStates","lengthOfStay","outOfCohortAllowed","outOfCohortFix"
+"TestCohort2Trajectory","Discrete","test_state1,test_state2","test_state1,test_state2",3,"test_state2","test_state2",30,TRUE,"None"
+"TestCohort2TrajectorySaved","Discrete","test_state2,test_state1","test_state2,test_state1",1,"No absorbing state","No mandatory state",30,TRUE,"None"
+"testStudy","Discrete","test_state1,test_state2","test_state1,test_state2",3,"test_state2","test_state2",30,FALSE,"None"

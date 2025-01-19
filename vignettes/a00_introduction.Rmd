@@ -1,0 +1,186 @@
+---
+title: "Getting started"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{a00_introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The **Cohort2Trajectory** package is designed for patients' medical trajectory creation. It accepts a target cohort of any size from your OMOP CDM instance and allows you to provide the state cohorts which will populate the observation time of the target cohort as trajectories. The package outputs patient level trajectories with no void time-interval described by your input state cohorts. These trajectories can be later used for further analysis, modeling and visualization!
+
+## Example with SampleCohort2Trajectory 
+
+### Initiating the database connection
+
+The package relies heavily on OMOP CDM, therefore a database connection must be initiated. The [CDMConnector](https://cran.r-project.org/web/packages/CDMConnector/index.html) package is used to establish the database connection for running `Cohort2Trajecotry`. You can configure the connection either by reading credentials from a `.Renviron` file or explicitly writing them in your script.
+
+```{r, include = TRUE, eval=FALSE, echo=TRUE}
+user <- Sys.getenv("DB_USERNAME")
+pw <- Sys.getenv("DB_PASSWORD")
+server <- stringr::str_c(Sys.getenv("DB_HOST"), "/", Sys.getenv("DB_NAME"))
+port <- Sys.getenv("DB_PORT")
+
+cdmSchema <-
+  Sys.getenv("OHDSI_CDM") # Schema which contains the OHDSI Common Data Model
+cdmVocabSchema <-
+  Sys.getenv("OHDSI_VOCAB") # Schema which contains the OHDSI Common Data Model vocabulary tables.
+cdmResultsSchema <-
+  Sys.getenv("OHDSI_RESULTS") # Schema which contains "cohort" table (is not mandatory)
+writeSchema <-
+  Sys.getenv("OHDSI_WRITE") # Schema for temporary tables, will be deleted
+writePrefix <- "cc_"
+
+db = DBI::dbConnect(
+  RPostgres::Postgres(),
+  dbname = Sys.getenv("DB_NAME"),
+  host = Sys.getenv("DB_HOST"),
+  user = Sys.getenv("DB_USERNAME"),
+  password = Sys.getenv("DB_PASSWORD"),
+  port  = port
+)
+
+cdm <- CDMConnector::cdm_from_con(
+  con = db,
+  cdm_schema = cdmSchema,
+  achille_schema = cdmResultsSchema,
+  write_schema = c(schema = writeSchema, prefix = writePrefix),
+)
+```
+
+For the purpose of the example, let us use a synthetic database.
+
+```{r, echo=TRUE, eval=FALSE}
+db  <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir("GiBleed"))
+
+# The Synthetic Eunomai database does not have defined cohorts, so let create a dummy table
+cohorts <- data.frame(subject_id = c(6,6,6,6,123,123,123),
+                         cohort_definition_id = c(1,2,3,2,1,2,3),
+                         cohort_start_date = c(as.Date("1970-01-01"),
+                                               as.Date("1970-02-18"),
+                                               as.Date("1970-03-02"),
+                                               as.Date("1970-04-01"),
+                                               as.Date("1968-01-05"),
+                                               as.Date("1968-02-01"),
+                                               as.Date("1968-03-12")
+                         ),
+                         cohort_end_date = c(as.Date("1971-01-01"),
+                                             as.Date("1970-02-28"),
+                                             as.Date("1970-03-05"),
+                                             as.Date("1970-04-15"),
+                                             as.Date("1969-01-01"),
+                                             as.Date("1968-02-04"),
+                                             as.Date("1968-03-19"))
+)
+
+cdm <- CDMConnector::cdm_from_con(
+  con = db,
+  cdm_name = "eunomia",
+  cdm_schema = "main",
+  write_schema = "main"
+)
+cdm <- omopgenerics::insertTable(cdm, cohorts, name =  "cohort")
+cdm$cohort <- omopgenerics::newCohortTable(cdm$cohort)
+```
+
+### Study configuration
+
+```{r, echo=TRUE, eval=FALSE}
+studyEnv <- cohort2TrajectoryConfiguration(
+  baseUrl = NULL,
+  studyName = "SampleCohort2Trajectory",
+  pathToStudy = getwd(),
+  atlasTargetCohort = 1, # The id of the target cohort
+  atlasStateCohorts = c(2, 3), # The ids of the state cohort
+  stateCohortLabels = c("test_state1", "test_state2"),
+  stateCohortMandatory = c("test_state2"),
+  stateCohortAbsorbing = c("test_state2"),
+  outOfCohortAllowed = FALSE,
+  trajectoryType = "Discrete",
+  lengthOfStay = 30,
+  stateSelectionType = "Priority",
+  stateCohortPriorityOrder = c("test_state1", "test_state2"),
+  runSavedStudy = FALSE,
+  useCDM = TRUE,
+  batchSize = 10
+)
+
+```
+
+Warning as output is expected, the study used as an example already exists. 
+
+```{r, echo = TRUE, eval=FALSE}
+Warning message:
+Study name already in use, consider renaming! 
+```
+
+
+### Importing data
+
+To import and preprocess the data, the following function is used:
+```{r, echo=TRUE, eval=FALSE}
+getDataForStudy(cdm = cdm, studyEnv = studyEnv)
+```
+
+Cleaned imported data is in the /SampleCohort2Trahectory/Data folder. Expected output:
+```{r, echo=TRUE, eval=FALSE}
+> getDataForStudy(cdm = cdm,studyEnv = studyEnv)
+✔ Importing data ... [64ms]
+✔ Get cohort data success!
+✔ Data cleaning completed!
+ℹ Saved cleaned data /Git/Cohort2Trajectory/SampleCohort2Trajectory/Data/importedDataCleaned_1.csv
+✔ Cleaning data ... [170ms]
+```
+
+### Creating trajectories
+
+To create trajectories the following function is used:
+```{r, echo=TRUE, eval=FALSE}
+createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)
+```
+
+Expected output:
+```{r, echo=TRUE, eval=FALSE}
+ℹ Creating batch 1!!!
+ℹ Saved trajectory dataframe: /Git/Cohort2Trajectory/SampleCohort2Trajectory/Data/patientDataDiscrete.csv
+ℹ Saving trajectories to the specified temp schema ...
+ℹ Trajectories saved to the specified temp schema!
+ℹ Saved settings to: /Git/Cohort2Trajectory/SampleCohort2Trajectory/Settings/trajectorySettings.csv
+✔ Trajectories generated!
+```
+
+Created trajectories are in the `/SampleCohort2Trajectory/Data` folder. 
+
+### Results
+```{r echo=FALSE}
+data <- data.frame(
+  subject_id = c(6, 6, 6, 6, 123, 123, 123, 123),
+  state_label = c("START", "test_state1", "test_state1", "EXIT", "START", "test_state1", "test_state2", "EXIT"),
+  state_start_date = as.Date(c("1970-02-18", "1970-02-18", "1970-03-20", "1970-04-20",
+                               "1968-02-01", "1968-02-01", "1968-03-02", "1968-04-02")),
+  state_end_date = as.Date(c("1970-02-18", "1970-03-20", "1970-04-19", "1970-04-20",
+                             "1968-02-01", "1968-03-02", "1968-04-01", "1968-04-02")),
+  time_in_cohort = c(0, 0, 0.082135523613963, 0.082135523613963, 0, 0, 0.082135523613963, 0.082135523613963),
+  seq_ordinal = c(1, 1, 2, 1, 1, 1, 1, 1),
+  gender_concept_id = c(8532, 8532, 8532, 8532, 8507, 8507, 8507, 8507),
+  age = c(6.136, 6.136, 6.218, 6.303, 17.807, 17.807, 17.889, 17.974),
+  state_id = c("1", "2", "2", "4", "1", "2", "3", "4")
+)
+
+# Display the table using knitr::kable
+knitr::kable(data, caption = "CSV Data Content")
+```
+
+To disconnect:
+```{r, echo=TRUE, eval=FALSE}
+DBI::dbDisconnect(db)
+```
