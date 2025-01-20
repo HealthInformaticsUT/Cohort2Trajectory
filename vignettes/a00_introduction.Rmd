@@ -62,7 +62,7 @@ For the purpose of the example, let us use a synthetic database.
 ```{r, echo=TRUE, eval=FALSE}
 db  <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir("GiBleed"))
 
-# The Synthetic Eunomai database does not have defined cohorts, so let create a dummy table
+# The Synthetic Eunomia database does not have defined cohorts, so let create a dummy table
 cohorts <- data.frame(subject_id = c(6,6,6,6,123,123,123),
                          cohort_definition_id = c(1,2,3,2,1,2,3),
                          cohort_start_date = c(as.Date("1970-01-01"),

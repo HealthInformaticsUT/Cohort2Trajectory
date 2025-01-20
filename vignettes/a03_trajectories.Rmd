@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 This section outlines the process for creating trajectories, including handling edge cases.
 
-The standard approach involves using the default configuration, data import, and preprocessing steps, as described in [getting started](a00_introduction.html#study-configuration).
+The standard approach involves using the default configuration, data import, and pre-processing steps, as described in [getting started](a00_introduction.html#study-configuration).
 
 ```{r, eval = FALSE, echo = TRUE}
 createTrajectories (cdm = cdm, studyEnv = studyEnv)
@@ -49,7 +49,7 @@ createTrajectories(
 
 ## Adding personal data to self-inserted data
 
-To include personal data such as patient age and gender while creating trajectories, ensure useCDM is set to TRUE. 
+To include personal data such as patient age and gender while creating trajectories, ensure `useCDM` is set to `TRUE`. 
 
 ```{r, eval = FALSE, echo = TRUE}
 createTrajectories (
@@ -58,3 +58,5 @@ createTrajectories (
   useCDM = TRUE
 )
 ```
+
+The function returns a dataframe with the trajectories and saves the trajectories to the study path.

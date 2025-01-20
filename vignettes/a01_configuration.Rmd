@@ -97,7 +97,7 @@ studyEnv <- cohort2TrajectoryConfiguration(
 
 <br>
 
-### Configuration with ATLAS
+### Configuration with ATLAS generated cohorts
 
 ```{r, echo = TRUE, eval = FALSE}
 

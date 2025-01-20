@@ -5,8 +5,9 @@ testthat::test_that("Create trajectories discrete", {
   studyEnv <- cohort2TrajectoryConfiguration(
     studyName = "testStudy",
     pathToStudy = paste0(getwd()),
-    atlasTargetCohort = "0"
+    atlasTargetCohort = "0",
   )
+  
   assign("studyEnv", studyEnv, envir = globalenv())
   
   createTrajectories(

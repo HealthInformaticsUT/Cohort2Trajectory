@@ -29,10 +29,12 @@ Imports:
     rlang,
     omopgenerics,
     SqlRender,
+    CirceR
 Remotes:
     OHDSI/ParallelLogger,
     OHDSI/Eunomia,
-    OHDSI/ROhdsiWebApi
+    OHDSI/ROhdsiWebApi,
+    OHDSI/CirceR
 Suggests:
     testthat (>= 3.0.0),
     duckdb,

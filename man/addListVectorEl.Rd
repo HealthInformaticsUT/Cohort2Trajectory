@@ -16,4 +16,3 @@ addListVectorEl(stateList, transitionHead, transitionTail)
 \description{
 Add element from list element's vector
 }
-\keyword{internal}

@@ -16,4 +16,3 @@ removeListVectorEl(stateList, transitionHead, transitionTail)
 \description{
 Remove element from list element's vector
 }
-\keyword{internal}

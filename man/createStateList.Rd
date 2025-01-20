@@ -12,4 +12,3 @@ createStateList(stateVector)
 \description{
 Create a list of all states (as elements) for each state (as index)
 }
-\keyword{internal}

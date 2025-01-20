@@ -21,12 +21,12 @@ test_that("import data function with data as input", {
                   studyEnv = studyEnv,
                   baseUrl = NULL,
                   outOfCohortAllowed = FALSE,
-                  stateCohortMandatory = c("test_state2"),
-                  stateCohortPriorityOrder = c("test_state1","test_state2"),
+                  stateCohortMandatory = c("TestState2"),
+                  stateCohortPriorityOrder = c("TestState1","TestState2"),
                   mergeStates = FALSE)
   
   dataCleaned <- read.csv(paste0(getwd(),"/testStudy/Data/importedDataCleaned_.csv"))
-  expect_equal(nrow(dataCleaned), 0)
+  expect_equal(nrow(dataCleaned), 63)
   expect_equal(ncol(dataCleaned), 5)
   DBI::dbDisconnect(db)
 })
@@ -47,13 +47,13 @@ test_that("import data function with path to data as input", {
                   studyEnv = studyEnv,
                   baseUrl = NULL,
                   outOfCohortAllowed = FALSE,
-                  stateCohortMandatory = c("test_state2"),
-                  stateCohortPriorityOrder = c("test_state1","test_state2"),
+                  stateCohortMandatory = c("TestState2"),
+                  stateCohortPriorityOrder = c("TestState1","TestState2"),
                   mergeStates = FALSE,
                   pathToData = paste0(getwd(), "/testStudy/Data/importedData.csv"))
   
   dataCleaned <- read.csv(paste0(getwd(),"/testStudy/Data/importedDataCleaned_.csv"))
-  expect_equal(nrow(dataCleaned), 0)
+  expect_equal(nrow(dataCleaned), 63)
   expect_equal(ncol(dataCleaned), 5)
   DBI::dbDisconnect(db)
 })
