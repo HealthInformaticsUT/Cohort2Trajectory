@@ -1,4 +1,4 @@
-#' Get data for study
+#' Import the data from CDM for the study
 #'
 #' 
 #' @param cdm object created with CDMConnector 
@@ -17,7 +17,7 @@
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
-#' @return log info?
+#' @return log info
 #' @export
 #' @examples
 #' \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}

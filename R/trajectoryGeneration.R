@@ -1,5 +1,5 @@
 #
-#' Create Trajectories
+#' Generate trajectories using the logic specified in the configuration
 #' 
 #' @param cdm object created with CDMConnector 
 #' @param stateCohortLabels vector of the customized labels of the state cohorts
@@ -18,7 +18,7 @@
 #' @param batchSize customizable batch size for trajectory generation process
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
-#' @return log info
+#' @return dataframe with trajectories
 #'
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -143,7 +143,6 @@ createTrajectories <- function(cdm = NULL,
         )
       )
       
-      
       if (nrow(result) == 0) {
         cli::cli_abort("{.error No trajectories generated as cohorts' do not increment any trajectory worthy data!}")
         return(NULL)
@@ -151,7 +150,6 @@ createTrajectories <- function(cdm = NULL,
       
       save_object(result,
                   path = paste0(pathToData, '/', "patientDataContinuous.csv"))
-      
     }
 
     cli::cli_alert_info(paste(
@@ -263,10 +261,9 @@ createTrajectories <- function(cdm = NULL,
       ),
       sep = ""
     ))
-
   }
   
+  cli::cli_alert_success("Trajectories generated!")
   
-  
-  return(cli::cli_alert_success("Trajectories generated!"))
+  return(result)
 }

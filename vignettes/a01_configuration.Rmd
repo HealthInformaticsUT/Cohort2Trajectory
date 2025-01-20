@@ -38,7 +38,7 @@ cdmResultsSchema <-
   Sys.getenv("OHDSI_RESULTS") # Schema which contains "cohort" table (is not mandatory)
 writeSchema <-
   Sys.getenv("OHDSI_WRITE") # Schema for temporary tables, will be deleted
-writePrefix <- "cc_"
+writePrefix <- "c2t_"
 
 db = DBI::dbConnect(
   RPostgres::Postgres(),

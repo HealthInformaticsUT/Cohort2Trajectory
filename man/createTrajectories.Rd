@@ -2,7 +2,7 @@
 % Please edit documentation in R/trajectoryGeneration.R
 \name{createTrajectories}
 \alias{createTrajectories}
-\title{Create Trajectories}
+\title{Generate trajectories using the logic specified in the configuration}
 \usage{
 createTrajectories(
   cdm = NULL,
@@ -57,10 +57,10 @@ createTrajectories(
 \item{batchSize}{customizable batch size for trajectory generation process}
 }
 \value{
-log info
+dataframe with trajectories
 }
 \description{
-Create Trajectories
+Generate trajectories using the logic specified in the configuration
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

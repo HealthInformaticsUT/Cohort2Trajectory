@@ -2,7 +2,7 @@
 % Please edit documentation in R/config.R
 \name{cohort2TrajectoryConfiguration}
 \alias{cohort2TrajectoryConfiguration}
-\title{C2T configuration}
+\title{C2T configuration for initiating the parameter values in the study environment}
 \usage{
 cohort2TrajectoryConfiguration(
   cdm = NULL,
@@ -78,15 +78,15 @@ cohort2TrajectoryConfiguration(
 \item{batchSize}{customizable batch size for cohort generation}
 }
 \description{
-C2T configuration
+C2T configuration for initiating the parameter values in the study environment
 }
 \examples{
 \dontrun{cohort2TrajectoryConfiguration(cdm = cdm,
 studyName = "TestCohort2Trajectory",
 baseUrl = NULL,
 pathToStudy = getwd(),
-atlasTargetCohort = "0",
-atlasStateCohorts = c("test_state1", "test_state2"),
+atlasTargetCohort = 0,
+atlasStateCohorts = c(1, 2),
 stateCohortLabels = c("test_label1", "test_label2"),
 )}
 }

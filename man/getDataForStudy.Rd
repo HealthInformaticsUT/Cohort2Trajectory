@@ -2,7 +2,7 @@
 % Please edit documentation in R/importDataForStudy.R
 \name{getDataForStudy}
 \alias{getDataForStudy}
-\title{Get data for study}
+\title{Import the data from CDM for the study}
 \usage{
 getDataForStudy(
   runSavedStudy = studyEnv$runSavedStudy,
@@ -54,10 +54,10 @@ getDataForStudy(
 \item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
 }
 \value{
-log info?
+log info
 }
 \description{
-Get data for study
+Import the data from CDM for the study
 }
 \examples{
 \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}

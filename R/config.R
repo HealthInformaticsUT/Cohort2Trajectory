@@ -1,4 +1,4 @@
-#' C2T configuration 
+#' C2T configuration for initiating the parameter values in the study environment
 #' 
 #' @param cdm object created with CDMConnector 
 #' @param studyName name chosen for study, is used as a folder name
@@ -30,8 +30,8 @@
 #' studyName = "TestCohort2Trajectory",
 #' baseUrl = NULL,
 #' pathToStudy = getwd(),
-#' atlasTargetCohort = "0",
-#' atlasStateCohorts = c("test_state1", "test_state2"),
+#' atlasTargetCohort = 0,
+#' atlasStateCohorts = c(1, 2),
 #' stateCohortLabels = c("test_label1", "test_label2"),
 #' )}
 cohort2TrajectoryConfiguration <- function(cdm = NULL,
