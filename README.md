@@ -8,7 +8,7 @@ NOTE: After refactoring to CDMConnector the package execution code has significa
 Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database.
 The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time.
 
-For instruction and documentation please see the package's [wiki](https://healthinformaticsut.github.io/Cohort2Trajectory/) page.
+For instructions and documentation please see the package's [wiki](https://healthinformaticsut.github.io/Cohort2Trajectory/) page.
 
 # Features
 
