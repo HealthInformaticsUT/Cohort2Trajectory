@@ -19,7 +19,7 @@
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
 #' @return dataframe with trajectories
-#'
+#' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
 createTrajectories <- function(cdm = NULL,
