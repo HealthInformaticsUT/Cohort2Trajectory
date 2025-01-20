@@ -110,7 +110,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     atlasStateCohorts = atlasStateCohorts,
 
     # data cleaning
-    allowedStatesList = createStateList(stateCohortLabels),
+    allowedStatesList = allowedStatesList,
     mergeStates = mergeStates,
     mergeThreshold = mergeThreshold,
 
