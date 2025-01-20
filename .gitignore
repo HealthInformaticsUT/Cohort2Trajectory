@@ -1,0 +1,9 @@
+inst/doc
+/doc/
+/Meta/
+/docs/
+*.Rdata
+*.rdata
+.Rhistory
+*.rds
+*.RDS
