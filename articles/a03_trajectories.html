@@ -81,7 +81,7 @@
 <p>This section outlines the process for creating trajectories,
 including handling edge cases.</p>
 <p>The standard approach involves using the default configuration, data
-import, and preprocessing steps, as described in <a href="a00_introduction.html#study-configuration">getting
+import, and pre-processing steps, as described in <a href="a00_introduction.html#study-configuration">getting
 started</a>.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span> <span class="op">(</span>cdm <span class="op">=</span> <span class="va">cdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
@@ -111,13 +111,16 @@ values:</p>
 <h3 id="adding-personal-data-to-self-inserted-data">Adding personal data to self-inserted data<a class="anchor" aria-label="anchor" href="#adding-personal-data-to-self-inserted-data"></a>
 </h3>
 <p>To include personal data such as patient age and gender while
-creating trajectories, ensure useCDM is set to TRUE.</p>
+creating trajectories, ensure <code>useCDM</code> is set to
+<code>TRUE</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span> <span class="op">(</span></span>
 <span>  cdm <span class="op">=</span> <span class="va">cdm</span>,</span>
 <span>  studyEnv <span class="op">=</span> <span class="va">studyEnv</span>,</span>
 <span>  useCDM <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<p>The function returns a dataframe with the trajectories and saves the
+trajectories to the study path.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
