@@ -10,41 +10,14 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// calcOverlap
-double calcOverlap(Date start1, Date end1, Date start2, Date end2);
-RcppExport SEXP _Cohort2Trajectory_calcOverlap(SEXP start1SEXP, SEXP end1SEXP, SEXP start2SEXP, SEXP end2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Date >::type start1(start1SEXP);
-    Rcpp::traits::input_parameter< Date >::type end1(end1SEXP);
-    Rcpp::traits::input_parameter< Date >::type start2(start2SEXP);
-    Rcpp::traits::input_parameter< Date >::type end2(end2SEXP);
-    rcpp_result_gen = Rcpp::wrap(calcOverlap(start1, end1, start2, end2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// mergeCohorts
-DataFrame mergeCohorts(DataFrame data, double threshold, std::vector<int> patientIDs);
-RcppExport SEXP _Cohort2Trajectory_mergeCohorts(SEXP dataSEXP, SEXP thresholdSEXP, SEXP patientIDsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DataFrame >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
-    Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
-    rcpp_result_gen = Rcpp::wrap(mergeCohorts(data, threshold, patientIDs));
-    return rcpp_result_gen;
-END_RCPP
-}
 // combineCohorts
-DataFrame combineCohorts(DataFrame data, NumericVector threshold, std::vector<int> patientIDs);
+DataFrame combineCohorts(DataFrame data, double threshold, std::vector<int> patientIDs);
 RcppExport SEXP _Cohort2Trajectory_combineCohorts(SEXP dataSEXP, SEXP thresholdSEXP, SEXP patientIDsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type threshold(thresholdSEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     rcpp_result_gen = Rcpp::wrap(combineCohorts(data, threshold, patientIDs));
     return rcpp_result_gen;
@@ -108,8 +81,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_Cohort2Trajectory_calcOverlap", (DL_FUNC) &_Cohort2Trajectory_calcOverlap, 4},
-    {"_Cohort2Trajectory_mergeCohorts", (DL_FUNC) &_Cohort2Trajectory_mergeCohorts, 3},
     {"_Cohort2Trajectory_combineCohorts", (DL_FUNC) &_Cohort2Trajectory_combineCohorts, 3},
     {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 7},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous, 3},

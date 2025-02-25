@@ -1,89 +1,86 @@
 #include <Rcpp.h>
+#include <map>
+#include <set>
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-double calcOverlap(Date start1, Date end1, Date start2, Date end2) {
-  Date start = std::max(start1, start2);
-  Date end = std::min(end1, end2);
-  double overlap = end - start;
-  double interval1 = end1 - start1;
-  if (overlap < 0) overlap = 0;
-  return overlap / interval1;
-}
-
-// [[Rcpp::export]]
-DataFrame mergeCohorts(DataFrame data, double threshold,  std::vector<int> patientIDs) {
+DataFrame combineCohorts(DataFrame data, double threshold, std::vector<int> patientIDs) {
   
-  //Initiating dataframe output data
-  NumericVector outpatientIDs;
+  std::vector<int> outpatientIDs;
   std::vector<std::string> outStates;
   std::vector<Date> outStartDates;
   std::vector<Date> outEndDates;
   
-  std::vector<int> subjects = data["subject_id"];
-  std::vector<std::string> ids = data["cohort_definition_id"];
-  DateVector startDates = data["cohort_start_date"];
-  DateVector endDates = data["cohort_end_date"];
+  std::vector<int> subjects = as<std::vector<int>>(data["subject_id"]);
+  std::vector<std::string> ids = as<std::vector<std::string>>(data["cohort_definition_id"]);
+  std::vector<Date> startDates = as<std::vector<Date>>(data["cohort_start_date"]);
+  std::vector<Date> endDates = as<std::vector<Date>>(data["cohort_end_date"]);
   
-  for (int p=0; p < (int) patientIDs.size(); p++){
-    
-    // Initiating patient input data, we'll get it from input vectors
-    std::vector<Date> controlStart;
-    std::vector<Date> controlEnd;
-    std::vector<std::string> states;
-    // Getting patient id
+  // Preserve original data
+  std::vector<int> origPatientIDs = subjects;
+  std::vector<std::string> origStates = ids;
+  std::vector<Date> origStartDates = startDates;
+  std::vector<Date> origEndDates = endDates;
+  
+  for (int p = 0; p < (int)patientIDs.size(); p++) {
     int patientID = patientIDs[p];
-    // Let's get data of this person
-    std::vector<int>::iterator iter = subjects.begin();
-    while ((iter = std::find(iter, subjects.end(), patientID)) != subjects.end())
-    {
-      int index = std::distance(subjects.begin(), iter);
-      states.push_back(ids[index]);
-      controlStart.push_back(startDates[index]);
-      controlEnd.push_back(endDates[index]);
-      iter++;
-    }
+    std::map<Date, std::set<std::string>> dateStates;
     
-    int n = states.size();
-    if (n < 2) {
-      // Rcout << "The value of v : " << patientID << "\n";
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(states[0]);
-      // Rcout << "The value of v : " << states[0] << "\n";
-      outStartDates.push_back(controlStart[0]);
-      outEndDates.push_back(controlEnd[0]);
-      //continue;
-    }
-    else{
-    for (int i = 0; i < n; ++i) {
-      // We add every state, user can later choose the priority
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(states[i]);
-      outStartDates.push_back(controlStart[i]);
-      outEndDates.push_back(controlEnd[i]);
-      for (int j = i + 1; j < n; ++j) {
-        double overlap = calcOverlap(controlStart[i], controlEnd[i], controlStart[j], controlEnd[j]);
-        if (overlap > threshold) {
-          std::string outId = states[i] + "+" + states[j];
-          Date outStartDate = std::max(controlStart[i], controlStart[j]);
-          Date outEndDate = std::min(controlEnd[i], controlEnd[j]);
-          outpatientIDs.push_back(patientID);
-          outStates.push_back(outId);
-          outStartDates.push_back(outStartDate);
-          outEndDates.push_back(outEndDate);
+    for (size_t i = 0; i < subjects.size(); i++) {
+      if (subjects[i] == patientID) {
+        for (Date d = startDates[i]; d <= endDates[i]; d = d + 1) {
+          dateStates[d].insert(ids[i]);
         }
       }
     }
+    
+    Date currentStart = dateStates.begin()->first;
+    std::set<std::string> currentState = dateStates.begin()->second;
+    
+    for (auto it = std::next(dateStates.begin()); it != dateStates.end(); ++it) {
+      if (it->second != currentState) {
+        std::string combinedState = "";
+        for (const auto& s : currentState) {
+          if (!combinedState.empty()) combinedState += "+";
+          combinedState += s;
+        }
+        
+        if (combinedState.find("+") != std::string::npos) {
+          outpatientIDs.push_back(patientID);
+          outStates.push_back(combinedState);
+          outStartDates.push_back(currentStart);
+          outEndDates.push_back(std::prev(it)->first);
+        }
+        
+        currentStart = it->first;
+        currentState = it->second;
+      }
+    }
+    
+    std::string finalState = "";
+    for (const auto& s : currentState) {
+      if (!finalState.empty()) finalState += "+";
+      finalState += s;
+    }
+    
+    if (finalState.find("+") != std::string::npos) {
+      outpatientIDs.push_back(patientID);
+      outStates.push_back(finalState);
+      outStartDates.push_back(currentStart);
+      outEndDates.push_back(dateStates.rbegin()->first);
+    }
   }
-  }
-  return DataFrame::create(_["subject_id"] = outpatientIDs, _["cohort_definition_id"] = outStates, _["cohort_start_date"] = outStartDates, _["cohort_end_date"] = outEndDates);
-}
-
-// [[Rcpp::export]]
-DataFrame combineCohorts(DataFrame data, NumericVector threshold, std::vector<int> patientIDs) {
-  int n = threshold.size();
-  for (int i = 0; i < n; ++i) {
-    data = mergeCohorts(data, threshold[i], patientIDs);
-  }
-  return data;
+  
+  // Append original data back
+  outpatientIDs.insert(outpatientIDs.begin(), origPatientIDs.begin(), origPatientIDs.end());
+  outStates.insert(outStates.begin(), origStates.begin(), origStates.end());
+  outStartDates.insert(outStartDates.begin(), origStartDates.begin(), origStartDates.end());
+  outEndDates.insert(outEndDates.begin(), origEndDates.begin(), origEndDates.end());
+  
+  return DataFrame::create(
+    _["subject_id"] = wrap(outpatientIDs),
+    _["cohort_definition_id"] = wrap(outStates),
+    _["cohort_start_date"] = wrap(outStartDates),
+    _["cohort_end_date"] = wrap(outEndDates)
+  );
 }

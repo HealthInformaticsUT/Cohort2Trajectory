@@ -259,7 +259,7 @@ cleanCohortData <- function(cohortData,
       combineCohorts(data_states,
                      mergeThreshold,
                      unique(data_states$subject_id))
-    
+    data_states <-data_states %>% dplyr::arrange(.data$cohort_start_date, .data$cohort_end_date)
     cli::cli_alert_success("Label merging completed!")
   }
   
