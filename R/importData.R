@@ -209,6 +209,7 @@ cleanCohortData <- function(cohortData,
                             mergeStates = FALSE,
                             mergeThreshold = 0.5) {
   data_tmp <- cohortData
+  data_tmp$subject_id = as.integer(data_tmp$subject_id) #convert int64
   
   ##############################################################################
   #
@@ -261,6 +262,7 @@ cleanCohortData <- function(cohortData,
     
     cli::cli_alert_success("Label merging completed!")
   }
+  
   data_tmp <- rbind(data_target, data_states)
   data_target <-
     dplyr::select(data_target, "subject_id", "cohort_start_date", "cohort_end_date")
