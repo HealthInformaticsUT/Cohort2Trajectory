@@ -7,7 +7,7 @@
 getDataForStudy(
   runSavedStudy = studyEnv$runSavedStudy,
   useCDM = studyEnv$useCDM,
-  trajectoryDataObject = NULL,
+  trajectoryDataObject = studyEnv$trajectoryDataObject,
   cdm = NULL,
   studyEnv = NULL,
   atlasStateCohorts = studyEnv$atlasStateCohorts,
@@ -19,6 +19,8 @@ getDataForStudy(
   stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
   mergeStates = studyEnv$mergeStates,
   mergeThreshold = studyEnv$mergeThreshold,
+  allowedStatesList = studyEnv$allowedStatesList,
+  stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
   pathToData = NULL
 )
 }

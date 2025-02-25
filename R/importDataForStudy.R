@@ -23,7 +23,7 @@
 #' \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}
 getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             useCDM = studyEnv$useCDM,
-                            trajectoryDataObject = NULL,
+                            trajectoryDataObject = studyEnv$trajectoryDataObject,
                             cdm = NULL,
                             studyEnv = NULL,
                             #settings = NULL,
@@ -36,6 +36,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
                             mergeStates = studyEnv$mergeStates,
                             mergeThreshold = studyEnv$mergeThreshold,
+                            allowedStatesList = studyEnv$allowedStatesList,
+                            stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
                             pathToData = NULL)  {
   
   # Variables from global studyEnv (can't be altered)
@@ -150,12 +152,9 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
 
   } else {
     # get data from input
-    
     if (is.null(trajectoryDataObject)) {
-      
       data = utils::read.csv(pathToData)
-    }
-    else{
+    } else{
       trajectoryDataObject$cohort_definition_id = sanitize_filenames(trajectoryDataObject$cohort_definition_id)
       data = trajectoryDataObject
     }
@@ -196,7 +195,6 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   if (mergeStates) {
     stateCohortPriorityOrder <-
       ordered_combinations(stateCohortPriorityOrder, n = length(mergeThreshold) + 1)
-    
     allowedStatesList_updated <-
       lapply(names(allowedStatesList), function(state_name) {
         c(allowedStatesList[[state_name]], stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)])
