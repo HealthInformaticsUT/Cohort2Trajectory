@@ -20,7 +20,8 @@ createTrajectories(
   allowedStatesList = studyEnv$allowedStatesList,
   useCDM = studyEnv$useCDM,
   pathToStudy = studyEnv$pathToStudy,
-  batchSize = studyEnv$batchSize
+  batchSize = studyEnv$batchSize,
+  updateAutomaticallyForMergedStates = FALSE
 )
 }
 \arguments{

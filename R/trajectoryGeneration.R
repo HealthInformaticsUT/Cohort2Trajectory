@@ -37,7 +37,8 @@ createTrajectories <- function(cdm = NULL,
                                allowedStatesList = studyEnv$allowedStatesList,
                                useCDM = studyEnv$useCDM,
                                pathToStudy = studyEnv$pathToStudy,
-                               batchSize = studyEnv$batchSize) {
+                               batchSize = studyEnv$batchSize,
+                               updateAutomaticallyForMergedStates = FALSE) {
   
   studyName = studyEnv$studyName
   pathToData = paste0(studyEnv$pathToStudy, '/', studyName, '/', 'Data')
@@ -59,8 +60,61 @@ createTrajectories <- function(cdm = NULL,
   data$cohort_start_date = as.Date(data$cohort_start_date)
   data$cohort_end_date = as.Date(data$cohort_end_date)
   
-  
-  # TODO delete cleanedimportdata
+  if (updateAutomaticallyForMergedStates){
+    
+    # update stateCohortLabels, stateCohortPriorityOrder, allowedStatesList, stateCohortAbsorbing on merged states
+    newStates = setdiff(unique(data$cohort_definition_id), c("0", stateCohortLabels))
+    priority_map <- setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
+    
+    for (newState in newStates) {
+      # Update stateCohortLabels
+      stateCohortLabels = c(stateCohortLabels, newState)
+      
+      # Split newState into its components
+      components <- unlist(strsplit(newState, "\\+"))
+      
+      # Filter components that exist in priority_map
+      valid_components <- components[components %in% names(priority_map)]
+      
+      if (length(valid_components) > 0) {
+        # Get the highest priority index of any component
+        insert_position <- min(priority_map[valid_components])
+        
+        # Insert new state at the correct priority position
+        stateCohortPriorityOrder <- append(stateCohortPriorityOrder, newState, after = insert_position - 1)
+        
+        # Update priority map with the new state
+        priority_map <- setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
+      }
+      
+      # Step 1: Add newState as a transition for all its components
+      if (!newState %in% names(allowedStatesList)) {
+        allowedStatesList[[newState]] <- unique(unlist(allowedStatesList[valid_components]))
+      }
+      
+      # Step 2: Update all states that previously had any of the components as allowed transitions
+      for (component in valid_components) {
+        # Add the new combination to the individual component's transition list
+        allowedStatesList[[component]] <- unique(c(allowedStatesList[[component]], newState))
+        
+        # Now go through all other states and update their transition lists
+        for (state in names(allowedStatesList)) {
+          if (component %in% allowedStatesList[[state]]) {
+            allowedStatesList[[state]] <- unique(c(allowedStatesList[[state]], newState))
+          }
+        }
+      }
+      
+      # Step 3: Update stateCohortAbsorbing
+      if (any(valid_components %in% stateCohortAbsorbing)) {
+        stateCohortAbsorbing <- unique(c(stateCohortAbsorbing, newState))
+      }
+    }
+    
+    # Ensure stateCohortPriorityOrder remains unique
+    stateCohortPriorityOrder <- unique(stateCohortPriorityOrder)
+  }
+
   
   # generation paramaters
   unique_subject_ids <- unique(data$subject_id)
