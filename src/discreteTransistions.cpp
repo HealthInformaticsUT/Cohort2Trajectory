@@ -68,14 +68,6 @@ DataFrame getDiscreteStates(int stateSelection,
   std::vector<Date> outEndDates;
   std::vector<double> outtimeCohort;
   
-  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF0"]) << '\n';
-  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF1"]) << '\n';
-  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF2"]) << '\n';
-  // Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HF3"]) << '\n';
-  //Rcpp::Rcout << as<Rcpp::StringVector>(allowedStatesList["HFD"]) << '\n';
-  //temp
-  //std::cout << allowedStatesList;
-
   // Getting data from patienData DataFrame
   std::vector<int> patientsIDs = patientData["subject_id"];
   
@@ -112,7 +104,7 @@ DataFrame getDiscreteStates(int stateSelection,
   }
   // Get earliest date, the controlStart values are ordered
   Date cohortstartDate = controlStart[0];
-  Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end());
+  Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end()) + 1;
   // # Let's get the number of possible state durations in the timespan of endDate - startDate
   // # This is needed for mapping possible states to time intervals
   int totalStateDurations =  (int) ceil((cohortendDate - cohortstartDate)/stateDuration);
@@ -136,6 +128,7 @@ DataFrame getDiscreteStates(int stateSelection,
                                                 controlStart[i],
                                                             controlEnd[i]));
       }
+      //Rcpp::Rcout << as<Rcpp::StringVector>(daysOverlapVector) << '\n';
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
         if (oocFix == "None"){
@@ -157,7 +150,8 @@ DataFrame getDiscreteStates(int stateSelection,
         // as.numeric(as.Date(startDate) -as.Date(personData$cohort_start_date))
         daysShift = replaceOnTreshold(daysShift,0,std::numeric_limits<int>::min());
         NumericVector daysShift_copy = daysShift;
-        std::sort(daysShift_copy.begin(), daysShift_copy.end(), greater<int>()); // Sort an array of in greatest-first order.
+ 
+        //std::sort(daysShift_copy.begin(), daysShift_copy.end(), greater<int>()); // Sort an array of in greatest-first order.
         
         
         Rcpp::StringVector allowedStates;
@@ -170,13 +164,15 @@ DataFrame getDiscreteStates(int stateSelection,
         
         for (int value=0; value < vectorLength; value++){
         
-        auto it =  std::find(daysShift.begin(), daysShift.end(), daysShift_copy[value]);
+        auto it =  std::find(daysShift.begin(), daysShift.end(), daysShift[value]);
         
         int index = it - daysShift.begin();
-        // int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
+        // Rcpp::Rcout << as<Rcpp::StringVector>(daysShift) << '\n';
+         int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
+         // Rcpp::Rcout << maxElementIndex << '\n';
         // indexMax = which.max(daysShift)
-        // state = states[maxElementIndex];;
-        state = states[index];
+         state = states[maxElementIndex];
+        //state = states[index];
         
         // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
         std::string lowercaseState = state;
@@ -347,12 +343,13 @@ DataFrame getDiscreteStates(int stateSelection,
       // This means that we will select the state which is present in the given timespan and has the highest priority
       for (int i=0; i < vectorLength; i++){
         daysOverlapVector.push_back(daysOverlap(startDate,
-                                                endDate,
+                                                endDate + (-1),
                                                 controlStart[i],
                                                             controlEnd[i]));
       }
       
       int sumV = sum(daysOverlapVector);
+      //Rcpp::Rcout << daysOverlapVector << '\n';
       if(sumV == 0) {
         if (oocFix == "None"){
           state = "OUT OF COHORT";
