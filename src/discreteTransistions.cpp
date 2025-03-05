@@ -26,7 +26,10 @@ int daysOverlap(Date dateStart,
            dateEnd <= controlEnd) {
     ans = dateEnd - controlStart + 1;
   }
-  else {
+  else if (dateEnd <= controlEnd &&
+            dateStart >= controlStart ) {
+    ans = dateEnd - controlStart + 1;
+  } else {
     ans = dateEnd - dateStart;
   }
   if (ans > 0){return ans;}
@@ -104,10 +107,10 @@ DataFrame getDiscreteStates(int stateSelection,
   }
   // Get earliest date, the controlStart values are ordered
   Date cohortstartDate = controlStart[0];
-  Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end()) + 1;
+  Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end());
   // # Let's get the number of possible state durations in the timespan of endDate - startDate
   // # This is needed for mapping possible states to time intervals
-  int totalStateDurations =  (int) ceil((cohortendDate - cohortstartDate)/stateDuration);
+  int totalStateDurations =  (int) ceil((cohortendDate - cohortstartDate + 1)/stateDuration);
   if (1 > totalStateDurations){
     totalStateDurations = 1;
   }
@@ -120,15 +123,14 @@ DataFrame getDiscreteStates(int stateSelection,
       std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration;
-
+      Date endDate = startDate + stateDuration + (-1);
+      
       for (int i=0; i < vectorLength; i++){
         daysOverlapVector.push_back(daysOverlap(startDate,
                                                 endDate,
                                                 controlStart[i],
                                                             controlEnd[i]));
       }
-      //Rcpp::Rcout << as<Rcpp::StringVector>(daysOverlapVector) << '\n';
       int sumV = sum(daysOverlapVector);
       if(sumV == 0) {
         if (oocFix == "None"){
@@ -167,9 +169,7 @@ DataFrame getDiscreteStates(int stateSelection,
         auto it =  std::find(daysShift.begin(), daysShift.end(), daysShift[value]);
         
         int index = it - daysShift.begin();
-        // Rcpp::Rcout << as<Rcpp::StringVector>(daysShift) << '\n';
          int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
-         // Rcpp::Rcout << maxElementIndex << '\n';
         // indexMax = which.max(daysShift)
          state = states[maxElementIndex];
         //state = states[index];
@@ -232,8 +232,7 @@ DataFrame getDiscreteStates(int stateSelection,
       std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration;
-
+      Date endDate = startDate + stateDuration + (-1);
 
 
       // Let's choose the state that overlaps the most with the present date interval
@@ -292,7 +291,6 @@ DataFrame getDiscreteStates(int stateSelection,
             }
           }
           // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-          // Rcpp::Rcout << (isPresent != allowedStates.end()) << '\n';
           //if (isPresent != allowedStates.end()){
           if (isPresent){
             lastState = state;
@@ -336,20 +334,18 @@ DataFrame getDiscreteStates(int stateSelection,
       std::string lastState = "$$not_intialized_yet$$";
       double time = (iteration - 1)*stateDuration/365.25;
       Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration;
-
+      Date endDate = startDate + stateDuration + (-1);
 
       // Let's implement the prioritization of state cohorts.
       // This means that we will select the state which is present in the given timespan and has the highest priority
       for (int i=0; i < vectorLength; i++){
         daysOverlapVector.push_back(daysOverlap(startDate,
-                                                endDate + (-1),
+                                                endDate,
                                                 controlStart[i],
-                                                            controlEnd[i]));
+                                                controlEnd[i]));
       }
       
       int sumV = sum(daysOverlapVector);
-      //Rcpp::Rcout << daysOverlapVector << '\n';
       if(sumV == 0) {
         if (oocFix == "None"){
           state = "OUT OF COHORT";
@@ -372,7 +368,6 @@ DataFrame getDiscreteStates(int stateSelection,
         else{
           Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
         }
-        // Rcpp::Rcout << allowedStates;
         int maxPriorityIndex = std::numeric_limits<int>::max();
         for (int j=0; j < vectorLength; j++){
           if (daysOverlapVector[j] > 0){
