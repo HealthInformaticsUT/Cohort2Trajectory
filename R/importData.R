@@ -461,7 +461,6 @@ getTrajectoriesDiscrete <- function(cdm,
   
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$subject_id)
-  print(head(tmp_data))
   newPatientData <- getDiscreteStates(
     stateSelection = as.numeric(stateSelection),
     oocFix = oocFix,
@@ -471,7 +470,6 @@ getTrajectoriesDiscrete <- function(cdm,
     statePriorityVector = statePriorityVector,
     allowedStatesList = allowedStatesList
   )
-  print(head(newPatientData))
   ################################################################################
   #
   # Removing absorbing states
