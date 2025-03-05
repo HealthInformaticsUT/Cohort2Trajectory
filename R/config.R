@@ -82,10 +82,10 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
       cli::cli_warn("{.warning cohort_start_date column is not in Date format! Convert using <as.Date> function.}")
     }
     if(class(trajectoryDataObject$cohort_end_date) != 'Date'){
-      cli::cli_warn("{.warning cohort_end_date column is not in Date format! Convert using <as.integer> function.}")
+      cli::cli_warn("{.warning cohort_end_date column is not in Date format! Convert using <as.Date> function.}")
     }
     if(class(trajectoryDataObject$subject_id) != 'numeric'){
-      cli::cli_warn("{.warning subject_id column is not in numeric format! Convert using <as.Date> function.}")
+      cli::cli_warn("{.warning subject_id column is not in numeric format! Convert using <as.integer> function.}")
     }
     if(class(trajectoryDataObject$cohort_definition_id) != 'character'){
       cli::cli_warn("{.warning cohort_definition_id column is not in character format! Convert using <as.character> function.}")
