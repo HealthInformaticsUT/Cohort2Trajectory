@@ -16,6 +16,7 @@
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param pathToStudy path to directory that contains study folder
 #' @param batchSize customizable batch size for trajectory generation process
+#' @param updateAutomaticallyForMergedStates boolean for automatically updating priority order and allowed transitions after merging
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
 #' @return dataframe with trajectories
@@ -175,7 +176,6 @@ createTrajectories <- function(cdm = NULL,
   cli::cli_progress_done()
   
   # Saving trajectories
-  # TODO add CDMConnector
   if (useCDM) {
     cli::cli_alert_info("Saving trajectories to the specified temp schema ...")
     
@@ -303,7 +303,7 @@ updateMergedStates <- function(data,
   
     # Identify new merged states
     newStates <- setdiff(unique(data$cohort_definition_id), c("0", stateCohortLabels))
-    priority_map <- setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
+    priority_map <- stats::setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
     
     for (newState in newStates) {
       # Update stateCohortLabels
@@ -323,7 +323,7 @@ updateMergedStates <- function(data,
         stateCohortPriorityOrder <- append(stateCohortPriorityOrder, newState, after = insert_position - 1)
         
         # Update priority map with the new state
-        priority_map <- setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
+        priority_map <- stats::setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
       }
       
       # Step 1: Add newState as a transition for all its components

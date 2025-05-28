@@ -53,6 +53,10 @@ getDataForStudy(
 
 \item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
 
+\item{allowedStatesList}{List of allowed transitions between states}
+
+\item{stateCohortAbsorbing}{Vector of absorbing states}
+
 \item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
 }
 \value{

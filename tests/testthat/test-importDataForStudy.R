@@ -4,8 +4,8 @@ library(Cohort2Trajectory)
 library(dplyr)
 
 test_that("import data function with data as input", {
-  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(db, cdm_name="eunomia", cdm_schema = "main", write_schema="main")
+  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(db, cdmName="eunomia", cdmSchema = "main", writeSchema="main")
   
   cohort2TrajectoryConfiguration(
     studyName = "testStudy",
@@ -32,8 +32,8 @@ test_that("import data function with data as input", {
 })
 
 test_that("import data function with path to data as input", {
-  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(db, cdm_name="eunomia", cdm_schema = "main", write_schema="main")
+  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(db, cdmName="eunomia", cdmSchema = "main", writeSchema="main")
   
   cohort2TrajectoryConfiguration(
     studyName = "testStudy",

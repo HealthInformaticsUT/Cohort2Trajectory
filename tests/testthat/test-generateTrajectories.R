@@ -1,6 +1,6 @@
 testthat::test_that("Create trajectories discrete", {
-  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(db, cdm_name="eunomia", cdm_schema = "main", write_schema="main")
+  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(db, cdmName ="eunomia", cdmSchema = "main", writeSchema="main")
   
   studyEnv <- cohort2TrajectoryConfiguration(
     studyName = "testStudy",
@@ -34,8 +34,8 @@ testthat::test_that("Create trajectories discrete", {
 
 
 testthat::test_that("Create trajectories continuous", {
-  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(db, cdm_name="eunomia", cdm_schema = "main", write_schema="main")
+  db <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(db, cdmName="eunomia", cdmSchema = "main", writeSchema="main")
   
   studyEnv <- cohort2TrajectoryConfiguration(
     studyName = "testStudy",

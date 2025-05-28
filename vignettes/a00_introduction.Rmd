@@ -49,7 +49,7 @@ db = DBI::dbConnect(
   port  = port
 )
 
-cdm <- CDMConnector::cdm_from_con(
+cdm <- CDMConnector::cdmFromCon(
   con = db,
   cdm_schema = cdmSchema,
   achille_schema = cdmResultsSchema,
@@ -82,7 +82,7 @@ cohorts <- data.frame(subject_id = c(6,6,6,6,123,123,123),
                                              as.Date("1968-03-19"))
 )
 
-cdm <- CDMConnector::cdm_from_con(
+cdm <- CDMConnector::cdmFromCon(
   con = db,
   cdm_name = "eunomia",
   cdm_schema = "main",

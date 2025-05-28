@@ -56,6 +56,8 @@ createTrajectories(
 \item{pathToStudy}{path to directory that contains study folder}
 
 \item{batchSize}{customizable batch size for trajectory generation process}
+
+\item{updateAutomaticallyForMergedStates}{boolean for automatically updating priority order and allowed transitions after merging}
 }
 \value{
 dataframe with trajectories

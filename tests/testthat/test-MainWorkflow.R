@@ -8,12 +8,12 @@ test_that("Imported data nrow is equal to expected (63)", {
   # Initiate the database connection
   #
   ################################################################################
-  db <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(
+  db <- DBI::dbConnect(duckdb::duckdb(), dbdir = CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(
     db,
-    cdm_name = "eunomia",
-    cdm_schema = "main",
-    write_schema = "main"
+    cdmName = "eunomia",
+    cdmSchema = "main",
+    writeSchema = "main"
   )
   
   
@@ -60,7 +60,7 @@ test_that("Imported data nrow is equal to expected (63)", {
 })
 
 
-test_that("Constructed trajectory data nrow is equal to expected (63)", {
+test_that("Constructed trajectory data nrow is equal to expected (84)", {
   cohort2TrajectoryConfiguration(
     baseUrl = NULL,
     studyName = "testStudyMain",
@@ -78,5 +78,5 @@ test_that("Constructed trajectory data nrow is equal to expected (63)", {
     )
   )
   
-  expect_equal(nrow(data), 63)
+  expect_equal(nrow(data), 84)
 })

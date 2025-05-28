@@ -15,6 +15,8 @@
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
+#' @param allowedStatesList List of allowed transitions between states
+#' @param stateCohortAbsorbing Vector of absorbing states
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
 #' @return log info

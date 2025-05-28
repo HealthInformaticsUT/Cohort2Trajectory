@@ -87,7 +87,7 @@ getCohortData <- function(cdm,
   selectedCohortIds <- cohortSetCSV$cohortId
   selectedCohortNames <- cohortSetCSV$cohortName
   
-  cohortSet <- CDMConnector::read_cohort_set(paste(pathToStudy, "/", studyName, "/JSON/", sep = ""))
+  cohortSet <- CDMConnector::readCohortSet(paste(pathToStudy, "/", studyName, "/JSON/", sep = ""))
   
   cdm <- CDMConnector::generateCohortSet(cdm, cohortSet, name = "cohort")
   

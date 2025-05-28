@@ -30,10 +30,10 @@
 
 test_that("getCohortData result nrow and ncol check ", {
   
-  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(con = DBIObject,
-                                    cdm_schema = "main",
-                                    write_schema = "main")
+  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(con = DBIObject,
+                                    cdmSchema = "main",
+                                    writeSchema = "main")
   
   data <- getCohortData(
     cdm = cdm, 
@@ -52,10 +52,10 @@ test_that("getCohortData result nrow and ncol check ", {
 
 test_that("getCohortData result nrow and ncol check with target state and selected state", {
   
-  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(con = DBIObject,
-                                    cdm_schema = "main",
-                                    write_schema = "main")
+  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(con = DBIObject,
+                                    cdmSchema = "main",
+                                    writeSchema = "main")
   
   data <- getCohortData(
     cdm = cdm, 
@@ -75,10 +75,10 @@ test_that("getCohortData result nrow and ncol check with target state and select
 
 test_that("getCohortData result nrow and ncol check with target state and selected state", {
   
-  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomia_dir("GiBleed"))
-  cdm <- CDMConnector::cdm_from_con(con = DBIObject,
-                                    cdm_schema = "main",
-                                    write_schema = "main")
+  DBIObject <- DBI::dbConnect(duckdb::duckdb(),dbdir=CDMConnector::eunomiaDir("GiBleed"))
+  cdm <- CDMConnector::cdmFromCon(con = DBIObject,
+                                    cdmSchema = "main",
+                                    writeSchema = "main")
   
   data <- getCohortData(
     cdm = cdm, 
