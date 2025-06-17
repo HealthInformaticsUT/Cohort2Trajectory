@@ -905,8 +905,8 @@ loadSettings <- function(studyName, pathToStudy) {
     strsplit(settings$priorityOrder[studyIndex], ",")[[1]]
   env$savedStateSelectionType <-
     settings$stateSelectionType[studyIndex]
-  env$savedAbsorbingStates <- settings$absorbingStates[studyIndex]
-  env$savedMandatoryStates <- settings$mandatoryStates[studyIndex]
+  env$savedAbsorbingStates <- strsplit(settings$absorbingStates[studyIndex], ",")[[1]]
+  env$savedMandatoryStates <- strsplit(settings$mandatoryStates[studyIndex], ",")[[1]]
   env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
   env$savedOutOfCohortAllowed <-
     settings$outOfCohortAllowed[studyIndex]
