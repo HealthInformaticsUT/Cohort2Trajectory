@@ -219,18 +219,18 @@ createTrajectories <- function(cdm = NULL,
     savedOutOfCohortFix <- oocFix
     
     # defining a row
-    newSettings <- data.frame(
-      studyName,
-      savedTrajectoryType,
-      paste(savedTrajectoryStates, collapse = ","),
-      paste(savedPriorityOrder, collapse = ","),
-      as.integer(savedStateSelectionType),
-      paste(savedAbsorbingStates, collapse = ","),
-      paste(savedMandatoryStates, collapse = ","),
-      savedLengthOfStay,
-      savedOutOfCohortAllowed,
-      savedOutOfCohortFix
-    )
+newSettings <- data.frame(
+  studyName = if (length(studyName) < 1) "Unnamed study" else studyName,
+  savedTrajectoryType = if (length(savedTrajectoryType) < 1) "Discrete" else savedTrajectoryType,
+  savedTrajectoryStates = if (length(savedTrajectoryStates) < 1) NULL else paste(savedTrajectoryStates, collapse = ","),
+  savedPriorityOrder = if (length(savedPriorityOrder) < 1) NULL else paste(savedPriorityOrder, collapse = ","),
+  savedStateSelectionType = if (length(savedStateSelectionType) < 1) "First" else as.integer(savedStateSelectionType),
+  savedAbsorbingStates = if (length(savedAbsorbingStates) < 1) NULL else paste(savedAbsorbingStates, collapse = ","),
+  savedMandatoryStates = if (length(savedMandatoryStates) < 1) NULL else paste(savedMandatoryStates, collapse = ","),
+  savedLengthOfStay = if (length(savedLengthOfStay) < 1) 30 else savedLengthOfStay,
+  savedOutOfCohortAllowed = if (length(savedOutOfCohortAllowed) < 1) FALSE else savedOutOfCohortAllowed,
+  savedOutOfCohortFix = if (length(savedOutOfCohortFix) < 1) "None" else savedOutOfCohortFix
+)
     
     settings <-
       utils::read.csv(
