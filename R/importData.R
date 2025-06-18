@@ -906,7 +906,9 @@ loadSettings <- function(studyName, pathToStudy) {
   env$savedStateSelectionType <-
     settings$stateSelectionType[studyIndex]
   env$savedAbsorbingStates <- strsplit(settings$absorbingStates[studyIndex], ",")[[1]]
+  if(any(env$savedAbsorbingStates == "NULL")) env$savedAbsorbingStates = NULL
   env$savedMandatoryStates <- strsplit(settings$mandatoryStates[studyIndex], ",")[[1]]
+  if(any(env$savedMandatoryStates == "NULL")) env$savedMandatoryStates = NULL
   env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
   env$savedOutOfCohortAllowed <-
     settings$outOfCohortAllowed[studyIndex]
