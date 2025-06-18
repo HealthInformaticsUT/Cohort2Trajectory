@@ -60,6 +60,7 @@ createTrajectories <- function(cdm = NULL,
   data$time_in_cohort = as.integer(data$time_in_cohort)
   data$cohort_start_date = as.Date(data$cohort_start_date)
   data$cohort_end_date = as.Date(data$cohort_end_date)
+  data <- data %>% dplyr::arrange(subject_id, cohort_start_date, cohort_end_date)
   
   if (updateAutomaticallyForMergedStates){
     updated_results <- updateMergedStates(
