@@ -324,14 +324,11 @@ cleanCohortData <- function(cohortData,
   #
   ##############################################################################
   
-  # Mandatory states
-  if (!(length(mandatoryStates) == 0 |
-        "No mandatory state" %in% mandatoryStates)) {
-    for (state in mandatoryStates) {
-      tmpPatientsEligible = unique(dplyr::filter(data_tmp, .data$cohort_definition_id == state)$subject_id)
-      patientsEligible = intersect(patientsEligible, tmpPatientsEligible)
-      
-    }
+  # NULL and character(0) impose no requirements. Every supplied label is
+  # literal, so an old placeholder cannot bypass other mandatory states.
+  for (state in mandatoryStates) {
+    tmpPatientsEligible = unique(dplyr::filter(data_tmp, .data$cohort_definition_id == state)$subject_id)
+    patientsEligible = intersect(patientsEligible, tmpPatientsEligible)
   }
   
   data_tmp <-

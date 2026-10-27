@@ -11,7 +11,9 @@
 #'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory Vector of state labels required in a trajectory.
-#'   NULL or character(0) means no mandatory states.
+#'   Patients must have every supplied state within the retained observation
+#'   bounds. NULL or character(0) means no mandatory states. All supplied labels
+#'   are literal, including the former placeholder "No mandatory state".
 #' @param stateCohortAbsorbing Vector of absorbing state labels.
 #'   NULL or character(0) means no absorbing states.
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.

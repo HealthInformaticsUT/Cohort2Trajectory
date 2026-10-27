@@ -51,7 +51,9 @@ and the literal label "NA". Empty CSV labels are invalid.}
 
 \item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
 
-\item{stateCohortMandatory}{vector of the customized labels of the state cohorts which are mandatory in trajectory}
+\item{stateCohortMandatory}{Vector of state labels patients must all have
+within the retained observation bounds. NULL or character(0) imposes no
+requirements. All labels are literal, including "No mandatory state".}
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 

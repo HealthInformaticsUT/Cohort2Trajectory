@@ -11,7 +11,9 @@
 #'   CSV cohort_definition_id values are read as text, including leading zeros
 #'   and the literal label "NA". Empty CSV labels are invalid.
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
-#' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
+#' @param stateCohortMandatory Vector of state labels patients must all have
+#'   within the retained observation bounds. NULL or character(0) imposes no
+#'   requirements. All labels are literal, including "No mandatory state".
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param runSavedStudy Use the analysis rules restored by a saved-study
 #'   configuration and import fresh data from the supplied connection or input.

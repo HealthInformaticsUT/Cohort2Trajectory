@@ -51,7 +51,9 @@ even when ignoring case. Labels must not be blank or missing. The labels
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 
 \item{stateCohortMandatory}{Vector of state labels required in a trajectory.
-NULL or character(0) means no mandatory states.}
+Patients must have every supplied state within the retained observation
+bounds. NULL or character(0) means no mandatory states. All supplied labels
+are literal, including the former placeholder "No mandatory state".}
 
 \item{stateCohortAbsorbing}{Vector of absorbing state labels.
 NULL or character(0) means no absorbing states.}
