@@ -8,12 +8,12 @@ test_that("optional state lists survive saving, updating and reloading settings"
     stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority", lengthOfStay = 7
   )
   expect_length(list.files(file.path(path, "settings", "Settings")), 0)
-  data <- data.frame(subject_id = c(1L, 1L), cohort_definition_id = c("0", "A"),
+  data <- data.frame(subject_id = c(1L, 1L, 1L), cohort_definition_id = c("0", "A", "B"),
                      cohort_start_date = as.Date("2020-01-01"),
                      cohort_end_date = as.Date("2020-01-07"), time_in_cohort = 0)
-  utils::write.csv(data, file.path(path, "settings", "Data", "importedDataCleaned_0.csv"),
-                   row.names = FALSE)
   for (states in list(NULL, c("A", "B"), character(0))) {
+    getDataForStudy(studyEnv = study, trajectoryDataObject = data,
+                    stateCohortMandatory = states)
     createTrajectories(studyEnv = study, stateCohortAbsorbing = states,
                        stateCohortMandatory = states)
     loaded <- cohort2TrajectoryConfiguration(

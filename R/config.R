@@ -16,6 +16,8 @@
 #'   Patients must have every supplied state within the retained observation
 #'   bounds. NULL or character(0) means no mandatory states. All supplied labels
 #'   are literal, including the former placeholder "No mandatory state".
+#'   Requirements are applied by getDataForStudy. Changing them requires a new
+#'   import, not an override in createTrajectories.
 #' @param stateCohortAbsorbing Vector of absorbing state labels.
 #'   NULL or character(0) means no absorbing states.
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.
@@ -43,6 +45,8 @@
 #'   study name, not the analysis settings again. Connections are supplied to
 #'   getDataForStudy and createTrajectories. Older CSV-only studies must first
 #'   be rerun with their original configuration to save the complete settings.
+#'   Saved settings with conflicting mandatory-state requirements for import
+#'   and generation must be reconfigured and rerun with the intended requirements.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param allowedStatesList A list object which indicates accessible states from said state

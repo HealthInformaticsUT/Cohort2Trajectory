@@ -55,7 +55,9 @@ Database cohort names and definition filenames are managed separately.}
 \item{stateCohortMandatory}{Vector of state labels required in a trajectory.
 Patients must have every supplied state within the retained observation
 bounds. NULL or character(0) means no mandatory states. All supplied labels
-are literal, including the former placeholder "No mandatory state".}
+are literal, including the former placeholder "No mandatory state".
+Requirements are applied by getDataForStudy. Changing them requires a new
+import, not an override in createTrajectories.}
 
 \item{stateCohortAbsorbing}{Vector of absorbing state labels.
 NULL or character(0) means no absorbing states.}
@@ -89,7 +91,9 @@ trajectory beyond the target interval's end. The target start is unchanged.}
 studyName/Settings/analysisSettings.rds. Supply the new parent folder and
 study name, not the analysis settings again. Connections are supplied to
 getDataForStudy and createTrajectories. Older CSV-only studies must first
-be rerun with their original configuration to save the complete settings.}
+be rerun with their original configuration to save the complete settings.
+Saved settings with conflicting mandatory-state requirements for import
+and generation must be reconfigured and rerun with the intended requirements.}
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 

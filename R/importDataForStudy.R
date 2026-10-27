@@ -14,6 +14,7 @@
 #' @param stateCohortMandatory Vector of state labels patients must all have
 #'   within the retained observation bounds. NULL or character(0) imposes no
 #'   requirements. All labels are literal, including "No mandatory state".
+#'   Rerun this import to add or remove requirements before creating trajectories.
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param runSavedStudy Use the analysis rules restored by a saved-study
 #'   configuration and import fresh data from the supplied connection or input.

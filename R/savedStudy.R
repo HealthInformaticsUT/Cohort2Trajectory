@@ -62,6 +62,12 @@
       !all(.studyGenerationFields() %in% names(saved$generation))) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
   }
+  if (!setequal(saved$import$stateCohortMandatory, saved$generation$stateCohortMandatory)) {
+    stop("Saved stateCohortMandatory requirements disagree between import and generation. ",
+         "Configure a new study with the intended requirements, then rerun ",
+         "getDataForStudy and createTrajectories. The saved file has not been changed.",
+         call. = FALSE)
+  }
   # Migrate legacy snapshots in memory without rewriting the user's file or
   # warning about codes that the package itself previously saved.
   .validateStateLabels(saved$import$stateCohortLabels)

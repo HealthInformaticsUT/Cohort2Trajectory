@@ -70,7 +70,10 @@ accepted with a deprecation warning. A selection must be specified before genera
 
 \item{stateCohortAbsorbing}{vector of the customized labels of the state cohorts which are absorbing}
 
-\item{stateCohortMandatory}{vector of the customized labels of the state cohorts which are mandatory in trajectory}
+\item{stateCohortMandatory}{Mandatory state requirements already applied by
+getDataForStudy. These cannot be changed during trajectory generation.
+Rerun getDataForStudy with the desired requirements first. Order and
+duplicates do not matter, and NULL and character(0) both mean none.}
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
 

@@ -6,7 +6,10 @@
 #'   even when ignoring case. Labels must not be blank or missing. The labels
 #'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
-#' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
+#' @param stateCohortMandatory Mandatory state requirements already applied by
+#'   getDataForStudy. These cannot be changed during trajectory generation.
+#'   Rerun getDataForStudy with the desired requirements first. Order and
+#'   duplicates do not matter, and NULL and character(0) both mean none.
 #' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
 #' @param stateSelectionType State selection: "First", "Overlap" or "Priority".
 #'   Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
@@ -144,6 +147,19 @@ createTrajectories <- function(cdm = NULL,
   if (trajectoryType == "Discrete") .validateGapFallback(oocFix, stateCohortLabels)
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
+  # Eligibility was applied before state merging. Generation cannot safely
+  # change it or recover patients excluded from the cleaned input.
+  imported <- studyEnv$.importSettings
+  if (is.null(imported)) {
+    if (length(stateCohortMandatory) || length(studyEnv$stateCohortMandatory)) {
+      stop("stateCohortMandatory requires a successful getDataForStudy import ",
+           "with the desired requirements before creating trajectories.", call. = FALSE)
+    }
+  } else if (!setequal(stateCohortMandatory, imported$stateCohortMandatory)) {
+    stop("stateCohortMandatory differs from the requirements used during import. ",
+         "Rerun getDataForStudy with the desired stateCohortMandatory value ",
+         "before creating trajectories.", call. = FALSE)
+  }
   # Save validated choices before data-dependent merged-state expansion so a
   # new site can apply the same expansion to its own observed states.
   generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)

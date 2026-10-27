@@ -53,7 +53,8 @@ and the literal label "NA". Empty CSV labels are invalid.}
 
 \item{stateCohortMandatory}{Vector of state labels patients must all have
 within the retained observation bounds. NULL or character(0) imposes no
-requirements. All labels are literal, including "No mandatory state".}
+requirements. All labels are literal, including "No mandatory state".
+Rerun this import to add or remove requirements before creating trajectories.}
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 

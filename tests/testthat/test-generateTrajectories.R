@@ -9,6 +9,9 @@ testthat::test_that("Create trajectories discrete", {
   )
   
   assign("studyEnv", studyEnv, envir = globalenv())
+  getDataForStudy(studyEnv = studyEnv, useCDM = FALSE,
+                  pathToData = file.path(getwd(), "testStudy", "Data", "importedData.csv"),
+                  stateCohortMandatory = "TestState2")
   
   createTrajectories(
     cdm = cdm,
@@ -44,6 +47,9 @@ testthat::test_that("Create trajectories continuous", {
     atlasTargetCohort = "0"
   )
   assign("studyEnv", studyEnv, envir = globalenv())
+  getDataForStudy(studyEnv = studyEnv, useCDM = FALSE,
+                  pathToData = file.path(getwd(), "testStudy", "Data", "importedData.csv"),
+                  stateCohortMandatory = "TestState2")
   
   createTrajectories(pathToStudy,
                      cdm = cdm,
