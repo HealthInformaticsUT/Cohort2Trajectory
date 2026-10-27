@@ -47,9 +47,11 @@ cohort2TrajectoryConfiguration(
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 
-\item{stateCohortMandatory}{vector of the customized labels of the state cohorts which are mandatory in trajectory}
+\item{stateCohortMandatory}{Vector of state labels required in a trajectory.
+NULL or character(0) means no mandatory states.}
 
-\item{stateCohortAbsorbing}{vector of the customized labels of the state cohorts which are absorbing}
+\item{stateCohortAbsorbing}{Vector of absorbing state labels.
+NULL or character(0) means no absorbing states.}
 
 \item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.}
 

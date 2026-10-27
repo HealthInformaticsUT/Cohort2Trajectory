@@ -12,4 +12,8 @@ loadSettings(studyName, pathToStudy)
 \description{
 Load settings of the study from trajectorySettings.csv according to the customized paramater studyName
 }
+\details{
+Empty state-list cells, missing values and the legacy string NULL
+  are restored as R NULL. Non-empty cells are split into state-label vectors.
+}
 \keyword{internal}

@@ -43,6 +43,8 @@
 #'   For custom input without a target row, boundaries fall back to the recorded
 #'   state span. The package does not infer observation coverage beyond the
 #'   supplied intervals.
+#'   Empty state lists (NULL or character(0)) are saved as blank CSV cells and
+#'   restored as NULL when settings are loaded. No placeholder state is needed.
 #' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -261,15 +263,16 @@ createTrajectories <- function(cdm = NULL,
     savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
     savedOutOfCohortFix <- oocFix
     
-    # defining a row
+    # Every CSV field must have length one. Collapsing an empty vector gives
+    # a blank cell, whereas inserting NULL would break the one-row data frame.
 newSettings <- data.frame(
   studyName = if (length(studyName) < 1) "Unnamed study" else studyName,
   savedTrajectoryType = if (length(savedTrajectoryType) < 1) "Discrete" else savedTrajectoryType,
-  savedTrajectoryStates = if (length(savedTrajectoryStates) < 1) NULL else paste(savedTrajectoryStates, collapse = ","),
-  savedPriorityOrder = if (length(savedPriorityOrder) < 1) NULL else paste(savedPriorityOrder, collapse = ","),
+  savedTrajectoryStates = paste(savedTrajectoryStates, collapse = ","),
+  savedPriorityOrder = paste(savedPriorityOrder, collapse = ","),
   savedStateSelectionType = if (length(savedStateSelectionType) < 1) "First" else as.integer(savedStateSelectionType),
-  savedAbsorbingStates = if (length(savedAbsorbingStates) < 1) NULL else paste(savedAbsorbingStates, collapse = ","),
-  savedMandatoryStates = if (length(savedMandatoryStates) < 1) NULL else paste(savedMandatoryStates, collapse = ","),
+  savedAbsorbingStates = paste(savedAbsorbingStates, collapse = ","),
+  savedMandatoryStates = paste(savedMandatoryStates, collapse = ","),
   savedLengthOfStay = if (length(savedLengthOfStay) < 1) 30 else savedLengthOfStay,
   savedOutOfCohortAllowed = if (length(savedOutOfCohortAllowed) < 1) FALSE else savedOutOfCohortAllowed,
   savedOutOfCohortFix = if (length(savedOutOfCohortFix) < 1) "None" else savedOutOfCohortFix

@@ -8,8 +8,10 @@
 #' @param atlasStateCohorts the ids of the state cohorts defined in OHDSI tool ATLAS
 #' @param stateCohortLabels vector of the customized labels of the state cohorts
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
-#' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
-#' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
+#' @param stateCohortMandatory Vector of state labels required in a trajectory.
+#'   NULL or character(0) means no mandatory states.
+#' @param stateCohortAbsorbing Vector of absorbing state labels.
+#'   NULL or character(0) means no absorbing states.
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.

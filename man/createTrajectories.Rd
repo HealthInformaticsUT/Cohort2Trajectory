@@ -89,6 +89,8 @@ State IDs are assigned once per study. START has ID 1, followed
   For custom input without a target row, boundaries fall back to the recorded
   state span. The package does not infer observation coverage beyond the
   supplied intervals.
+  Empty state lists (NULL or character(0)) are saved as blank CSV cells and
+  restored as NULL when settings are loaded. No placeholder state is needed.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

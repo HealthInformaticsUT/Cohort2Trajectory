@@ -832,6 +832,8 @@ getTrajectoriesContinuous <- function(cdm,
 #' Load settings of the study from trajectorySettings.csv according to the customized paramater studyName
 #'
 #' @param studyName Customized name for the study
+#' @details Empty state-list cells, missing values and the legacy string NULL
+#'   are restored as R NULL. Non-empty cells are split into state-label vectors.
 #' @keywords internal
 loadSettings <- function(studyName, pathToStudy) {
   env <-
@@ -888,18 +890,25 @@ loadSettings <- function(studyName, pathToStudy) {
   if (length(studyIndex) == 0) {
     return(NULL)
   }
+
+  # CSV represents an empty vector with one blank/missing cell. Older files
+  # used the literal string NULL. Restore all three forms to an absent setting.
+  readStateList <- function(value) {
+    if (length(value) == 0L) return(NULL)
+    value <- as.character(value)
+    if (is.na(value) || !nzchar(trimws(value)) || value == "NULL") return(NULL)
+    strsplit(value, ",", fixed = TRUE)[[1]]
+  }
   
   env$savedTrajectoryType <- settings$trajectoryType[studyIndex]
   env$savedTrajectoryStates <-
-    strsplit(settings$trajectoryStates[studyIndex], ",")[[1]]
+    readStateList(settings$trajectoryStates[studyIndex])
   env$savedPriorityOrder <-
-    strsplit(settings$priorityOrder[studyIndex], ",")[[1]]
+    readStateList(settings$priorityOrder[studyIndex])
   env$savedStateSelectionType <-
     settings$stateSelectionType[studyIndex]
-  env$savedAbsorbingStates <- strsplit(settings$absorbingStates[studyIndex], ",")[[1]]
-  if(any(env$savedAbsorbingStates == "NULL")) env$savedAbsorbingStates = NULL
-  env$savedMandatoryStates <- strsplit(settings$mandatoryStates[studyIndex], ",")[[1]]
-  if(any(env$savedMandatoryStates == "NULL")) env$savedMandatoryStates = NULL
+  env$savedAbsorbingStates <- readStateList(settings$absorbingStates[studyIndex])
+  env$savedMandatoryStates <- readStateList(settings$mandatoryStates[studyIndex])
   env$savedLengthOfStay <- settings$lengthOfStay[studyIndex]
   env$savedOutOfCohortAllowed <-
     settings$outOfCohortAllowed[studyIndex]

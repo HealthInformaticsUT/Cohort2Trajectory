@@ -70,8 +70,7 @@ test_that("the public workflow accepts a target-only batch", {
     study <- cohort2TrajectoryConfiguration(
       pathToStudy = path, studyName = type, useCDM = FALSE,
       atlasTargetCohort = "0", stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
-      runSavedStudy = TRUE
+      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7
     )
     utils::write.csv(data, file.path(path, type, "Data", "importedDataCleaned_0.csv"), row.names = FALSE)
     result <- createTrajectories(studyEnv = study)
