@@ -19,7 +19,7 @@ test_that("incorrect column types produce the appropriate warning", {
   data <- data.frame(subject_id = 1L, cohort_definition_id = "A",
                      cohort_start_date = as.Date("2020-01-01"),
                      cohort_end_date = as.Date("2020-01-07"))
-  invalid <- list(subject_id = "1", cohort_definition_id = 1L,
+  invalid <- list(subject_id = TRUE, cohort_definition_id = 1L,
                   cohort_start_date = "2020-01-01", cohort_end_date = "2020-01-07")
   for (column in names(invalid)) {
     input <- data

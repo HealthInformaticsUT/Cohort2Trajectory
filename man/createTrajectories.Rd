@@ -93,6 +93,14 @@ State IDs are assigned once per study. START has ID 1, followed
   supplied intervals.
   Empty state lists (NULL or character(0)) are saved as blank CSV cells and
   restored as NULL when settings are loaded. No placeholder state is needed.
+  Patient IDs are mapped to temporary integers internally and restored before
+  demographic joins and output. No user-supplied mapping is needed. File and
+  CDM input preserve large identifiers and leading zeros as text. Canonical
+  numeric IDs below 2^53 retain numeric output. For in-memory input, supply
+  very large IDs as character or integer64, since doubles may already have
+  rounded them. Temporary IDs never appear in saved patient histories.
+  When reading exported CSV files outside the package, read subject_id as
+  character to retain long or zero-prefixed identifiers.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

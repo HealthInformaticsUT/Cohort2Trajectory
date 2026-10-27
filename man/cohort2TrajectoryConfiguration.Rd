@@ -114,6 +114,11 @@ For discrete trajectories, selection ranks only overlapping states
   Continuous Priority selection requires every clinical state in the bounded
   input to be listed in stateCohortPriorityOrder. Missing states raise an error.
   Models requiring unique timestamps must resolve ties explicitly.
+  Patient IDs may be numeric whole numbers, character or integer64 values.
+  Temporary integer IDs are assigned internally and originals are restored
+  before output. No manual remapping is needed. For in-memory IDs at or above
+  2^53, use character or integer64 input to avoid prior rounding by doubles.
+  Missing and blank identifiers are rejected.
 }
 \examples{
 \dontrun{cohort2TrajectoryConfiguration(cdm = cdm,

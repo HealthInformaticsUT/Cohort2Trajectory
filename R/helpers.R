@@ -4,6 +4,67 @@
 #
 ################################################################################
 
+# Match identifiers as exact text, never by narrowing them to native integers.
+.subjectKeys <- function(ids) {
+  if (inherits(ids, "integer64") || is.character(ids) || is.factor(ids)) {
+    keys <- as.character(ids)
+  } else if (is.numeric(ids) && !is.complex(ids)) {
+    if (any(!is.finite(ids)) || any(ids != trunc(ids))) {
+      stop("subject_id must contain non-missing whole numbers or text identifiers.", call. = FALSE)
+    }
+    if (any(abs(ids) >= 2^53)) {
+      stop("subject_id supplied as double may already be rounded. Supply large IDs as character or integer64, not double.",
+           call. = FALSE)
+    }
+    keys <- sprintf("%.0f", ids)
+  } else {
+    stop("subject_id must contain numeric, character or integer64 identifiers.", call. = FALSE)
+  }
+  if (anyNA(keys) || any(!nzchar(trimws(keys)))) {
+    stop("subject_id must not contain missing or blank identifiers.", call. = FALSE)
+  }
+  keys
+}
+
+.encodeSubjectIds <- function(data) {
+  keys <- .subjectKeys(data$subject_id)
+  first <- !duplicated(keys)
+  originals <- data$subject_id[first]
+  if (length(originals) > .Machine$integer.max) {
+    stop("Too many distinct patients in one native operation.", call. = FALSE)
+  }
+  data$subject_id <- match(keys, keys[first])
+  list(data = data, originals = originals)
+}
+
+.restoreSubjectIds <- function(data, originals) {
+  data$subject_id <- originals[as.integer(data$subject_id)]
+  data
+}
+
+# Keep the historical numeric output for canonical small numeric IDs only.
+# Large IDs, leading zeros and nonnumeric labels must stay as exact text.
+.simplifySubjectKeys <- function(ids) {
+  keys <- .subjectKeys(ids)
+  numbers <- suppressWarnings(as.numeric(keys))
+  if (all(is.finite(numbers)) && all(abs(numbers) < 2^53) &&
+      all(numbers == trunc(numbers)) && identical(sprintf("%.0f", numbers), keys)) {
+    return(numbers)
+  }
+  keys
+}
+
+.readPatientCsv <- function(path) {
+  # Read IDs without type inference or treating a literal "NA" identifier as
+  # missing. Other columns retain the usual read.csv type conversion.
+  data <- utils::read.csv(path, colClasses = "character", na.strings = NULL)
+  data$subject_id <- .simplifySubjectKeys(data$subject_id)
+  for (column in setdiff(names(data), "subject_id")) {
+    data[[column]] <- utils::type.convert(data[[column]], as.is = TRUE)
+  }
+  data
+}
+
 
 #' Load and translate SQL file or an explicit SQL query to desired dialect.
 #'
@@ -55,6 +116,9 @@ is.nan.data.frame <- function(data) {
 #' @keywords internal
 save_object <- function(object, path) {
   if (is.data.frame(object)) {
+    if ("subject_id" %in% names(object)) {
+      object$subject_id <- .subjectKeys(object$subject_id)
+    }
     utils::write.csv(object, path, row.names = FALSE)
   }
   else {

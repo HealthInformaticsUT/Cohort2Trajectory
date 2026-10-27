@@ -96,7 +96,9 @@ getCohortData <- function(cdm,
     dplyr::arrange(.data$subject_id,
                    .data$cohort_start_date,
                    .data$cohort_end_date) %>%
+    dplyr::mutate(subject_id = as.character(.data$subject_id)) %>%
     dplyr::collect()
+  data$subject_id <- .simplifySubjectKeys(data$subject_id)
   
   data$cohort_definition_id = cohortSetCSV$cohortName[match(data$cohort_definition_id, cohortSetCSV$cohortId)]
   ##############################################################################
@@ -155,14 +157,18 @@ addPersonalData <- function(cohortData, cdm) {
   #
   ##############################################################################
   
-  subjects <- data %>% dplyr::distinct(.data$subject_id) %>% dplyr::pull(1) #getCohorts(data, useCDM = FALSE) #TODO: The $ method is for internal use only
+  originalIds <- data$subject_id
+  data$subject_id <- .subjectKeys(originalIds)
+  subjects <- unique(data$subject_id)
   
   personal_data <- cdm$person %>%
     dplyr::filter(.data$person_id %in% subjects)
   
   personal_data <- personal_data %>% 
     dplyr::select("person_id", "gender_concept_id", "birth_datetime") %>%
-    dplyr::rename(subject_id = "person_id")
+    dplyr::rename(subject_id = "person_id") %>%
+    dplyr::mutate(subject_id = as.character(.data$subject_id)) %>%
+    dplyr::collect()
   
   
   
@@ -176,6 +182,7 @@ addPersonalData <- function(cohortData, cdm) {
           y = personal_data,
           by = "subject_id",
           all.x = TRUE)
+  data_merged$subject_id <- originalIds[match(data_merged$subject_id, data$subject_id)]
   
   ##############################################################################
   #
@@ -208,8 +215,15 @@ cleanCohortData <- function(cohortData,
                             outOfCohortAllowed = FALSE,
                             mergeStates = FALSE,
                             mergeThreshold = 0.5) {
-  data_tmp <- cohortData
-  data_tmp$subject_id = as.integer(data_tmp$subject_id) #convert int64
+  encoded <- .encodeSubjectIds(cohortData)
+  data_tmp <- encoded$data
+  # CSV dates must be converted before native state merging, not afterwards.
+  data_tmp$cohort_start_date <- as.Date(data_tmp$cohort_start_date)
+  data_tmp$cohort_end_date <- as.Date(data_tmp$cohort_end_date)
+  if (anyNA(data_tmp$cohort_start_date) || anyNA(data_tmp$cohort_end_date) ||
+      any(data_tmp$cohort_end_date < data_tmp$cohort_start_date)) {
+    stop("Cohort intervals must have non-missing dates with end >= start.", call. = FALSE)
+  }
   
   ##############################################################################
   #
@@ -362,7 +376,7 @@ cleanCohortData <- function(cohortData,
     "cohort_end_date",
     "time_in_cohort"
   )
-  return(data_tmp)
+  return(.restoreSubjectIds(data_tmp, encoded$originals))
 }
 
 
@@ -434,6 +448,7 @@ getInclusionTable <- function(cohortData,
 # Custom inputs without a target row fall back to their recorded state span.
 .boundTrajectoryData <- function(data, outOfCohortAllowed = FALSE) {
   data <- as.data.frame(data)
+  .subjectKeys(data$subject_id)
   data$cohort_definition_id <- as.character(data$cohort_definition_id)
   data$cohort_start_date <- as.Date(data$cohort_start_date)
   data$cohort_end_date <- as.Date(data$cohort_end_date)
@@ -507,7 +522,8 @@ getTrajectoriesDiscrete <- function(cdm,
                                     stateLevels = NULL,
                                     outOfCohortAllowed = FALSE) {
   .validatePositiveInteger(stateDuration, "stateDuration", "days")
-  tmp_data <- .boundTrajectoryData(cohortData, outOfCohortAllowed)
+  encoded <- .encodeSubjectIds(cohortData)
+  tmp_data <- .boundTrajectoryData(encoded$data, outOfCohortAllowed)
   
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$subject_id)
@@ -533,6 +549,7 @@ getTrajectoriesDiscrete <- function(cdm,
     else
       absorbingStates
   )
+  newPatientData <- .restoreSubjectIds(newPatientData, encoded$originals)
   ##############################################################################
   #
   # Adding personal data
@@ -614,7 +631,8 @@ getTrajectoriesContinuous <- function(cdm,
                                       allowedStatesList = list(),
                                       stateLevels = NULL,
                                       outOfCohortAllowed = FALSE) {
-  data <- .boundTrajectoryData(patientData, outOfCohortAllowed)
+  encoded <- .encodeSubjectIds(patientData)
+  data <- .boundTrajectoryData(encoded$data, outOfCohortAllowed)
   isTarget <- data$cohort_definition_id == "0"
   exits <- data[isTarget, ]
   exits$cohort_start_date <- exits$cohort_end_date + 1
@@ -798,6 +816,7 @@ getTrajectoriesContinuous <- function(cdm,
       absorbingStates
     }
   )
+  data <- .restoreSubjectIds(data, encoded$originals)
   
   ##############################################################################
   #

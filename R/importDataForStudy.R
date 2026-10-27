@@ -155,7 +155,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   } else {
     # get data from input
     if (is.null(trajectoryDataObject)) {
-      data = utils::read.csv(pathToData)
+      data = .readPatientCsv(pathToData)
     } else{
       trajectoryDataObject$cohort_definition_id = sanitize_filenames(trajectoryDataObject$cohort_definition_id)
       data = trajectoryDataObject

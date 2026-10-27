@@ -56,6 +56,11 @@
 #'   Continuous Priority selection requires every clinical state in the bounded
 #'   input to be listed in stateCohortPriorityOrder. Missing states raise an error.
 #'   Models requiring unique timestamps must resolve ties explicitly.
+#'   Patient IDs may be numeric whole numbers, character or integer64 values.
+#'   Temporary integer IDs are assigned internally and originals are restored
+#'   before output. No manual remapping is needed. For in-memory IDs at or above
+#'   2^53, use character or integer64 input to avoid prior rounding by doubles.
+#'   Missing and blank identifiers are rejected.
 #'
 #' @export
 #' @examples
@@ -129,8 +134,8 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     if(!inherits(trajectoryDataObject$cohort_end_date, 'Date')){
       cli::cli_warn("{.warning cohort_end_date column is not in Date format! Convert using <as.Date> function.}")
     }
-    if(!is.numeric(trajectoryDataObject$subject_id)){
-      cli::cli_warn("{.warning subject_id column is not in numeric format! Convert using <as.integer> function.}")
+    if(!(is.numeric(trajectoryDataObject$subject_id) || is.character(trajectoryDataObject$subject_id))){
+      cli::cli_warn("{.warning subject_id column must contain numeric, character or integer64 identifiers.}")
     }
     if(!is.character(trajectoryDataObject$cohort_definition_id)){
       cli::cli_warn("{.warning cohort_definition_id column is not in character format! Convert using <as.character> function.}")

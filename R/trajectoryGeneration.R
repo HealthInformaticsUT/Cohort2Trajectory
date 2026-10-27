@@ -47,6 +47,14 @@
 #'   supplied intervals.
 #'   Empty state lists (NULL or character(0)) are saved as blank CSV cells and
 #'   restored as NULL when settings are loaded. No placeholder state is needed.
+#'   Patient IDs are mapped to temporary integers internally and restored before
+#'   demographic joins and output. No user-supplied mapping is needed. File and
+#'   CDM input preserve large identifiers and leading zeros as text. Canonical
+#'   numeric IDs below 2^53 retain numeric output. For in-memory input, supply
+#'   very large IDs as character or integer64, since doubles may already have
+#'   rounded them. Temporary IDs never appear in saved patient histories.
+#'   When reading exported CSV files outside the package, read subject_id as
+#'   character to retain long or zero-prefixed identifiers.
 #' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -77,7 +85,7 @@ createTrajectories <- function(cdm = NULL,
   pathToStudy = studyEnv$pathToStudy
   atlasTarget = studyEnv$atlasTargetCohort
   
-  data <- utils::read.csv(
+  data <- .readPatientCsv(
     paste0(
       pathToData,
       "/",
@@ -87,7 +95,6 @@ createTrajectories <- function(cdm = NULL,
     )
   )
   
-  data$subject_id = as.integer(data$subject_id)
   data$time_in_cohort = as.integer(data$time_in_cohort)
   data$cohort_start_date = as.Date(data$cohort_start_date)
   data$cohort_end_date = as.Date(data$cohort_end_date)
