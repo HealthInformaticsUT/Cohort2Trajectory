@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{removeListVectorEl}
 \alias{removeListVectorEl}
-\title{Remove element from list element's vector}
+\title{Remove an allowed transition}
 \usage{
 removeListVectorEl(stateList, transitionHead, transitionTail)
 }
@@ -13,6 +13,14 @@ removeListVectorEl(stateList, transitionHead, transitionTail)
 
 \item{transitionTail}{State label which is the state where the transition is going to}
 }
+\value{
+The updated transition list.
+}
 \description{
-Remove element from list element's vector
+Remove an allowed transition
+}
+\details{
+Removing an absent transition leaves the list unchanged. Removing
+  the last destination preserves an empty source entry, meaning no allowed
+  destinations. The input list is not modified in place.
 }

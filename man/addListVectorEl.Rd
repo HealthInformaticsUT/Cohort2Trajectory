@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{addListVectorEl}
 \alias{addListVectorEl}
-\title{Add element from list element's vector}
+\title{Add an allowed transition}
 \usage{
 addListVectorEl(stateList, transitionHead, transitionTail)
 }
@@ -13,6 +13,14 @@ addListVectorEl(stateList, transitionHead, transitionTail)
 
 \item{transitionTail}{State label which is the state where the transition is going to}
 }
+\value{
+The updated transition list.
+}
 \description{
-Add element from list element's vector
+Add an allowed transition
+}
+\details{
+Repeated additions do not duplicate destinations. Existing
+  destination order is preserved and new destinations are appended.
+  The input list is not modified in place.
 }

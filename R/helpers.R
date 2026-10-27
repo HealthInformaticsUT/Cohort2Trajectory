@@ -157,32 +157,42 @@ createStateList <- function(stateVector) {
 }
 
 
-#' Remove element from list element's vector
+#' Remove an allowed transition
 #'
 #' @param stateList List of all the states storing the possible destination states
 #' @param transitionHead State label which is the state where the transition is coming from
 #' @param transitionTail State label which is the state where the transition is going to
+#' @details Removing an absent transition leaves the list unchanged. Removing
+#'   the last destination preserves an empty source entry, meaning no allowed
+#'   destinations. The input list is not modified in place.
+#' @return The updated transition list.
 #' @export
 removeListVectorEl <-
   function(stateList,
            transitionHead,
            transitionTail) {
-    stateList[[transitionHead]] = stateList[[transitionHead]][-which(stateList[[transitionHead]] == transitionTail)]
+    destinations <- stateList[[transitionHead]]
+    if (is.null(destinations)) return(stateList)
+    stateList[[transitionHead]] <- destinations[!destinations %in% transitionTail]
     return(stateList)
   }
 
 
-#' Add element from list element's vector
+#' Add an allowed transition
 #'
 #' @param stateList List of all the states storing the possible destination states
 #' @param transitionHead State label which is the state where the transition is coming from
 #' @param transitionTail State label which is the state where the transition is going to
+#' @details Repeated additions do not duplicate destinations. Existing
+#'   destination order is preserved and new destinations are appended.
+#'   The input list is not modified in place.
+#' @return The updated transition list.
 #' @export
 addListVectorEl <-
   function(stateList,
            transitionHead,
            transitionTail) {
-    stateList[[transitionHead]] = c(stateList[[transitionHead]], transitionTail)
+    stateList[[transitionHead]] <- unique(c(stateList[[transitionHead]], transitionTail))
     return(stateList)
   }
 
