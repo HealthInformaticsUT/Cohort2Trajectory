@@ -33,6 +33,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
     
     // Getting patient id
     int patientID = patientIDs[p];
+    size_t patientOutputStart = outEndDates.size();
     
     std::string stateLast;
     int seqCounter = 1;
@@ -70,7 +71,8 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
       // We have to explicitly add 'EXIT' state as it would be otherwise cut off
       if (std::find(absorbingStates.begin(), absorbingStates.end(), state) != absorbingStates.end())
       {
-        Date exitDate = patientsEnd[index] + 1;
+        Date terminalEnd = patientsEnd[index];
+        Date exitDate = terminalEnd + 1;
         Date stateStart = patientsStart[index];
         double exitTime = timeCohort[index] + (exitDate - stateStart) / 365.25;
         // Find this patient's boundary without reading past the table or
@@ -82,6 +84,12 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
         }
         if (exitIndex == patientsStates.size()) {
           stop("Missing EXIT after absorbing state for internal patient ID %d. Regenerate the continuous trajectory input.", patientID);
+        }
+        // First/Overlap may retain earlier intervals overlapping this record.
+        // They must not extend beyond the patient's new terminal endpoint.
+        // Preserve their starts and any overlap within the retained follow-up.
+        for (size_t i = patientOutputStart; i < outEndDates.size(); ++i) {
+          outEndDates[i] = std::min(outEndDates[i], terminalEnd);
         }
         // Adding EXIT state
         outpatientIDs.push_back(patientID);

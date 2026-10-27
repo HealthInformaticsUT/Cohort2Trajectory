@@ -118,6 +118,8 @@ State IDs are assigned once per study. START has ID 1, followed
   times now match the recorded dates, including ties. Downstream models that
   require unique times need an explicit tie-handling rule.
   Configured absorbing states can end trajectories earlier. With
+  continuous trajectories, earlier intervals extending beyond the retained
+  absorbing endpoint are shortened to that endpoint. With
   outOfCohortAllowed = TRUE, retained state records can extend the endpoint,
   but records already removed during import cannot be recovered here.
   For custom input without a target row, boundaries fall back to the recorded

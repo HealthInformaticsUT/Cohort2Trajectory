@@ -99,3 +99,36 @@ test_that("continuous absorbing cutoff requires the same patient's EXIT", {
   expect_error(removeAfterAbsorbingStatesContinuous(data[1:2, ], 1L, "Death"),
                "Missing EXIT after absorbing state for internal patient ID 1")
 })
+
+test_that("continuous absorbing cutoffs bound earlier intervals for that patient only", {
+  path <- tempfile("c2t-absorbing-intervals-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  input <- data.frame(
+    subject_id = c(1L, 1L, 2L, 2L, 2L),
+    cohort_definition_id = c("0", "A", "0", "A", "Death"),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 0, 0, 4),
+    cohort_end_date = as.Date("2020-01-01") + c(20, 20, 20, 20, 5)
+  )
+  for (method in c("First", "Overlap", "Priority")) {
+    study <- cohort2TrajectoryConfiguration(
+      pathToStudy = path, studyName = method, useCDM = FALSE,
+      trajectoryDataObject = input, stateCohortLabels = c("A", "Death"),
+      stateCohortPriorityOrder = c("Death", "A"), stateSelectionType = method,
+      trajectoryType = "Continuous", stateCohortAbsorbing = "Death",
+      allowedStatesList = list()
+    )
+    getDataForStudy(studyEnv = study)
+    result <- createTrajectories(studyEnv = study)
+    expect_equal(result$state_end_date[result$state_label == "A"],
+                   as.Date(c("2020-01-21", if (method == "Priority") "2020-01-04" else "2020-01-06")))
+    expect_equal(result$state_start_date[result$state_label == "EXIT"],
+                   as.Date(c("2020-01-22", "2020-01-07")))
+    saved <- read.csv(file.path(path, method, "Data", "patientDataContinuous.csv"))
+    expect_identical(saved$state_end_date, as.character(result$state_end_date))
+
+    rejected <- createTrajectories(studyEnv = study, allowedStatesList = list(A = "A"))
+    expect_equal(rejected$state_end_date[rejected$state_label == "A"],
+                   rep(as.Date("2020-01-21"), 2))
+  }
+})

@@ -50,6 +50,8 @@ Target intervals supply START and EXIT boundaries even without state
   records. Selected intervals retain their endpoints and simultaneous records
   retain equal elapsed times. Gaps do not imply continued clinical state
   membership. Absorbing states end the trajectory at their retained endpoint.
+  Earlier overlapping intervals are capped at that endpoint so that no
+  clinical interval extends beyond the shortened follow-up.
   Priority selection assigns shared days to the higher-priority state and
   retains only non-empty fragments of lower-priority intervals.
   Only transition-eligible states compete for priority. Continuing a selected
