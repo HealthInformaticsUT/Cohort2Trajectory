@@ -4,13 +4,7 @@
 \alias{cleanCohortData}
 \title{This function eliminates patients which do not fulfill the inclusion criteria}
 \usage{
-cleanCohortData(
-  cohortData,
-  mandatoryStates,
-  outOfCohortAllowed = FALSE,
-  mergeStates = FALSE,
-  mergeThreshold = 0.5
-)
+cleanCohortData(cohortData, mandatoryStates, outOfCohortAllowed = FALSE)
 }
 \arguments{
 \item{cohortData}{Imported cohort data}
@@ -18,10 +12,6 @@ cleanCohortData(
 \item{mandatoryStates}{States which have to be present in the trajectory, otherwise dropped#'}
 
 \item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
-
-\item{mergeStates}{Boolean, if you want to merge states when they overlap}
-
-\item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
 }
 \value{
 A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date

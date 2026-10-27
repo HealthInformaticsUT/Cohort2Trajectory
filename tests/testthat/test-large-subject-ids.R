@@ -14,8 +14,8 @@ test_that("original text IDs survive public import, merging, batching and CSV ou
   for (type in c("Discrete", "Continuous")) {
     study <- cohort2TrajectoryConfiguration(
       studyName = type, pathToStudy = path, useCDM = FALSE, atlasTargetCohort = "0",
-      stateCohortLabels = c("A", "B", "C", "D", "E", "A+B"),
-      stateCohortPriorityOrder = c("A+B", "A", "B", "C", "D", "E"),
+      stateCohortLabels = c("A", "B", "C", "D", "E"),
+      stateCohortPriorityOrder = c("A", "B", "C", "D", "E"),
       stateCohortAbsorbing = "B", stateSelectionType = "Priority",
       trajectoryType = type, lengthOfStay = 1, runSavedStudy = FALSE
     )
@@ -23,7 +23,7 @@ test_that("original text IDs survive public import, merging, batching and CSV ou
                     pathToData = inputFile, mergeStates = TRUE)
     cleaned <- read.csv(file.path(path, type, "Data", "importedDataCleaned_0.csv"),
                         colClasses = c(subject_id = "character"))
-    expect_equal(cleaned$subject_id[cleaned$cohort_definition_id == "A+B"], ids[1])
+    expect_equal(cleaned$subject_id[cleaned$cohort_definition_id == .stateKey(c("A", "B"))], ids[1])
     together <- createTrajectories(studyEnv = study, batchSize = 4)
     separate <- createTrajectories(studyEnv = study, batchSize = 1)
     expect_equal(separate, together)

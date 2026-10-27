@@ -26,8 +26,9 @@ cohort2TrajectoryConfiguration(
   pathToData = "./Cohort2Trajectory/Data/importedData.csv",
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
-  mergeThreshold = 0.5,
-  batchSize = 1000
+  batchSize = 1000,
+  mergedStateOverrides = list(),
+  ...
 )
 }
 \arguments{
@@ -83,10 +84,14 @@ be rerun with their original configuration to save the complete settings.}
 
 \item{mergeStates}{Boolean, if you want to merge states when they overlap}
 
-\item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
-
 \item{batchSize}{Maximum number of patients per trajectory-generation batch.
 Must be a single positive whole number. Defaults to 1000.}
+
+\item{mergedStateOverrides}{List of mergedState() definitions. Omitted
+properties inherit from the original member states.}
+
+\item{...}{Compatibility only: legacy named mergeThreshold is ignored with
+a warning. No overlap threshold is used.}
 }
 \description{
 C2T configuration for initiating the parameter values in the study environment
@@ -121,6 +126,15 @@ For discrete trajectories, selection ranks only overlapping states
   Continuous Priority selection requires every clinical state in the bounded
   input to be listed in stateCohortPriorityOrder. Missing states raise an error.
   Models requiring unique timestamps must resolve ties explicitly.
+  With mergeStates = TRUE, exact overlapping intervals form states with
+  structured membership before discretisation. Labels are never parsed.
+  Destinations are inherited by union. Every newly introduced destination
+  member must be permitted by at least one source member. Self-transitions
+  and transitions only removing members require permission for all retained
+  destination members. A combination is absorbing if any member is absorbing.
+  Explicit mergedState() properties replace inheritance. Absorbing status
+  takes precedence over outgoing transitions. The stateDictionary in the
+  study environment and Data/stateDictionary.rds describes the resolved states.
   Patient IDs may be numeric whole numbers, character or integer64 values.
   Temporary integer IDs are assigned internally and originals are restored
   before output. No manual remapping is needed. For in-memory IDs at or above

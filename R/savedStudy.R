@@ -2,14 +2,14 @@
 .studyImportFields <- function() {
   c("stateCohortLabels", "stateCohortPriorityOrder", "stateCohortMandatory",
     "stateCohortAbsorbing", "outOfCohortAllowed", "allowedStatesList",
-    "mergeStates", "mergeThreshold")
+    "mergeStates", "mergedStateOverrides")
 }
 
 .studyGenerationFields <- function() {
   c("trajectoryType", "oocFix", "outOfCohortAllowed", "lengthOfStay",
     "stateCohortLabels", "stateCohortPriorityOrder", "stateSelectionType",
     "stateCohortAbsorbing", "stateCohortMandatory", "allowedStatesList",
-    "updateAutomaticallyForMergedStates")
+    "mergedStateOverrides")
 }
 
 .checkSavedOverrides <- function(call, fields) {
@@ -31,8 +31,23 @@
          call. = FALSE)
   }
   saved <- readRDS(path)
-  if (!is.list(saved) || !(identical(saved$version, 1L) || identical(saved$version, 2L)) ||
-      !is.list(saved$import) || !is.list(saved$generation) ||
+  if (!is.list(saved) || !any(vapply(1:3, function(v) identical(saved$version, v), logical(1))) ||
+      !is.list(saved$import) || !is.list(saved$generation)) {
+    stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
+  }
+  if (saved$version < 3L) {
+    if (isTRUE(saved$import$mergeStates)) {
+      stop("Legacy merged-study settings have no structured membership. Reconfigure with the original state definitions and mergedStateOverrides, then rerun import and generation. Labels will not be parsed to guess membership.", call. = FALSE)
+    }
+    if ("mergeThreshold" %in% names(saved$import)) {
+      warning("Removed obsolete mergeThreshold from legacy saved settings. No threshold is used.", call. = FALSE)
+    }
+    saved$import$mergeThreshold <- NULL
+    saved$generation$updateAutomaticallyForMergedStates <- NULL
+    saved$import$mergedStateOverrides <- list()
+    saved$generation$mergedStateOverrides <- list()
+  }
+  if (
       !all(.studyImportFields() %in% names(saved$import)) ||
       !all(.studyGenerationFields() %in% names(saved$generation))) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
@@ -47,7 +62,7 @@
     saved$generation$stateSelectionType, c(First = 1, Overlap = 2, Priority = 3),
     "stateSelectionType", allowNull = FALSE, warnCodes = FALSE
   )
-  saved$version <- 2L
+  saved$version <- 3L
   saved
 }
 
@@ -78,8 +93,9 @@
   if (is.null(imported)) {
     imported <- mget(.studyImportFields(), envir = studyEnv, inherits = FALSE)
   }
-  snapshot <- list(version = 2L, import = imported, generation = generation,
-                   definitions = studyEnv$.cohortDefinitions)
+  snapshot <- list(version = 3L, import = imported, generation = generation,
+                   definitions = studyEnv$.cohortDefinitions,
+                   stateDictionary = studyEnv$stateDictionary)
   saveRDS(snapshot, file.path(studyEnv$pathToStudy, studyEnv$studyName,
                              "Settings", "analysisSettings.rds"))
 }

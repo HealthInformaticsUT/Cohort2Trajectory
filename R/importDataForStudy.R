@@ -14,7 +14,8 @@
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param mergeStates Boolean, if you want to merge states when they overlap
-#' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
+#' @param mergedStateOverrides List of mergedState() definitions.
+#' @param ... Compatibility only: legacy named mergeThreshold warns and is ignored.
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
 #' @param allowedStatesList List of allowed transitions between states
 #' @param stateCohortAbsorbing Vector of absorbing states
@@ -49,15 +50,17 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             stateCohortMandatory = studyEnv$stateCohortMandatory,
                             stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
                             mergeStates = studyEnv$mergeStates,
-                            mergeThreshold = studyEnv$mergeThreshold,
                             allowedStatesList = studyEnv$allowedStatesList,
                             stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
-                            pathToData = studyEnv$pathToData)  {
+                            pathToData = studyEnv$pathToData,
+                            mergedStateOverrides = studyEnv$mergedStateOverrides,
+                            ...)  {
   
   # Variables from global studyEnv (can't be altered)
   studyName = studyEnv$studyName
   pathToStudy = studyEnv$pathToStudy
   studyEnv$.dataReady <- FALSE
+  .legacyMergeArguments(list(...))
   if (isTRUE(runSavedStudy)) {
     .checkSavedOverrides(match.call(), c(.studyImportFields(),
       "atlasTargetCohort", "atlasStateCohorts", "baseUrl"))
@@ -69,6 +72,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     if (useCDM) .checkSavedDefinitions(saved, pathToStudy, studyName)
     atlasTargetCohort <- "0"
   }
+  .validateMergeOptions(mergeStates, mergedStateOverrides)
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
 
@@ -172,35 +176,23 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   data <- cleanCohortData(
     cohortData = data,
     mandatoryStates = stateCohortMandatory,
-    outOfCohortAllowed = outOfCohortAllowed,
-    mergeStates = mergeStates,
-    mergeThreshold = mergeThreshold
+    outOfCohortAllowed = outOfCohortAllowed
   )
   
   
-  # As we may have new state labels (if mergeStates = TRUE) we now will modify some settings:
+  # Keep source rules unchanged. Only the resolved interval table uses state keys.
+  registry <- NULL
   if (mergeStates) {
-    stateCohortPriorityOrder <-
-      ordered_combinations(stateCohortPriorityOrder, n = length(mergeThreshold) + 1)
-    allowedStatesList_updated <-
-      lapply(names(allowedStatesList), function(state_name) {
-        c(allowedStatesList[[state_name]], stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)])
-      })
-    
-    names(allowedStatesList_updated) <- names(allowedStatesList)
-    
-    for (state_name in stateCohortPriorityOrder) {
-      allowedStatesList_updated[[state_name]] <-
-        allowedStatesList_updated[[strsplit(state_name, split = "\\+")[[1]][1]]]
-    }
-    
-    allowedStatesList <- allowedStatesList_updated
-    
-    stateCohortAbsorbing <-
-      unique(unlist(lapply(stateCohortAbsorbing, function(state_name) {
-        stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)]
-      })))
+    sourceIntervals <- data
+    merged <- .composeStateIntervals(data, stateCohortLabels, mergedStateOverrides)
+    data <- merged$data
+    registry <- .mergedRules(merged$registry, stateCohortPriorityOrder,
+                             allowedStatesList, stateCohortAbsorbing,
+                             mergedStateOverrides)$registry
+    # Preserve bounded original-state evidence separately from the resolved view.
+    saveRDS(sourceIntervals, file.path(pathToStudy, studyName, "Data", "sourceIntervals.rds"))
   }
+  studyEnv$stateDictionary <- registry
   cli::cli_alert_success("Data cleaning completed!")
   
   save_object(

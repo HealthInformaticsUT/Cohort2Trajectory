@@ -21,7 +21,6 @@ Imports:
     plyr,
     utils,
     RJSONIO,
-    gtools, 
     magrittr,
     CDMConnector,
     cli,

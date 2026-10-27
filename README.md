@@ -23,9 +23,87 @@ Use readable names for `trajectoryType` (`"Discrete"` or `"Continuous"`) and
 and generation. Names ignore case and surrounding whitespace. The configuration
 and new RDS snapshots store the canonical names, not numeric engine codes.
 Legacy numeric arguments still work but warn with the replacement name.
-Existing version-1 RDS snapshots are converted in memory when loaded, without
-modifying the original file. New snapshots use version 2 and require the updated
-package when shared.
+Existing non-merged version-1 and version-2 RDS snapshots are converted in memory
+when loaded, without modifying the original file. Removed threshold settings
+produce a warning. New snapshots use version 3 and require the updated package
+when shared. Legacy merged studies must be reconfigured from their original
+state definitions because their saved labels do not reliably identify membership.
+
+## Combining overlapping states
+
+Use `mergeStates = TRUE` to represent simultaneous original states as a single
+combined state over their exact overlapping interval. No threshold is used.
+For example, A on days 1-10 and B on days 5-7 produce A on days 1-4, A+B on
+days 5-7, and A on days 8-10. Composition follows observation-boundary and
+mandatory-state filtering, and precedes weekly or other discretisation.
+Two events on different days of the same week are not automatically combined.
+
+Membership is stored explicitly, never recovered from labels. An original state
+called `A+B` remains an original state. It is not confused with the combination
+of A and B. Only observed combinations and explicitly specified definitions are
+registered, without enumerating permutations of all possible combinations.
+
+By default:
+
+- Permitted destinations are inherited by union across the source members.
+  Thus A+B can enter C when A allows C, even if B does not.
+- Entering a composite destination requires permission for every newly added
+  member. A permission for C alone does not allow entry into C+D.
+- Self-transitions and transitions only removing members require permission for
+  the retained destination members. Empty original-state destination lists do
+  not silently acquire self-transitions.
+- A combination is absorbing if any member is absorbing. Absorbing behaviour
+  takes precedence over permitted outgoing transitions.
+- Priority follows the highest-priority member, with larger combinations first
+  at equal priority. With no supplied priority order, original labels supply a
+  deterministic order. The priority rule selects among intervals within a
+  discrete cycle, not among duplicate original and combined patient-time.
+
+Use `mergedState()` only for exceptions:
+
+```r
+study <- cohort2TrajectoryConfiguration(
+  useCDM = FALSE,
+  trajectoryDataObject = input,
+  stateCohortLabels = c("A", "B", "C"),
+  stateCohortPriorityOrder = c("A", "B", "C"),
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7,
+  stateCohortAbsorbing = "A",
+  allowedStatesList = list(A = "C", B = character(0), C = "C"),
+  mergeStates = TRUE,
+  mergedStateOverrides = list(
+    mergedState(c("A", "B"), absorbing = FALSE, label = "Combined")
+  )
+)
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+study$stateDictionary
+```
+
+Omitted override properties inherit. `allowedTransitions = character(0)` means
+no destinations, and `absorbing = FALSE` explicitly removes inherited absorbing
+status. A supplied destination list replaces, rather than extends, inheritance.
+For example, `allowedTransitions = list("C", c("C", "D"))` explicitly permits
+both C alone and the C+D combination. Members always refer to original states.
+Names containing punctuation need no escaping or manual numeric remapping.
+
+The configuration and saved rules retain original-state definitions and
+structured overrides. Resolved memberships, labels, absorbing flags and allowed
+destination keys are available in `study$stateDictionary` and
+`Data/stateDictionary.rds`. Merged trajectory outputs contain readable
+`state_label` values and a stable `state_key`. Numeric `state_id` values are local
+to the run and should not be used to identify combinations across databases.
+Generated display-label collisions are disambiguated without changing membership.
+Bounded original-state intervals are retained in `Data/sourceIntervals.rds`.
+This file contains patient-level data and must not be included when sharing a study.
+
+Legacy named `mergeThreshold` arguments warn and are ignored. The previous native
+merger never used the threshold. `updateAutomaticallyForMergedStates` also warns
+when explicitly supplied and is ignored because structured rules are always
+resolved automatically. Merging results can differ from older versions because
+overlapping patient-time is now resolved once and rule inheritance is explicit.
 
 ## Rerunning a study on another database
 

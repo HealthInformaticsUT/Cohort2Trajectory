@@ -12,8 +12,7 @@ test_that("a moved study restores its rules and reads a different CDM", {
     stateCohortLabels = c("a", "b"), stateCohortPriorityOrder = c("b", "a"),
     stateCohortMandatory = "b", stateCohortAbsorbing = "b",
     stateSelectionType = "Priority", lengthOfStay = 14,
-    oocFix = "Last present state", allowedStatesList = list(a = c("a", "b"), b = "b"),
-    mergeThreshold = 0.75
+    oocFix = "Last present state", allowedStatesList = list(a = c("a", "b"), b = "b")
   )
   file.copy(file.path("testStudyMain", "JSON", c("test1.json", "test3.json", "test4.json")),
             file.path(sourcePath, "portable", "JSON", c("0.json", "first.json", "second.json")))
@@ -32,7 +31,8 @@ test_that("a moved study restores its rules and reads a different CDM", {
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, batchSize = 5
   )
   expect_equal(restored$allowedStatesList, study$allowedStatesList)
-  expect_equal(c(restored$lengthOfStay, restored$mergeThreshold), c(14, 0.75))
+  expect_equal(restored$lengthOfStay, 14)
+  expect_false("mergeThreshold" %in% names(restored))
   expect_error(createTrajectories(studyEnv = restored), "getDataForStudy successfully first")
   expect_error(cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, lengthOfStay = 7
@@ -72,10 +72,10 @@ test_that("saved local studies preserve merging and optional rules in both forma
       stateCohortLabels = c("A", "B"), stateCohortPriorityOrder = c("A", "B"),
       stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
       allowedStatesList = list(), stateCohortAbsorbing = NULL,
-      mergeStates = TRUE, mergeThreshold = 0.7
+      mergeStates = TRUE
     )
     getDataForStudy(studyEnv = study)
-    expected <- createTrajectories(studyEnv = study, updateAutomaticallyForMergedStates = TRUE)
+    expected <- createTrajectories(studyEnv = study)
     inputFile <- file.path(root, paste0(type, ".csv"))
     write.csv(input, inputFile, row.names = FALSE)
     restored <- cohort2TrajectoryConfiguration(
@@ -85,7 +85,7 @@ test_that("saved local studies preserve merging and optional rules in both forma
     getDataForStudy(studyEnv = restored)
     expect_equal(createTrajectories(studyEnv = restored), expected)
     expect_true(restored$mergeStates)
-    expect_true(restored$updateAutomaticallyForMergedStates)
+    expect_equal(restored$stateDictionary, study$stateDictionary)
     expect_length(restored$allowedStatesList, 0)
     expect_length(restored$stateCohortAbsorbing, 0)
   }
