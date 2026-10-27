@@ -2,7 +2,7 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
-#include <cctype>
+#include "transitionMatching.h"
 using namespace Rcpp;
 using namespace std;
 
@@ -29,11 +29,9 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   std::vector<std::string> patientsStates = patientData["state_label"];
   NumericVector stateIDs = patientData["state_id"];
   std::vector<double> timeCohort = patientData["time_in_cohort"];
-  auto lower = [](std::string value) {
-    std::transform(value.begin(), value.end(), value.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
-    return value;
-  };
+  // Match R's case conversion without changing labels or source-rule names.
+  auto labelForms = c2t::transitionLabelForms(patientData["state_label"]);
+  List foldedRules = c2t::foldTransitionRules(allowedStatesList);
   std::vector<std::string> absorbing;
   if (absorbingStates.isNotNull()) {
     absorbing = as<std::vector<std::string>>(absorbingStates.get());
@@ -69,11 +67,8 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
           stop("No allowed-transition entry for state '%s'.", lastState.c_str());
         }
         std::vector<std::string> destinations =
-          as<std::vector<std::string>>(allowedStatesList[lastState]);
-        permitted = std::any_of(destinations.begin(), destinations.end(),
-                                [&](const std::string& candidate) {
-                                  return lower(candidate) == lower(state);
-                                });
+          as<std::vector<std::string>>(foldedRules[lastState]);
+        permitted = std::find(destinations.begin(), destinations.end(), labelForms.at(state)) != destinations.end();
       }
       if (permitted) {
         seqCounter = !boundary && state == lastState ? seqCounter + 1 : 1;

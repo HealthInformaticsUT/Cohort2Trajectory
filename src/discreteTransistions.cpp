@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <cctype>
 #include <map>
+#include "transitionMatching.h"
 using namespace Rcpp;
 using namespace std;
 
@@ -42,11 +42,11 @@ NumericVector replaceOnTreshold(NumericVector referenceVector, int treshold, int
 
 // [[Rcpp::export]]
 DataFrame getDiscreteStates(int stateSelection,
-                  std::string oocFix, 
+                  Rcpp::CharacterVector oocFix,
                   int stateDuration,
                   std::vector<int> patientIDs,
                   DataFrame patientData,
-                  std::vector<std::string> statePriorityVector,
+                  Rcpp::CharacterVector statePriorityVector,
                   Rcpp::List allowedStatesList,
                   Nullable<CharacterVector> absorbingStates = R_NilValue){
 
@@ -77,13 +77,25 @@ DataFrame getDiscreteStates(int stateSelection,
   
   std::vector<std::string> patientsStates = patientData["cohort_definition_id"];
   std::vector<double> timeCohort = patientData["time_in_cohort"];
+  std::vector<std::string> priority = as<std::vector<std::string>>(statePriorityVector);
+  std::string gapFix = as<std::string>(oocFix);
+
+  // Prepare comparison forms once, never by calling R in patient/cycle loops.
+  // Keep R's encoding metadata until conversion, including for a new fallback.
+  auto labelForms = c2t::transitionLabelForms(patientData["cohort_definition_id"]);
+  if (labelForms.find(gapFix) == labelForms.end()) {
+    labelForms[gapFix] = as<std::string>(c2t::foldTransitionLabels(oocFix));
+  }
+  List foldedRules = c2t::foldTransitionRules(allowedStatesList);
+  std::vector<std::string> foldedPriority =
+    as<std::vector<std::string>>(c2t::foldTransitionLabels(statePriorityVector));
 
   // Priority is a ranking (also used for First/Overlap ties), not a filter.
   // Validate before allowed-destination filtering can hide unlisted records.
   // The R caller has already bounded these records to the target intervals.
   for (const auto& state : patientsStates) {
     if (state != "0" &&
-        std::find(statePriorityVector.begin(), statePriorityVector.end(), state) == statePriorityVector.end()) {
+        std::find(priority.begin(), priority.end(), state) == priority.end()) {
       stop("State '%s' is missing from statePriorityVector (stateCohortPriorityOrder in the study configuration).",
            state.c_str());
     }
@@ -132,23 +144,15 @@ DataFrame getDiscreteStates(int stateSelection,
     Date startDate = cohortstartDate + (iteration - 1) * stateDuration;
     Date endDate = std::min(startDate + (stateDuration - 1), cohortendDate);
 
-    std::vector<std::string> allowedStates = statePriorityVector;
+    std::vector<std::string> allowedStates = foldedPriority;
     if (!lastState.empty() && allowedStatesList.size() > 0) {
       if (!allowedStatesList.containsElementNamed(lastState.c_str())) {
         stop("No allowed-transition entry for state '%s'.", lastState.c_str());
       }
-      allowedStates = as<std::vector<std::string>>(allowedStatesList[lastState]);
+      allowedStates = as<std::vector<std::string>>(foldedRules[lastState]);
     }
     auto isAllowed = [&](const std::string& candidate) {
-      std::string lowerCandidate = candidate;
-      std::transform(lowerCandidate.begin(), lowerCandidate.end(),
-                     lowerCandidate.begin(), [](unsigned char c) { return std::tolower(c); });
-      for (std::string allowed : allowedStates) {
-        std::transform(allowed.begin(), allowed.end(), allowed.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
-        if (allowed == lowerCandidate) return true;
-      }
-      return false;
+      return std::find(allowedStates.begin(), allowedStates.end(), labelForms.at(candidate)) != allowedStates.end();
     };
 
     int best = -1;
@@ -161,10 +165,10 @@ DataFrame getDiscreteStates(int stateSelection,
       int overlap = daysOverlap(startDate, endDate, controlStart[i], controlEnd[i]);
       if (overlap <= 0 || !isAllowed(states[i])) continue;
 
-      auto priorityIt = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[i]);
-      int priority = std::distance(statePriorityVector.begin(), priorityIt);
+      auto priorityIt = std::find(priority.begin(), priority.end(), states[i]);
+      int priorityIndex = std::distance(priority.begin(), priorityIt);
       if (stateSelection == 2) {
-        overlapIntervals[priority].push_back(std::make_pair(
+        overlapIntervals[priorityIndex].push_back(std::make_pair(
           std::max(startDate, controlStart[i]), std::min(endDate, controlEnd[i])));
         continue;
       }
@@ -172,14 +176,14 @@ DataFrame getDiscreteStates(int stateSelection,
       if (best >= 0) {
         if (stateSelection == 1) {
           better = controlStart[i] < controlStart[best] ||
-            (controlStart[i] == controlStart[best] && priority < bestPriority);
+            (controlStart[i] == controlStart[best] && priorityIndex < bestPriority);
         } else {
-          better = priority < bestPriority;
+          better = priorityIndex < bestPriority;
         }
       }
       if (better) {
         best = i;
-        bestPriority = priority;
+        bestPriority = priorityIndex;
       }
     }
 
@@ -207,17 +211,17 @@ DataFrame getDiscreteStates(int stateSelection,
       coveredDays += static_cast<int>(coveredEnd - coveredStart) + 1;
       if (coveredDays > bestOverlap) {
         bestOverlap = coveredDays;
-        state = statePriorityVector[entry.first];
+        state = priority[entry.first];
       }
     }
     if (state == "OUT OF COHORT") {
-      if (oocFix == "Last present state") {
+      if (gapFix == "Last present state") {
         // Carry-forward must not introduce a prohibited self-transition.
         if (!lastState.empty() && isAllowed(lastState)) state = lastState;
-      } else if (oocFix != "None") {
+      } else if (gapFix != "None") {
         // A named fallback is a state too, and must respect the same rules.
-        if (lastState.empty() || allowedStatesList.size() == 0 || isAllowed(oocFix)) {
-          state = oocFix;
+        if (lastState.empty() || allowedStatesList.size() == 0 || isAllowed(gapFix)) {
+          state = gapFix;
         }
       }
     }

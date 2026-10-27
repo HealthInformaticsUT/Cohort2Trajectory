@@ -77,7 +77,9 @@
 #'   A rejected absorbing record does not end follow-up. Discrete generation
 #'   stops after retaining the absorbing cycle. No further transition
 #'   rules are required after a retained absorbing state. Destination matching
-#'   is case-insensitive in both formats.
+#'   is case-insensitive in both formats using R's locale-aware case conversion.
+#'   Original clinical labels are preserved in output. Source-rule names must
+#'   still use the exact clinical labels.
 #'   The first target-cohort interval (label 0 in cleaned data) defines trajectory
 #'   boundaries, including for patients with no state records. Discrete gaps use
 #'   oocFix. The legacy OUT OF COHORT label means no selected state, not loss of

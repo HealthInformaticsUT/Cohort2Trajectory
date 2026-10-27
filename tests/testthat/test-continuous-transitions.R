@@ -16,6 +16,45 @@ test_that("empty continuous transition rules are unrestricted", {
   expect_equal(result$state_label, c("START", "A", "B", "C", "EXIT"))
 })
 
+test_that("native transition matching follows R case conversion for accented labels", {
+  label <- "\u00c4ge faas"
+  skip_if(tolower(label) != "\u00e4ge faas", "R locale does not support this case conversion")
+  data <- data.frame(
+    subject_id = 1L, cohort_definition_id = c("0", "A", label, label),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7, 14),
+    cohort_end_date = as.Date("2020-01-01") + c(20, 6, 13, 20)
+  )
+  rules <- setNames(list(tolower(label), toupper(label)), c("A", label))
+  for (method in 1:3) {
+    discrete <- getTrajectoriesDiscrete(
+      NULL, data, stateDuration = 7, stateSelection = method,
+      statePriorityVector = c("A", label), allowedStatesList = rules, addPersonalData = FALSE
+    )
+    continuous <- getTrajectoriesContinuous(
+      NULL, data, stateSelection = method, statePriorityVector = c("A", label),
+      allowedStatesList = rules, addPersonalData = FALSE
+    )
+    expect_identical(discrete$state_label, c("START", "A", label, label, "EXIT"))
+    expect_identical(continuous$state_label, c("START", "A", label, label, "EXIT"))
+  }
+  # An unrecorded named fallback must use the same comparison rules.
+  gap <- data[c(1, 2), ]
+  fallback <- getTrajectoriesDiscrete(
+    NULL, gap, stateDuration = 7, stateSelection = 3, statePriorityVector = "A",
+    oocFix = label, allowedStatesList = rules, addPersonalData = FALSE
+  )
+  expect_identical(fallback$state_label, c("START", "A", label, label, "EXIT"))
+  # Preserve explicit input encodings before native comparison forms are made.
+  encoded <- iconv(label, from = "UTF-8", to = "latin1")
+  gap$time_in_cohort <- 0
+  encodedRules <- setNames(list(tolower(encoded), toupper(encoded)), c("A", encoded))
+  native <- getDiscreteStates(3, encoded, 7, 1L, gap, c("A", encoded), encodedRules)
+  expect_identical(lapply(native$state_label, charToRaw),
+                    lapply(c("A", encoded, encoded), charToRaw))
+  expect_error(getDiscreteStates(3, c("None", encoded), 7, 1L, gap, "A", list()),
+                "single string")
+})
+
 test_that("a prohibited absorbing state does not truncate later valid records", {
   result <- continuous_rule_fixture(list(A = "c", B = "B", C = "C"), absorbing = "B")
   expect_equal(result$state_label, c("START", "A", "C", "EXIT"))

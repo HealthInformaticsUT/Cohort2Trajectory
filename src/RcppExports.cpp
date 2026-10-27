@@ -11,17 +11,17 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // getDiscreteStates
-DataFrame getDiscreteStates(int stateSelection, std::string oocFix, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, std::vector<std::string> statePriorityVector, Rcpp::List allowedStatesList, Nullable<CharacterVector> absorbingStates);
+DataFrame getDiscreteStates(int stateSelection, Rcpp::CharacterVector oocFix, int stateDuration, std::vector<int> patientIDs, DataFrame patientData, Rcpp::CharacterVector statePriorityVector, Rcpp::List allowedStatesList, Nullable<CharacterVector> absorbingStates);
 RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP oocFixSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP, SEXP allowedStatesListSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type stateSelection(stateSelectionSEXP);
-    Rcpp::traits::input_parameter< std::string >::type oocFix(oocFixSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type oocFix(oocFixSEXP);
     Rcpp::traits::input_parameter< int >::type stateDuration(stateDurationSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type statePriorityVector(statePriorityVectorSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type statePriorityVector(statePriorityVectorSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type allowedStatesList(allowedStatesListSEXP);
     Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type absorbingStates(absorbingStatesSEXP);
     rcpp_result_gen = Rcpp::wrap(getDiscreteStates(stateSelection, oocFix, stateDuration, patientIDs, patientData, statePriorityVector, allowedStatesList, absorbingStates));
