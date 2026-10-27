@@ -532,12 +532,9 @@ getTrajectoriesDiscrete <- function(cdm,
   #
   ################################################################################
   newPatientData <- removeAfterAbsorbingStatesDiscrete(
-    patientData <- newPatientData,
-    patientIDs <- patientIds,
-    absorbingStates <- if (is.null(absorbingStates))
-      c("No absorbing state")
-    else
-      absorbingStates
+    patientData = newPatientData,
+    patientIDs = patientIds,
+    absorbingStates = if (is.null(absorbingStates)) character(0) else absorbingStates
   )
   newPatientData <- .restoreSubjectIds(newPatientData, encoded$originals)
   ##############################################################################
@@ -799,12 +796,7 @@ getTrajectoriesContinuous <- function(cdm,
   data <- removeAfterAbsorbingStatesContinuous(
     patientData = data,
     patientIDs = unique(data$subject_id),
-    absorbingStates = if (is.null(absorbingStates)) {
-      c("No absorbing state")
-    }
-    else {
-      absorbingStates
-    }
+    absorbingStates = if (is.null(absorbingStates)) character(0) else absorbingStates
   )
   data <- .restoreSubjectIds(data, encoded$originals)
   

@@ -61,6 +61,32 @@ test_that("absorbing states still end trajectories before the target endpoint", 
   }
 })
 
+test_that("no absorbing states does not introduce a placeholder clinical label", {
+  data <- data.frame(
+    subject_id = 1L,
+    cohort_definition_id = c("0", "No absorbing state", "Recovery"),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+    cohort_end_date = as.Date("2020-01-01") + c(13, 6, 13)
+  )
+  for (type in c("Discrete", "Continuous")) {
+    generate <- function(absorbing) {
+      args <- list(NULL, data, stateSelection = 3,
+                   statePriorityVector = c("No absorbing state", "Recovery"),
+                   absorbingStates = absorbing, addPersonalData = FALSE)
+      if (type == "Discrete") args$stateDuration <- 7
+      do.call(if (type == "Discrete") getTrajectoriesDiscrete else getTrajectoriesContinuous, args)
+    }
+    result <- generate(NULL)
+    expect_equal(result, generate(character(0)))
+    expect_equal(result$state_label, c("START", "No absorbing state", "Recovery", "EXIT"))
+    expect_equal(tail(result$state_end_date, 1), as.Date("2020-01-15"))
+    # The same label can still be made absorbing deliberately.
+    absorbing <- generate("No absorbing state")
+    expect_equal(absorbing$state_label, c("START", "No absorbing state", "EXIT"))
+    expect_equal(tail(absorbing$state_end_date, 1), as.Date("2020-01-08"))
+  }
+})
+
 test_that("fresh and saved workflows import target-only histories", {
   path <- tempfile("c2t-boundaries-")
   dir.create(path)
