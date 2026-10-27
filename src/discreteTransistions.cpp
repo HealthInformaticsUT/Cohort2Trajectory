@@ -46,13 +46,18 @@ DataFrame getDiscreteStates(int stateSelection,
                   std::vector<int> patientIDs,
                   DataFrame patientData,
                   std::vector<std::string> statePriorityVector,
-                  Rcpp::List allowedStatesList){
+                  Rcpp::List allowedStatesList,
+                  Nullable<CharacterVector> absorbingStates = R_NilValue){
 
   if (stateDuration < 1) {
     stop("stateDuration must be a positive number of days.");
   }
   if (stateSelection < 1 || stateSelection > 3) {
     stop("stateSelection must be 1 (First), 2 (Overlap), or 3 (Priority).");
+  }
+  std::vector<std::string> absorbing;
+  if (absorbingStates.isNotNull()) {
+    absorbing = as<std::vector<std::string>>(absorbingStates.get());
   }
 
   //Initiating dataframe output data
@@ -194,6 +199,12 @@ DataFrame getDiscreteStates(int stateSelection,
     outStartDates.push_back(startDate);
     outEndDates.push_back(endDate);
     outtimeCohort.push_back(time);
+    // Stop at the selected absorbing cycle, before later cycles can demand
+    // outgoing rules. Raw but prohibited/unselected absorbing records do not
+    // end follow-up. The outer loop must still process the next patient.
+    if (std::find(absorbing.begin(), absorbing.end(), state) != absorbing.end()) {
+      break;
+    }
   }
   }
   DataFrame outPatientData = DataFrame::create( Named("subject_id") = outpatientIDs,

@@ -130,7 +130,8 @@ For discrete trajectories, selection ranks only overlapping states
   permitted destinations. Rules are applied independently for each patient.
   Continuous output checks transitions from the last retained clinical state
   and removes prohibited records before applying the absorbing-state cutoff.
-  A rejected absorbing record does not end follow-up. No further transition
+  A rejected absorbing record does not end follow-up. Discrete generation
+  stops after retaining the absorbing cycle. No further transition
   rules are required after a retained absorbing state. Destination matching
   is case-insensitive in both formats.
   The first target-cohort interval (label 0 in cleaned data) defines trajectory

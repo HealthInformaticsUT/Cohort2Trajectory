@@ -65,6 +65,31 @@ test_that("unrestricted and case-insensitive destination lists remain supported"
   expect_error(discrete_labels(data, 3, list(B = "B")), "No allowed-transition entry for state 'A'")
 })
 
+test_that("selected absorbing states stop discrete cycles without outgoing rules", {
+  data <- transition_fixture(c("0", "A", "B", "C", "0", "C"),
+                              c(0, 0, 7, 14, 0, 0), c(20, 6, 13, 20, 13, 13),
+                              c(1L, 1L, 1L, 1L, 2L, 2L))
+  run <- function(method, rules) {
+    getTrajectoriesDiscrete(NULL, data, stateDuration = 7,
+                            stateSelection = method, statePriorityVector = c("A", "B", "C"),
+                            absorbingStates = "B", allowedStatesList = rules,
+                            addPersonalData = FALSE)
+  }
+  for (method in 1:3) {
+    # No B entry is needed after absorption. The next patient still runs.
+    permitted <- run(method, list(A = "B", C = "C"))
+    expect_equal(permitted$state_label, c("START", "A", "B", "EXIT", "START", "C", "C", "EXIT"))
+    expect_equal(permitted$state_start_date[permitted$state_label == "EXIT"],
+                  as.Date(c("2020-01-15", "2020-01-15")))
+    # A recorded but prohibited absorbing state must not end follow-up.
+    prohibited <- run(method, list(A = "C", C = "C"))
+    expect_equal(prohibited$state_label,
+                  c("START", "A", "OUT OF COHORT", "C", "EXIT", "START", "C", "C", "EXIT"))
+    expect_equal(prohibited$state_start_date[prohibited$state_label == "EXIT"],
+                  as.Date(c("2020-01-22", "2020-01-15")))
+  }
+})
+
 test_that("missing priority entries cannot silently turn records into gaps", {
   data <- transition_fixture(c("0", "A", "B", "Outside"), c(0, 0, 7, 21), c(13, 6, 13, 27))
   run <- function(method, priority, input = data) {
