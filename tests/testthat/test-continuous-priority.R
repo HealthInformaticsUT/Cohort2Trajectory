@@ -24,3 +24,22 @@ test_that("continuous priority removes all shared days without invalid fragments
     expect_equal(actual, case$expected)
   }
 })
+
+test_that("continuous priority cannot silently discard unlisted states", {
+  data <- data.frame(
+    subject_id = 1L, cohort_definition_id = c("0", "A", "B"),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 3),
+    cohort_end_date = as.Date("2020-01-01") + c(6, 2, 6),
+    time_in_cohort = 0
+  )
+  run <- function(priority, input = data) {
+    getTrajectoriesContinuous(
+      NULL, input, stateSelection = 3, statePriorityVector = priority,
+      addPersonalData = FALSE
+    )
+  }
+  expect_error(run("A"), "States missing from statePriorityVector: B", fixed = TRUE)
+  expect_error(run(NULL), "States missing from statePriorityVector: A, B", fixed = TRUE)
+  # No priority is needed when the patient has only a target interval.
+  expect_equal(run(NULL, data[1, ])$state_label, c("START", "EXIT"))
+})

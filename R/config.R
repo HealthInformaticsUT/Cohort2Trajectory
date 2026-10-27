@@ -50,6 +50,8 @@
 #'   oocFix. The legacy OUT OF COHORT label means no selected state, not loss of
 #'   observation. Continuous output retains interval endpoints and boundary
 #'   markers without filling undocumented gaps or shifting simultaneous events.
+#'   Continuous Priority selection requires every clinical state in the bounded
+#'   input to be listed in stateCohortPriorityOrder. Missing states raise an error.
 #'   Models requiring unique timestamps must resolve ties explicitly.
 #'
 #' @export

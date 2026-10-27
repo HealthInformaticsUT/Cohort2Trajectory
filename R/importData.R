@@ -595,6 +595,8 @@ getTrajectoriesDiscrete <- function(cdm,
 #'   membership. Absorbing states end the trajectory at their retained endpoint.
 #'   Priority selection assigns shared days to the higher-priority state and
 #'   retains only non-empty fragments of lower-priority intervals.
+#'   Every clinical state in the bounded input must appear in statePriorityVector.
+#'   Missing states raise an error rather than being silently discarded.
 #'   Transition rules are checked before the absorbing-state cutoff. Empty rules
 #'   mean unrestricted transitions. Rejected records do not change the last
 #'   retained state, and only a retained absorbing record can end the trajectory.
@@ -633,6 +635,12 @@ getTrajectoriesContinuous <- function(cdm,
   
   # Lets just create a new dataframe and add all the states in the order of priorities
   if (stateSelection == 3) {
+    clinicalStates <- setdiff(unique(data$cohort_definition_id), c("START", "EXIT"))
+    missingStates <- setdiff(clinicalStates, statePriorityVector)
+    if (length(missingStates) > 0L) {
+      stop("States missing from statePriorityVector: ",
+           paste(missingStates, collapse = ", "), ".", call. = FALSE)
+    }
     newData <-
       dplyr::filter(data, .data$cohort_definition_id %in% c("START", "EXIT"))
     for (patientID in unique(newData$subject_id)) {
@@ -644,7 +652,7 @@ getTrajectoriesContinuous <- function(cdm,
       )
       
       
-      for (p in 1:length(statePriorityVector)) {
+      for (p in seq_along(statePriorityVector)) {
         priorityData <- dplyr::filter(patientData,
                                       .data$cohort_definition_id == statePriorityVector[p])
         if (nrow(priorityData) == 0) {

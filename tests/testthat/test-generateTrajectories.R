@@ -52,16 +52,17 @@ testthat::test_that("Create trajectories continuous", {
                      oocFix = "None",
                      outOfCohortAllowed = FALSE,
                      lengthOfStay = 30,
-                     stateCohortLabels = c("test_state1","test_state2"),
-                     stateCohortPriorityOrder = c("test_state1","test_state2"),
-                     stateCohortMandatory = c("test_state2"),
-                     stateCohortAbsorbing = c("test_state2"),
+                     stateCohortLabels = c("TestState1","TestState2"),
+                     stateCohortPriorityOrder = c("TestState1","TestState2"),
+                     stateCohortMandatory = c("TestState2"),
+                     stateCohortAbsorbing = c("TestState2"),
                      stateSelectionType = 3,
-                     allowedStatesList = createStateList(c("test_state1","test_state2")),
+                     allowedStatesList = createStateList(c("TestState1","TestState2")),
                      useCDM = TRUE)
   
   dataTrajectories <- read.csv(paste0(getwd(), "/testStudy/Data/patientDataContinuous.csv"))
   expect_equal(ncol(dataTrajectories), 9)
+  expect_true(any(dataTrajectories$state_label %in% c("TestState1", "TestState2")))
   DBI::dbDisconnect(db, shutdown = TRUE)
 })
 
