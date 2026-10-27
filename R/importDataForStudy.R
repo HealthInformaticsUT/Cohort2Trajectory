@@ -26,6 +26,10 @@
 #'   the configured gap rule, and continuous trajectories retain boundaries
 #'   without inventing clinical states. An empty eligible cohort is not treated
 #'   as a successful import.
+#'   For non-CDM input, state labels are preserved as supplied, whether data
+#'   come from a data frame or CSV. Spaces and punctuation are not converted
+#'   into filename-safe substitutes. Use the same labels in state definitions,
+#'   mandatory states, priorities and transition rules.
 #'
 #' @return log info
 #' @export
@@ -136,9 +140,10 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     # get data from input
     if (is.null(trajectoryDataObject)) {
       data = .readPatientCsv(pathToData)
-    } else{
-      trajectoryDataObject$cohort_definition_id = sanitize_filenames(trajectoryDataObject$cohort_definition_id)
-      data = trajectoryDataObject
+    } else {
+      # Clinical labels are values, not filenames. Renaming them here can
+      # collapse distinct states and break the configured selection rules.
+      data <- trajectoryDataObject
     }
     
   }

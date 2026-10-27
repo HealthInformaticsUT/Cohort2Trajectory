@@ -73,6 +73,10 @@ A nonempty target cohort remains valid when no state events survive
   the configured gap rule, and continuous trajectories retain boundaries
   without inventing clinical states. An empty eligible cohort is not treated
   as a successful import.
+  For non-CDM input, state labels are preserved as supplied, whether data
+  come from a data frame or CSV. Spaces and punctuation are not converted
+  into filename-safe substitutes. Use the same labels in state definitions,
+  mandatory states, priorities and transition rules.
 }
 \examples{
 \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}
