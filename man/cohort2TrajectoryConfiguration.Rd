@@ -58,9 +58,10 @@ cohort2TrajectoryConfiguration(
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.}
 
 \item{lengthOfStay}{Cycle length in days for discrete trajectories. The final
-cycle is shortened if the supplied state history ends partway through it.}
+cycle is shortened if the trajectory boundary falls partway through it.}
 
-\item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
+\item{outOfCohortAllowed}{Whether retained state records may extend the
+trajectory beyond the target interval's end. The target start is unchanged.}
 
 \item{runSavedStudy}{running a predefined study from studyName/Settings/trajectorySettings.csv}
 
@@ -94,6 +95,12 @@ For discrete trajectories, selection ranks only overlapping states
   An empty allowedStatesList imposes no transition restrictions. In a nonempty
   list, each selected state must have an entry, with character(0) meaning no
   permitted destinations. Rules are applied independently for each patient.
+  The first target-cohort interval (label 0 in cleaned data) defines trajectory
+  boundaries, including for patients with no state records. Discrete gaps use
+  oocFix. The legacy OUT OF COHORT label means no selected state, not loss of
+  observation. Continuous output retains interval endpoints and boundary
+  markers without filling undocumented gaps or shifting simultaneous events.
+  Models requiring unique timestamps must resolve ties explicitly.
 }
 \examples{
 \dontrun{cohort2TrajectoryConfiguration(cdm = cdm,

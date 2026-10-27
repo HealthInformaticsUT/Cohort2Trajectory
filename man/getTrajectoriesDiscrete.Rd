@@ -15,7 +15,8 @@ getTrajectoriesDiscrete(
   studyName = "",
   addPersonalData = TRUE,
   allowedStatesList = list(),
-  stateLevels = NULL
+  stateLevels = NULL,
+  outOfCohortAllowed = FALSE
 )
 }
 \arguments{
@@ -24,7 +25,7 @@ getTrajectoriesDiscrete(
 \item{cohortData}{A data.frame object which is queried with getCohortsPatients function}
 
 \item{stateDuration}{Cycle length in days. The final cycle is shortened when
-the supplied state history ends before a full cycle is complete.}
+the trajectory boundary falls before a full cycle is complete.}
 
 \item{stateSelection}{The chosen state selection method}
 
@@ -41,6 +42,8 @@ the supplied state history ends before a full cycle is complete.}
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
 
 \item{stateLevels}{Ordered study-wide state labels used to assign stable IDs.}
+
+\item{outOfCohortAllowed}{Whether retained states may extend the target endpoint.}
 }
 \description{
 This function outputs a data.frame object which describes the movement of patients between the defined states

@@ -35,10 +35,11 @@ createTrajectories(
 
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)}
 
-\item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
+\item{outOfCohortAllowed}{Whether retained state records may extend the
+trajectory beyond the target interval's end. The target start is unchanged.}
 
 \item{lengthOfStay}{Cycle length in days for discrete trajectories. The final
-cycle is shortened if the supplied state history ends partway through it.}
+cycle is shortened if the trajectory boundary falls partway through it.}
 
 \item{stateCohortLabels}{vector of the customized labels of the state cohorts}
 
@@ -75,6 +76,19 @@ State IDs are assigned once per study. START has ID 1, followed
   In discrete output, EXIT marks the day after the last retained cycle and
   does not add observed time. Its time_in_cohort records elapsed years from
   trajectory start to that boundary, using 365.25 days per year.
+
+  The first target interval (label 0) supplies the start and end boundaries.
+  Patients without clinical state records remain in the output. Discrete gaps
+  follow oocFix, whereas continuous output keeps boundary markers and selected
+  intervals without implicitly extending a state through a gap. Continuous
+  times now match the recorded dates, including ties. Downstream models that
+  require unique times need an explicit tie-handling rule.
+  Configured absorbing states can end trajectories earlier. With
+  outOfCohortAllowed = TRUE, retained state records can extend the endpoint,
+  but records already removed during import cannot be recovered here.
+  For custom input without a target row, boundaries fall back to the recorded
+  state span. The package does not infer observation coverage beyond the
+  supplied intervals.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

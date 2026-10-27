@@ -70,16 +70,19 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
       // We have to explicitly add 'EXIT' state as it would be otherwise cut off
       if (std::find(absorbingStates.begin(), absorbingStates.end(), state) != absorbingStates.end())
       {
+        Date exitDate = patientsEnd[index] + 1;
+        Date stateStart = patientsStart[index];
+        double exitTime = timeCohort[index] + (exitDate - stateStart) / 365.25;
         while (patientsStates[index] != "EXIT"){
           index ++;
         }
         // Adding EXIT state
         outpatientIDs.push_back(patientID);
         outStates.push_back(patientsStates[index]);
-        outStartDates.push_back(patientsStart[index]);
-        outEndDates.push_back(patientsEnd[index]);
+        outStartDates.push_back(exitDate);
+        outEndDates.push_back(exitDate);
         outstateIDs.push_back(stateIDs[index]);
-        outtimeCohort.push_back(timeCohort[index]);
+        outtimeCohort.push_back(exitTime);
         seqOrdinal.push_back(1);
         
         break;

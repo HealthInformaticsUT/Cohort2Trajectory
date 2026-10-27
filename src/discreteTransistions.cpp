@@ -92,8 +92,8 @@ DataFrame getDiscreteStates(int stateSelection,
     times.push_back(timeCohort[index]);
     iter++;
   }
-  // Get earliest date, the controlStart values are ordered
-  Date cohortstartDate = controlStart[0];
+  // Target rows preserve the full span even when clinical states are sparse.
+  Date cohortstartDate = *std::min_element(controlStart.begin(), controlStart.end());
   Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end());
   // # Let's get the number of possible state durations in the timespan of endDate - startDate
   // # This is needed for mapping possible states to time intervals
@@ -132,6 +132,8 @@ DataFrame getDiscreteStates(int stateSelection,
     int bestOverlap = -1;
     int bestPriority = std::numeric_limits<int>::max();
     for (size_t i = 0; i < states.size(); i++) {
+      // Target rows define follow-up, but are not clinical state candidates.
+      if (states[i] == "0") continue;
       int overlap = daysOverlap(startDate, endDate, controlStart[i], controlEnd[i]);
       if (overlap <= 0 || !isAllowed(states[i])) continue;
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/importData.R
 \name{getTrajectoriesContinuous}
 \alias{getTrajectoriesContinuous}
-\title{Prepare patientData dataframe for msm package}
+\title{Construct continuous patient histories}
 \usage{
 getTrajectoriesContinuous(
   cdm,
@@ -13,7 +13,8 @@ getTrajectoriesContinuous(
   studyName = "",
   addPersonalData = TRUE,
   allowedStatesList = list(),
-  stateLevels = NULL
+  stateLevels = NULL,
+  outOfCohortAllowed = FALSE
 )
 }
 \arguments{
@@ -34,11 +35,20 @@ getTrajectoriesContinuous(
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
 
 \item{stateLevels}{Ordered study-wide state labels used to assign stable IDs.}
+
+\item{outOfCohortAllowed}{Whether retained states may extend the target endpoint.}
 }
 \value{
-A dataframe ready for using msm package
+A dataframe of selected intervals and boundary markers. Models that
+  require unique timestamps need an explicit rule for simultaneous records.
 }
 \description{
-This function prepares patientData dataframe for msm package
+This function returns selected state intervals with trajectory boundary markers.
+}
+\details{
+Target intervals supply START and EXIT boundaries even without state
+  records. Selected intervals retain their endpoints and simultaneous records
+  retain equal elapsed times. Gaps do not imply continued clinical state
+  membership. Absorbing states end the trajectory at their retained endpoint.
 }
 \keyword{internal}

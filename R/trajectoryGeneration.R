@@ -10,8 +10,9 @@
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)
 #' @param lengthOfStay Cycle length in days for discrete trajectories. The final
-#'   cycle is shortened if the supplied state history ends partway through it.
-#' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
+#'   cycle is shortened if the trajectory boundary falls partway through it.
+#' @param outOfCohortAllowed Whether retained state records may extend the
+#'   trajectory beyond the target interval's end. The target start is unchanged.
 #' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param allowedStatesList A list object which indicates accessible states from said state
@@ -29,6 +30,19 @@
 #'   In discrete output, EXIT marks the day after the last retained cycle and
 #'   does not add observed time. Its time_in_cohort records elapsed years from
 #'   trajectory start to that boundary, using 365.25 days per year.
+#'
+#'   The first target interval (label 0) supplies the start and end boundaries.
+#'   Patients without clinical state records remain in the output. Discrete gaps
+#'   follow oocFix, whereas continuous output keeps boundary markers and selected
+#'   intervals without implicitly extending a state through a gap. Continuous
+#'   times now match the recorded dates, including ties. Downstream models that
+#'   require unique times need an explicit tie-handling rule.
+#'   Configured absorbing states can end trajectories earlier. With
+#'   outOfCohortAllowed = TRUE, retained state records can extend the endpoint,
+#'   but records already removed during import cannot be recovered here.
+#'   For custom input without a target row, boundaries fall back to the recorded
+#'   state span. The package does not infer observation coverage beyond the
+#'   supplied intervals.
 #' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -110,8 +124,8 @@ createTrajectories <- function(cdm = NULL,
   # Create an empty dataframe to store the combined results
   result <- data.frame()
   
-  if (nrow(dplyr::filter(data, .data$cohort_definition_id != 0)) == 0) {
-    cli::cli_abort("{.error No trajectories generated as cohorts' do not increment any trajectory worthy data!}")
+  if (nrow(data) == 0) {
+    cli::cli_abort("{.error No trajectories generated: the cleaned input is empty.}")
     return(NULL)
   }
   
@@ -140,7 +154,8 @@ createTrajectories <- function(cdm = NULL,
           studyName = studyName,
           addPersonalData = useCDM,
           allowedStatesList = allowedStatesList,
-          stateLevels = stateLevels
+          stateLevels = stateLevels,
+          outOfCohortAllowed = outOfCohortAllowed
         )
       )
       
@@ -180,7 +195,8 @@ createTrajectories <- function(cdm = NULL,
           studyName = studyName,
           addPersonalData = useCDM,
           allowedStatesList = allowedStatesList,
-          stateLevels = stateLevels
+          stateLevels = stateLevels,
+          outOfCohortAllowed = outOfCohortAllowed
         )
       )
       

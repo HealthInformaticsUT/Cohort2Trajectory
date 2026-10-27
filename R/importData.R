@@ -430,13 +430,56 @@ getInclusionTable <- function(cohortData,
   return(cohortbyinclusion)
 }
 
+# Resolve the first target episode once, independently of the available states.
+# Custom inputs without a target row fall back to their recorded state span.
+.boundTrajectoryData <- function(data, outOfCohortAllowed = FALSE) {
+  data <- as.data.frame(data)
+  data$cohort_definition_id <- as.character(data$cohort_definition_id)
+  data$cohort_start_date <- as.Date(data$cohort_start_date)
+  data$cohort_end_date <- as.Date(data$cohort_end_date)
+  if (anyNA(data$cohort_start_date) || anyNA(data$cohort_end_date) ||
+      any(data$cohort_end_date < data$cohort_start_date)) {
+    stop("Trajectory intervals must have non-missing dates with end >= start.", call. = FALSE)
+  }
+  targets <- data %>% dplyr::filter(.data$cohort_definition_id == "0") %>%
+    dplyr::arrange(.data$cohort_start_date, .data$cohort_end_date) %>%
+    dplyr::group_by(.data$subject_id) %>% dplyr::slice_head(n = 1) %>%
+    dplyr::ungroup()
+  data <- dplyr::bind_rows(dplyr::filter(data, .data$cohort_definition_id != "0"), targets)
+  spans <- data %>% dplyr::group_by(.data$subject_id) %>%
+    dplyr::summarise(record_start = min(.data$cohort_start_date),
+                     record_end = max(.data$cohort_end_date), .groups = "drop")
+  targets <- targets %>% dplyr::transmute(subject_id = .data$subject_id,
+                     target_start = .data$cohort_start_date, target_end = .data$cohort_end_date)
+  bounds <- dplyr::left_join(spans, targets, by = "subject_id") %>%
+    dplyr::mutate(bound_start = dplyr::coalesce(.data$target_start, .data$record_start),
+                   bound_end = dplyr::coalesce(.data$target_end, .data$record_end))
+  if (outOfCohortAllowed) bounds$bound_end <- pmax(bounds$bound_end, bounds$record_end)
+  states <- data %>% dplyr::filter(.data$cohort_definition_id != "0") %>%
+    dplyr::inner_join(bounds, by = "subject_id") %>%
+    dplyr::filter(.data$cohort_start_date <= .data$bound_end,
+                   .data$cohort_end_date >= .data$bound_start) %>%
+    dplyr::transmute(subject_id = .data$subject_id,
+                     cohort_definition_id = .data$cohort_definition_id,
+                     cohort_start_date = pmax(.data$cohort_start_date, .data$bound_start),
+                     cohort_end_date = pmin(.data$cohort_end_date, .data$bound_end))
+  targetRows <- bounds %>% dplyr::transmute(
+    subject_id = .data$subject_id, cohort_definition_id = "0",
+    cohort_start_date = .data$bound_start, cohort_end_date = .data$bound_end
+  )
+  # Native discrete selection calculates elapsed time from these boundaries.
+  dplyr::bind_rows(targetRows, states) %>%
+    dplyr::mutate(time_in_cohort = 0) %>%
+    dplyr::arrange(.data$subject_id, .data$cohort_start_date, .data$cohort_end_date)
+}
+
 #' Convert the imported cohort data to patient treatmnet trajectories
 #'
 #' This function outputs a data.frame object which describes the movement of patients between the defined states
 #'
 #' @param cohortData A data.frame object which is queried with getCohortsPatients function
 #' @param stateDuration Cycle length in days. The final cycle is shortened when
-#'   the supplied state history ends before a full cycle is complete.
+#'   the trajectory boundary falls before a full cycle is complete.
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
@@ -446,6 +489,7 @@ getInclusionTable <- function(cohortData,
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @param stateLevels Ordered study-wide state labels used to assign stable IDs.
+#' @param outOfCohortAllowed Whether retained states may extend the target endpoint.
 #' @details EXIT is a boundary marker on the day after the final retained cycle.
 #'   Its time_in_cohort is elapsed time in years (days divided by 365.25) from
 #'   the trajectory start to that boundary. EXIT does not add observed time.
@@ -460,10 +504,9 @@ getTrajectoriesDiscrete <- function(cdm,
                                     studyName = "",
                                     addPersonalData = TRUE,
                                     allowedStatesList = list(),
-                                    stateLevels = NULL) {
-  tmp_data <- dplyr::filter(cohortData, .data$cohort_definition_id != "0")
-  tmp_data <-
-    dplyr::arrange(tmp_data, "subject_id", "cohort_start_date")
+                                    stateLevels = NULL,
+                                    outOfCohortAllowed = FALSE) {
+  tmp_data <- .boundTrajectoryData(cohortData, outOfCohortAllowed)
   
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$subject_id)
@@ -532,9 +575,9 @@ getTrajectoriesDiscrete <- function(cdm,
 #
 ################################################################################
 
-#' Prepare patientData dataframe for msm package
+#' Construct continuous patient histories
 #'
-#' This function prepares patientData dataframe for msm package
+#' This function returns selected state intervals with trajectory boundary markers.
 #'
 #' @param patientData Object of class data.frame with columns subject_id, state_label, STATE_START_DATE, STATE_END_DATE
 #' @param stateSelection Selection of the type of ordering
@@ -545,7 +588,13 @@ getTrajectoriesDiscrete <- function(cdm,
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @param stateLevels Ordered study-wide state labels used to assign stable IDs.
-#' @return A dataframe ready for using msm package
+#' @param outOfCohortAllowed Whether retained states may extend the target endpoint.
+#' @details Target intervals supply START and EXIT boundaries even without state
+#'   records. Selected intervals retain their endpoints and simultaneous records
+#'   retain equal elapsed times. Gaps do not imply continued clinical state
+#'   membership. Absorbing states end the trajectory at their retained endpoint.
+#' @return A dataframe of selected intervals and boundary markers. Models that
+#'   require unique timestamps need an explicit rule for simultaneous records.
 #' @keywords internal
 getTrajectoriesContinuous <- function(cdm,
                                       patientData,
@@ -555,49 +604,17 @@ getTrajectoriesContinuous <- function(cdm,
                                       studyName = "",
                                       addPersonalData = TRUE,
                                       allowedStatesList = list(),
-                                      stateLevels = NULL) {
-  data <- patientData
-  data <- dplyr::mutate(
-    data,
-    cohort_definition_id = ifelse(
-      .data$cohort_definition_id == "0",
-      "START",
-      .data$cohort_definition_id
-    )
-  )
-  
-  ### Let's find the ending date of last active state
-  data_ls <- data %>%
-    dplyr::filter(.data$cohort_definition_id != "START") %>%
-    dplyr::group_by(.data$subject_id) %>%
-    dplyr::summarise(LAST_STATE_DATE = max(as.Date(.data$cohort_end_date), na.rm = TRUE)) %>%
-    dplyr::select("subject_id", "LAST_STATE_DATE")
-  
-  data <- merge(data, data_ls, by = "subject_id")
-  
-  data <- dplyr::mutate(
-    data,
-    cohort_end_date = dplyr::if_else(
-      .data$cohort_definition_id == "START",
-      as.Date(.data$cohort_start_date),
-      as.Date(.data$cohort_end_date)
-    )
-  )
-  
-  # data$cohort_definition_id = as.character(data$cohort_definition_id)
-  # Adding "EXIT" state
-  data <- data %>%
-    dplyr::group_by(.data$subject_id) %>%
-    dplyr::summarise(
-      LAST_STATE_DATE = max(.data$LAST_STATE_DATE, na.rm = TRUE),
-      cohort_start_date = max(as.Date(.data$LAST_STATE_DATE) + 1, na.rm = TRUE),
-      .groups = "drop"
-    ) %>%
-    dplyr::mutate(
-      cohort_end_date = .data$cohort_start_date,
-      cohort_definition_id = "EXIT"
-    ) %>%
-    dplyr::bind_rows(data) %>%
+                                      stateLevels = NULL,
+                                      outOfCohortAllowed = FALSE) {
+  data <- .boundTrajectoryData(patientData, outOfCohortAllowed)
+  isTarget <- data$cohort_definition_id == "0"
+  exits <- data[isTarget, ]
+  exits$cohort_start_date <- exits$cohort_end_date + 1
+  exits$cohort_end_date <- exits$cohort_start_date
+  exits$cohort_definition_id <- "EXIT"
+  data$cohort_definition_id[isTarget] <- "START"
+  data$cohort_end_date[isTarget] <- data$cohort_start_date[isTarget]
+  data <- dplyr::bind_rows(data, exits) %>%
     dplyr::arrange(.data$subject_id, .data$cohort_start_date)
   
   
@@ -709,14 +726,14 @@ getTrajectoriesContinuous <- function(cdm,
   colnames(data_target) <-
     c("subject_id", "reference_start_date", "reference_end_date")
   data <- merge(data, data_target, by = "subject_id")
-  data <- dplyr::mutate(data, time_in_cohort = round(as.numeric(
+  data <- dplyr::mutate(data, time_in_cohort = as.numeric(
     difftime(
       as.Date(.data$cohort_start_date),
       as.Date(.data$reference_start_date),
       units = "days"
     ) /
       365.25
-  ), 3))
+  ))
   data <- dplyr::select(
     data,
     "subject_id",
@@ -762,45 +779,11 @@ getTrajectoriesContinuous <- function(cdm,
     "time_in_cohort"
   )
   
-  # We should make sure that the time_in_cohort column has differing values for each state for the same patient
-  # for developement case, let's just create an artificial difference of 1 day for each colliding date
+  # Preserve calendar timing, including simultaneous records. Artificial offsets
+  # can push events beyond the observation boundary.
   data <- dplyr::arrange(data, .data$subject_id, .data$time_in_cohort, .data$state_id)
-  paient_id <- NA
-  last_patient_id <- data$subject_id[1]
-  last_observed_ts <- data$time_in_cohort[1]
-  coef <- 1
-  impact <- 1 / 365.25
-  
-  data$time_in_cohort <- round(data$time_in_cohort, 6)
-  
-  for (row in 2:nrow(data)) {
-    patient_id <- data$subject_id[row]
-    if (patient_id != last_patient_id |
-        last_observed_ts < data$time_in_cohort[row]) {
-      last_patient_id <- patient_id
-      last_observed_ts <- data$time_in_cohort[row]
-      coef <- 1
-    }
-    else {
-      data$time_in_cohort[row] <- data$time_in_cohort[row] + impact * coef
-      last_patient_id <- patient_id
-      coef <- coef + 1
-      last_observed_ts <- data$time_in_cohort[row]
-    }
-  }
-  
-  # Fix state end dates
-  data <- data %>%
-    dplyr::arrange(.data$subject_id, .data$time_in_cohort) %>% # Arrange by SUBJECT_ID and TIME_IN_COHORT
-    dplyr::group_by(.data$subject_id) %>% # Group by SUBJECT_ID
-    dplyr::mutate(
-      state_end_date = dplyr::case_when(
-        state_label %in% c("START", "EXIT") ~ state_end_date,
-        # Keep START and EXIT as is
-        TRUE ~ dplyr::lead(state_start_date) # Use next STATE_START_DATE
-      )
-    ) %>%
-    dplyr::ungroup() # Ungroup for safety
+  # Keep the selected interval endpoints. A later EXIT or state record is not
+  # evidence that the previous clinical state persisted through the gap.
   
   ################################################################################
   #

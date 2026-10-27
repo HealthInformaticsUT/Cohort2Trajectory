@@ -14,8 +14,9 @@
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.
 #' @param lengthOfStay Cycle length in days for discrete trajectories. The final
-#'   cycle is shortened if the supplied state history ends partway through it.
-#' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
+#'   cycle is shortened if the trajectory boundary falls partway through it.
+#' @param outOfCohortAllowed Whether retained state records may extend the
+#'   trajectory beyond the target interval's end. The target start is unchanged.
 #' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
@@ -36,6 +37,12 @@
 #'   An empty allowedStatesList imposes no transition restrictions. In a nonempty
 #'   list, each selected state must have an entry, with character(0) meaning no
 #'   permitted destinations. Rules are applied independently for each patient.
+#'   The first target-cohort interval (label 0 in cleaned data) defines trajectory
+#'   boundaries, including for patients with no state records. Discrete gaps use
+#'   oocFix. The legacy OUT OF COHORT label means no selected state, not loss of
+#'   observation. Continuous output retains interval endpoints and boundary
+#'   markers without filling undocumented gaps or shifting simultaneous events.
+#'   Models requiring unique timestamps must resolve ties explicitly.
 #'
 #' @export
 #' @examples
