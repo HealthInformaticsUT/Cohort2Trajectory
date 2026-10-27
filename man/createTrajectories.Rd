@@ -41,7 +41,10 @@ for a saved run. Configure a new study to change the analysis rules.}
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 "None" and "Last present state" always select gap-handling behaviour,
 even when a clinical state has that label. Other labels select a named
-fallback state, including a merged state's display label.}
+fallback state, including a merged state's display label.
+For discrete trajectories, supply one nonempty string. Boundary labels
+"0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
+also accepted to leave gaps unresolved.}
 
 \item{outOfCohortAllowed}{Whether retained state records may extend the
 trajectory beyond the target interval's end. The target start is unchanged.}

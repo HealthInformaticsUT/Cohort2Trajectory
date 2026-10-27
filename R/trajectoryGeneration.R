@@ -15,6 +15,9 @@
 #'   "None" and "Last present state" always select gap-handling behaviour,
 #'   even when a clinical state has that label. Other labels select a named
 #'   fallback state, including a merged state's display label.
+#'   For discrete trajectories, supply one nonempty string. Boundary labels
+#'   "0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
+#'   also accepted to leave gaps unresolved.
 #' @param trajectoryType Trajectory format: "Discrete" or "Continuous".
 #'   Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
 #'   with a deprecation warning.
@@ -127,6 +130,7 @@ createTrajectories <- function(cdm = NULL,
     stateSelectionType, c(First = 1, Overlap = 2, Priority = 3), "stateSelectionType",
     allowNull = FALSE
   )
+  if (trajectoryType == "Discrete") .validateGapFallback(oocFix)
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   # Save validated choices before data-dependent merged-state expansion so a

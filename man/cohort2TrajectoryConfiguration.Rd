@@ -63,7 +63,10 @@ NULL or character(0) means no absorbing states.}
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 "None" and "Last present state" always select gap-handling behaviour,
 even when a clinical state has that label. Other labels select a named
-fallback state, including a merged state's display label.}
+fallback state, including a merged state's display label.
+For discrete trajectories, supply one nonempty string. Boundary labels
+"0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
+also accepted to leave gaps unresolved.}
 
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.}
 
