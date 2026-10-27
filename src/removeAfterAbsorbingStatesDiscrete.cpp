@@ -30,6 +30,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
     int patientID = patientIDs[p];
     
     std::string stateLast;
+    Date trajectoryStart;
     int seqCounter = 1;
     int k = 0;
     // Let's get data of this person
@@ -50,6 +51,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
       Date endDate = patientsEnd[index];
       
       if (k == 0){
+      trajectoryStart = startDate;
       // Adding START state
       outpatientIDs.push_back(patientID);
       outStates.push_back("START");
@@ -78,11 +80,12 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
       iter++;
     }
     // Adding EXIT state
+    Date exitDate = outEndDates.back() + 1;
     outpatientIDs.push_back(patientID);
     outStates.push_back("EXIT");
-    outStartDates.push_back(outEndDates.back() + 1);
-    outEndDates.push_back(outEndDates.back() + 1);
-    outtimeCohort.push_back(outtimeCohort.back());
+    outStartDates.push_back(exitDate);
+    outEndDates.push_back(exitDate);
+    outtimeCohort.push_back((exitDate - trajectoryStart) / 365.25);
     seqOrdinal.push_back(1);
   }
   DataFrame outPatientData = DataFrame::create( Named("subject_id") = outpatientIDs,

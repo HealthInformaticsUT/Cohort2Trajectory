@@ -107,7 +107,7 @@ DataFrame getDiscreteStates(int stateSelection,
   for (int iteration = 1; iteration <= totalStateDurations; iteration++) {
     double time = (iteration - 1) * stateDuration / 365.25;
     Date startDate = cohortstartDate + (iteration - 1) * stateDuration;
-    Date endDate = startDate + (stateDuration - 1);
+    Date endDate = std::min(startDate + (stateDuration - 1), cohortendDate);
 
     std::vector<std::string> allowedStates = statePriorityVector;
     if (!lastState.empty() && allowedStatesList.size() > 0) {

@@ -23,7 +23,8 @@ getTrajectoriesDiscrete(
 
 \item{cohortData}{A data.frame object which is queried with getCohortsPatients function}
 
-\item{stateDuration}{The length of a discrete state}
+\item{stateDuration}{Cycle length in days. The final cycle is shortened when
+the supplied state history ends before a full cycle is complete.}
 
 \item{stateSelection}{The chosen state selection method}
 
@@ -43,5 +44,10 @@ getTrajectoriesDiscrete(
 }
 \description{
 This function outputs a data.frame object which describes the movement of patients between the defined states
+}
+\details{
+EXIT is a boundary marker on the day after the final retained cycle.
+  Its time_in_cohort is elapsed time in years (days divided by 365.25) from
+  the trajectory start to that boundary. EXIT does not add observed time.
 }
 \keyword{internal}

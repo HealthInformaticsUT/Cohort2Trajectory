@@ -13,7 +13,8 @@
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.
-#' @param lengthOfStay The length of stay (days) in one state (Effect only in discrete case)
+#' @param lengthOfStay Cycle length in days for discrete trajectories. The final
+#'   cycle is shortened if the supplied state history ends partway through it.
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
 #' @param useCDM The package can also be run without the OMOP CDM

@@ -435,7 +435,8 @@ getInclusionTable <- function(cohortData,
 #' This function outputs a data.frame object which describes the movement of patients between the defined states
 #'
 #' @param cohortData A data.frame object which is queried with getCohortsPatients function
-#' @param stateDuration The length of a discrete state
+#' @param stateDuration Cycle length in days. The final cycle is shortened when
+#'   the supplied state history ends before a full cycle is complete.
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
 #' @param absorbingStates The absorbing states: patient trajectory ends with it
@@ -445,6 +446,9 @@ getInclusionTable <- function(cohortData,
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
 #' @param stateLevels Ordered study-wide state labels used to assign stable IDs.
+#' @details EXIT is a boundary marker on the day after the final retained cycle.
+#'   Its time_in_cohort is elapsed time in years (days divided by 365.25) from
+#'   the trajectory start to that boundary. EXIT does not add observed time.
 #' @keywords internal
 getTrajectoriesDiscrete <- function(cdm,
                                     cohortData,

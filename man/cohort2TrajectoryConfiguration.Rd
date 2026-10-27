@@ -57,7 +57,8 @@ cohort2TrajectoryConfiguration(
 
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.}
 
-\item{lengthOfStay}{The length of stay (days) in one state (Effect only in discrete case)}
+\item{lengthOfStay}{Cycle length in days for discrete trajectories. The final
+cycle is shortened if the supplied state history ends partway through it.}
 
 \item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
 
