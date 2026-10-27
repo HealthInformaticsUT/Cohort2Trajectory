@@ -478,7 +478,7 @@ getInclusionTable <- function(cohortData,
 #' This function outputs a data.frame object which describes the movement of patients between the defined states
 #'
 #' @param cohortData A data.frame object which is queried with getCohortsPatients function
-#' @param stateDuration Cycle length in days. The final cycle is shortened when
+#' @param stateDuration Positive whole-number cycle length in days. The final cycle is shortened when
 #'   the trajectory boundary falls before a full cycle is complete.
 #' @param stateSelection The chosen state selection method
 #' @param statePriorityVector The order of priority for states
@@ -506,6 +506,7 @@ getTrajectoriesDiscrete <- function(cdm,
                                     allowedStatesList = list(),
                                     stateLevels = NULL,
                                     outOfCohortAllowed = FALSE) {
+  .validateCycleLength(stateDuration, "stateDuration")
   tmp_data <- .boundTrajectoryData(cohortData, outOfCohortAllowed)
   
   # Getting all relevant patient ID's

@@ -9,7 +9,8 @@
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority)
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)
-#' @param lengthOfStay Cycle length in days for discrete trajectories. The final
+#' @param lengthOfStay Positive whole-number cycle length in days, required for
+#'   discrete trajectories. The final
 #'   cycle is shortened if the trajectory boundary falls partway through it.
 #' @param outOfCohortAllowed Whether retained state records may extend the
 #'   trajectory beyond the target interval's end. The target start is unchanged.
@@ -65,6 +66,9 @@ createTrajectories <- function(cdm = NULL,
                                pathToStudy = studyEnv$pathToStudy,
                                batchSize = studyEnv$batchSize,
                                updateAutomaticallyForMergedStates = FALSE) {
+  if (isTRUE(as.numeric(trajectoryType) == 0)) {
+    .validateCycleLength(lengthOfStay)
+  }
   
   studyName = studyEnv$studyName
   pathToData = paste0(studyEnv$pathToStudy, '/', studyName, '/', 'Data')

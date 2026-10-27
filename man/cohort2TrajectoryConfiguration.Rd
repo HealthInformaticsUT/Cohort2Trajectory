@@ -59,7 +59,9 @@ NULL or character(0) means no absorbing states.}
 
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.}
 
-\item{lengthOfStay}{Cycle length in days for discrete trajectories. The final
+\item{lengthOfStay}{Positive whole-number cycle length in days for discrete
+trajectories. NULL may be supplied during configuration, but a cycle length
+is required when generating discrete trajectories. The final
 cycle is shortened if the trajectory boundary falls partway through it.}
 
 \item{outOfCohortAllowed}{Whether retained state records may extend the

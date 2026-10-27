@@ -48,6 +48,9 @@ DataFrame getDiscreteStates(int stateSelection,
                   std::vector<std::string> statePriorityVector,
                   Rcpp::List allowedStatesList){
 
+  if (stateDuration < 1) {
+    stop("stateDuration must be a positive number of days.");
+  }
   if (stateSelection < 1 || stateSelection > 3) {
     stop("stateSelection must be 1 (First), 2 (Overlap), or 3 (Priority).");
   }

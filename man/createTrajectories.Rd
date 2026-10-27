@@ -38,7 +38,8 @@ createTrajectories(
 \item{outOfCohortAllowed}{Whether retained state records may extend the
 trajectory beyond the target interval's end. The target start is unchanged.}
 
-\item{lengthOfStay}{Cycle length in days for discrete trajectories. The final
+\item{lengthOfStay}{Positive whole-number cycle length in days, required for
+discrete trajectories. The final
 cycle is shortened if the trajectory boundary falls partway through it.}
 
 \item{stateCohortLabels}{vector of the customized labels of the state cohorts}

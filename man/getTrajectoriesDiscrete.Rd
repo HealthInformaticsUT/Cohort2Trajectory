@@ -24,7 +24,7 @@ getTrajectoriesDiscrete(
 
 \item{cohortData}{A data.frame object which is queried with getCohortsPatients function}
 
-\item{stateDuration}{Cycle length in days. The final cycle is shortened when
+\item{stateDuration}{Positive whole-number cycle length in days. The final cycle is shortened when
 the trajectory boundary falls before a full cycle is complete.}
 
 \item{stateSelection}{The chosen state selection method}

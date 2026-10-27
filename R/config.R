@@ -15,7 +15,9 @@
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.
-#' @param lengthOfStay Cycle length in days for discrete trajectories. The final
+#' @param lengthOfStay Positive whole-number cycle length in days for discrete
+#'   trajectories. NULL may be supplied during configuration, but a cycle length
+#'   is required when generating discrete trajectories. The final
 #'   cycle is shortened if the trajectory boundary falls partway through it.
 #' @param outOfCohortAllowed Whether retained state records may extend the
 #'   trajectory beyond the target interval's end. The target start is unchanged.
@@ -102,6 +104,9 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   trajectoryType <- .configurationChoice(
     trajectoryType, c(Discrete = 0, Continuous = 1), "trajectoryType"
   )
+  if (isTRUE(trajectoryType == 0) && !is.null(lengthOfStay)) {
+    .validateCycleLength(lengthOfStay)
+  }
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")
@@ -177,4 +182,13 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   }
   stop(argument, " must be one of: ", paste(names(choices), collapse = ", "),
        ".", call. = FALSE)
+}
+
+.validateCycleLength <- function(value, argument = "lengthOfStay") {
+  if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
+      value < 1 || value > .Machine$integer.max || value != trunc(value)) {
+    stop(argument, " must be a single positive whole number of days within the integer range.",
+         call. = FALSE)
+  }
+  invisible(NULL)
 }
