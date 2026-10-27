@@ -7,6 +7,8 @@
 #'   Omit this argument to inherit transitions.
 #' @param absorbing Optional TRUE or FALSE replacing inherited absorbing status.
 #' @param label Optional display label. It is never parsed to determine membership.
+#'   Reserved boundary/gap labels ("0", "START", "EXIT", "OUT OF COHORT") are
+#'   not permitted, including case variants.
 #' @return A definition for mergedStateOverrides in the study configuration.
 #' @export
 #' @examples
@@ -20,6 +22,7 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
                         is.na(label) || !nzchar(trimws(label)))) {
     stop("label must be one nonempty string.", call. = FALSE)
   }
+  .validateStateLabels(label, "label")
   if (!missing(allowedTransitions)) {
     result$allowedTransitions <- .destinationSets(allowedTransitions)
   }
@@ -77,12 +80,7 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
 }
 
 .stateRegistry <- function(baseLabels, memberships = list(), overrides = list()) {
-  baseLabels <- unique(as.character(baseLabels))
-  if (length(baseLabels)) .stateMembers(baseLabels)
-  if (anyDuplicated(tolower(baseLabels)) ||
-      any(baseLabels %in% c("0", "START", "EXIT", "OUT OF COHORT"))) {
-    stop("Merged studies need distinct state labels (also ignoring case), excluding reserved boundary/gap labels.", call. = FALSE)
-  }
+  .validateStateLabels(baseLabels)
   sets <- c(as.list(baseLabels), memberships, lapply(overrides, `[[`, "members"),
             unlist(lapply(overrides, function(x) x$allowedTransitions), recursive = FALSE))
   sets <- lapply(sets, .stateMembers)
@@ -97,6 +95,7 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
   labels <- vapply(sets, paste, character(1), collapse = " + ")
   custom <- rep(FALSE, length(keys))
   for (x in overrides) if (!is.null(x$label)) {
+    .validateStateLabels(x$label, "label")
     i <- match(.stateKey(x$members), keys)
     labels[i] <- x$label
     custom[i] <- TRUE

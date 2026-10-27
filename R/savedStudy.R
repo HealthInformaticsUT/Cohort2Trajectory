@@ -54,6 +54,8 @@
   }
   # Migrate legacy snapshots in memory without rewriting the user's file or
   # warning about codes that the package itself previously saved.
+  .validateStateLabels(saved$import$stateCohortLabels)
+  .validateStateLabels(saved$generation$stateCohortLabels)
   saved$generation$trajectoryType <- .configurationChoice(
     saved$generation$trajectoryType, c(Discrete = 0, Continuous = 1),
     "trajectoryType", allowNull = FALSE, warnCodes = FALSE

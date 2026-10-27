@@ -211,6 +211,7 @@ addPersonalData <- function(cohortData, cdm) {
 cleanCohortData <- function(cohortData,
                             mandatoryStates,
                             outOfCohortAllowed = FALSE) {
+  .validateObservedStateLabels(cohortData$cohort_definition_id)
   encoded <- .encodeSubjectIds(cohortData)
   data_tmp <- encoded$data
   # CSV dates must be converted before native state merging, not afterwards.
@@ -433,6 +434,7 @@ getInclusionTable <- function(cohortData,
 # Custom inputs without a target row fall back to their recorded state span.
 .boundTrajectoryData <- function(data, outOfCohortAllowed = FALSE) {
   data <- as.data.frame(data)
+  .validateObservedStateLabels(data$cohort_definition_id)
   .subjectKeys(data$subject_id)
   data$cohort_definition_id <- as.character(data$cohort_definition_id)
   data$cohort_start_date <- as.Date(data$cohort_start_date)

@@ -44,7 +44,9 @@ cohort2TrajectoryConfiguration(
 
 \item{atlasStateCohorts}{the ids of the state cohorts defined in OHDSI tool ATLAS}
 
-\item{stateCohortLabels}{vector of the customized labels of the state cohorts}
+\item{stateCohortLabels}{Character vector of clinical state labels, unique
+even when ignoring case. Labels must not be blank or missing. The labels
+"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).}
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 

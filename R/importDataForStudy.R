@@ -5,7 +5,9 @@
 #' @param baseUrl the base URL for the WebApi instance
 #' @param atlasTargetCohort the id of the target cohort defined in OHDSI tool ATLAS
 #' @param atlasStateCohorts the ids of the state cohorts defined in OHDSI tool ATLAS
-#' @param stateCohortLabels vector of the customized labels of the state cohorts
+#' @param stateCohortLabels Character vector of clinical state labels, unique
+#'   even when ignoring case. Labels must not be blank or missing. The labels
+#'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
@@ -73,6 +75,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     atlasTargetCohort <- "0"
   }
   .validateMergeOptions(mergeStates, mergedStateOverrides)
+  .validateStateLabels(stateCohortLabels)
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
 
@@ -173,6 +176,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   
   cli::cli_progress_step("Cleaning data ...")
   
+  .validateObservedStateLabels(data$cohort_definition_id, stateCohortLabels)
   data <- cleanCohortData(
     cohortData = data,
     mandatoryStates = stateCohortMandatory,

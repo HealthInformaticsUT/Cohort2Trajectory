@@ -2,7 +2,9 @@
 #' Generate trajectories using the logic specified in the configuration
 #' 
 #' @param cdm object created with CDMConnector 
-#' @param stateCohortLabels vector of the customized labels of the state cohorts
+#' @param stateCohortLabels Character vector of clinical state labels, unique
+#'   even when ignoring case. Labels must not be blank or missing. The labels
+#'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
@@ -123,6 +125,7 @@ createTrajectories <- function(cdm = NULL,
     allowNull = FALSE
   )
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
+  .validateStateLabels(stateCohortLabels)
   # Save validated choices before data-dependent merged-state expansion so a
   # new site can apply the same expansion to its own observed states.
   generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)
@@ -147,7 +150,9 @@ createTrajectories <- function(cdm = NULL,
   data$cohort_end_date = as.Date(data$cohort_end_date)
   data <- data %>% dplyr::arrange(subject_id, cohort_start_date, cohort_end_date)
   
-  configuredStates <- setdiff(as.character(stateCohortLabels), c("0", "START", "EXIT"))
+  .validateObservedStateLabels(data$cohort_definition_id,
+    if (!isTRUE(studyEnv$mergeStates)) stateCohortLabels else NULL)
+  configuredStates <- as.character(stateCohortLabels)
   registry <- NULL
   if (isTRUE(studyEnv$mergeStates)) {
     if (is.null(studyEnv$stateDictionary)) {

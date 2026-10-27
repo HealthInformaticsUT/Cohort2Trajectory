@@ -47,7 +47,9 @@ trajectory beyond the target interval's end. The target start is unchanged.}
 discrete trajectories. The final
 cycle is shortened if the trajectory boundary falls partway through it.}
 
-\item{stateCohortLabels}{vector of the customized labels of the state cohorts}
+\item{stateCohortLabels}{Character vector of clinical state labels, unique
+even when ignoring case. Labels must not be blank or missing. The labels
+"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).}
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 

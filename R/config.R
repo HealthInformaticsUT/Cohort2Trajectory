@@ -6,7 +6,9 @@
 #' @param pathToStudy path to folder which contains folder named after studyName
 #' @param atlasTargetCohort the id of the target cohort defined in OHDSI tool ATLAS
 #' @param atlasStateCohorts the ids of the state cohorts defined in OHDSI tool ATLAS
-#' @param stateCohortLabels vector of the customized labels of the state cohorts
+#' @param stateCohortLabels Character vector of clinical state labels, unique
+#'   even when ignoring case. Labels must not be blank or missing. The labels
+#'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory Vector of state labels required in a trajectory.
 #'   NULL or character(0) means no mandatory states.
@@ -153,6 +155,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   }
   .validatePositiveInteger(batchSize, "batchSize", "patients")
   .validateMergeOptions(mergeStates, mergedStateOverrides)
+  .validateStateLabels(stateCohortLabels)
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")

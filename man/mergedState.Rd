@@ -16,7 +16,9 @@ Omit this argument to inherit transitions.}
 
 \item{absorbing}{Optional TRUE or FALSE replacing inherited absorbing status.}
 
-\item{label}{Optional display label. It is never parsed to determine membership.}
+\item{label}{Optional display label. It is never parsed to determine membership.
+Reserved boundary/gap labels ("0", "START", "EXIT", "OUT OF COHORT") are
+not permitted, including case variants.}
 }
 \value{
 A definition for mergedStateOverrides in the study configuration.

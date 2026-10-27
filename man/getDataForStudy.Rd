@@ -41,7 +41,9 @@ configuration and import fresh data from the supplied connection or input.}
 
 \item{atlasTargetCohort}{the id of the target cohort defined in OHDSI tool ATLAS}
 
-\item{stateCohortLabels}{vector of the customized labels of the state cohorts}
+\item{stateCohortLabels}{Character vector of clinical state labels, unique
+even when ignoring case. Labels must not be blank or missing. The labels
+"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).}
 
 \item{baseUrl}{the base URL for the WebApi instance}
 
