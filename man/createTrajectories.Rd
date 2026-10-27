@@ -46,7 +46,10 @@ For discrete trajectories, supply one nonempty string. Boundary labels
 "0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
 also accepted to leave gaps unresolved.
 Use the exact spelling of an existing state label. A new fallback label
-must not differ only in case from a clinical or merged-state label.}
+must not differ only in case from a clinical or merged-state label.
+For merged trajectories, select states by display label, not internal
+state_key. Declare key-like text in stateCohortLabels to use it as a
+distinct literal state.}
 
 \item{outOfCohortAllowed}{Whether retained state records may extend the
 trajectory beyond the target interval's end. The target start is unchanged.}

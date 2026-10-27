@@ -26,6 +26,9 @@
 #'   also accepted to leave gaps unresolved.
 #'   Use the exact spelling of an existing state label. A new fallback label
 #'   must not differ only in case from a clinical or merged-state label.
+#'   For merged trajectories, select states by display label, not internal
+#'   state_key. Declare key-like text in stateCohortLabels to use it as a
+#'   distinct literal state.
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.
 #' @param lengthOfStay Positive whole-number cycle length in days for discrete
 #'   trajectories. NULL may be supplied during configuration, but a cycle length

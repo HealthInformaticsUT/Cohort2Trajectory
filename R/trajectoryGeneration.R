@@ -20,6 +20,9 @@
 #'   also accepted to leave gaps unresolved.
 #'   Use the exact spelling of an existing state label. A new fallback label
 #'   must not differ only in case from a clinical or merged-state label.
+#'   For merged trajectories, select states by display label, not internal
+#'   state_key. Declare key-like text in stateCohortLabels to use it as a
+#'   distinct literal state.
 #' @param trajectoryType Trajectory format: "Discrete" or "Continuous".
 #'   Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
 #'   with a deprecation warning.
@@ -182,9 +185,21 @@ createTrajectories <- function(cdm = NULL,
     stateCohortAbsorbing <- resolved$absorbing
     configuredStates <- registry$state_key
     # Gap controls are not clinical labels, even if a state shares their name.
-    if (!oocFix %in% c("None", "Last present state")) {
+    if (trajectoryType == "Discrete" && !oocFix %in% c("None", "Last present state")) {
       fallback <- match(oocFix, registry$label)
-      if (!is.na(fallback)) oocFix <- registry$state_key[fallback]
+      if (!is.na(fallback)) {
+        oocFix <- registry$state_key[fallback]
+      } else {
+        # An undeclared literal must not accidentally acquire another state's
+        # identity, transition rules or absorbing behaviour through its key.
+        key <- match(oocFix, registry$state_key)
+        if (!is.na(key)) {
+          stop("oocFix ", shQuote(oocFix), " is an internal state key for ",
+               shQuote(registry$label[key]), ". Use that display label to select the state. ",
+               "If the text is intended as a separate literal state, declare it in ",
+               "stateCohortLabels and its state rules.", call. = FALSE)
+        }
+      }
     }
   }
 

@@ -125,6 +125,8 @@ test_that("merged labels do not override gap controls or named fallbacks", {
     cohort_start_date = as.Date("2020-01-01") + c(0, 7, 14, 21, 21),
     cohort_end_date = as.Date("2020-01-01") + c(34, 13, 20, 27, 27)
   )
+  # A declared literal label may look like another state's internal key.
+  labels <- c(labels, .stateKey("A"))
   study <- cohort2TrajectoryConfiguration(
     pathToStudy = root, studyName = "gaps", useCDM = FALSE,
     trajectoryDataObject = raw, stateCohortLabels = labels,
@@ -138,9 +140,16 @@ test_that("merged labels do not override gap controls or named fallbacks", {
                    c("START", "OUT OF COHORT", observed, "OUT OF COHORT", "EXIT"))
   expect_identical(createTrajectories(studyEnv = study, oocFix = "Last present state")$state_label,
                    c("START", "OUT OF COHORT", observed, "Combined", "EXIT"))
-  for (fallback in c("A", "Combined")) {
+  for (fallback in c("A", "Combined", .stateKey("A"))) {
     expect_identical(createTrajectories(studyEnv = study, oocFix = fallback)$state_label,
                      c("START", fallback, observed, fallback, "EXIT"))
   }
   expect_error(createTrajectories(studyEnv = study, oocFix = "combined"), "oocFix.*Combined")
+  files <- file.path(root, "gaps", c("Data/patientDataDiscrete.csv", "Data/stateDictionary.rds",
+                                     "Settings/analysisSettings.rds"))
+  before <- tools::md5sum(files)
+  for (key in c(.stateKey("B"), .stateKey(c("A", "B")))) {
+    expect_error(createTrajectories(studyEnv = study, oocFix = key), "oocFix.*internal state key")
+  }
+  expect_identical(tools::md5sum(files), before)
 })
