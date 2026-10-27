@@ -1,4 +1,4 @@
-test_that("a moved study restores its rules and reads a different CDM", {
+test_that("a moved study preserves colliding clinical labels and reads a different CDM", {
   root <- tempfile("c2t-portable-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -9,10 +9,12 @@ test_that("a moved study restores its rules and reads a different CDM", {
   study <- cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = sourcePath, baseUrl = NULL,
     atlasTargetCohort = "0", atlasStateCohorts = c("first", "second"),
-    stateCohortLabels = c("a", "b"), stateCohortPriorityOrder = c("b", "a"),
-    stateCohortMandatory = "b", stateCohortAbsorbing = "b",
+    # Clinical labels intentionally overlap the opposite definition filenames.
+    # They must be assigned once, identically in fresh and restored imports.
+    stateCohortLabels = c("second", "first"), stateCohortPriorityOrder = c("first", "second"),
+    stateCohortMandatory = "first", stateCohortAbsorbing = "first",
     stateSelectionType = "Priority", lengthOfStay = 14,
-    oocFix = "Last present state", allowedStatesList = list(a = c("a", "b"), b = "b")
+    oocFix = "Last present state", allowedStatesList = list(second = c("second", "first"), first = "first")
   )
   file.copy(file.path("testStudyMain", "JSON", c("test1.json", "test3.json", "test4.json")),
             file.path(sourcePath, "portable", "JSON", c("0.json", "first.json", "second.json")))
@@ -46,7 +48,7 @@ test_that("a moved study restores its rules and reads a different CDM", {
   getDataForStudy(cdm = cdm2, studyEnv = restored)
   actual <- createTrajectories(cdm = cdm2, studyEnv = restored)
   expect_true(all(actual$gender_concept_id == 8507))
-  expected$gender_concept_id <- actual$gender_concept_id
+  expected$gender_concept_id <- 8507L
   expect_equal(dplyr::arrange(actual, subject_id, time_in_cohort, state_label),
                 dplyr::arrange(expected, subject_id, time_in_cohort, state_label))
 

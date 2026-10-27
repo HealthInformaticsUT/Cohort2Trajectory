@@ -107,15 +107,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       stateCohortLabels = stateCohortLabels
     )
 
-    # Change state labels
-    
-    #column_cohort_definition_id <- dplyr::pull(data, cohort_definition_id)
-    data$cohort_definition_id <- plyr::mapvalues(
-      x = dplyr::pull(data, .data$cohort_definition_id),
-      from = c("0", as.character(atlasStateCohorts)),
-      to = c("0", stateCohortLabels),
-      warn_missing = FALSE
-    )
+    # getCohortData already assigned the final clinical labels. Mapping again
+    # by definition ID/filename could rename a different state's label.
     
     # Rename JSON file
     if (!is.null(baseUrl)) {
