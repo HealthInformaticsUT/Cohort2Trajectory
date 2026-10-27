@@ -8,6 +8,8 @@
 #' @param stateCohortLabels Character vector of clinical state labels, unique
 #'   even when ignoring case. Labels must not be blank or missing. The labels
 #'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
+#'   CSV cohort_definition_id values are read as text, including leading zeros
+#'   and the literal label "NA". Empty CSV labels are invalid.
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period

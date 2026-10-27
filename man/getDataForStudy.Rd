@@ -43,7 +43,9 @@ configuration and import fresh data from the supplied connection or input.}
 
 \item{stateCohortLabels}{Character vector of clinical state labels, unique
 even when ignoring case. Labels must not be blank or missing. The labels
-"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).}
+"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
+CSV cohort_definition_id values are read as text, including leading zeros
+and the literal label "NA". Empty CSV labels are invalid.}
 
 \item{baseUrl}{the base URL for the WebApi instance}
 

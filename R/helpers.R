@@ -55,11 +55,12 @@
 }
 
 .readPatientCsv <- function(path) {
-  # Read IDs without type inference or treating a literal "NA" identifier as
-  # missing. Other columns retain the usual read.csv type conversion.
+  # Patient IDs and clinical labels are identifiers, not numbers. Preserve
+  # leading zeros and literal "NA" text in both. Only other columns undergo
+  # type inference. Blank clinical labels are rejected by import validation.
   data <- utils::read.csv(path, colClasses = "character", na.strings = NULL)
   data$subject_id <- .simplifySubjectKeys(data$subject_id)
-  for (column in setdiff(names(data), "subject_id")) {
+  for (column in setdiff(names(data), c("subject_id", "cohort_definition_id"))) {
     data[[column]] <- utils::type.convert(data[[column]], as.is = TRUE)
   }
   data

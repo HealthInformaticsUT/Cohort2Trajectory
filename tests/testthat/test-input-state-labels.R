@@ -38,6 +38,34 @@ test_that("ambiguous configured labels fail before creating study files", {
   expect_error(mergedState(c("A", "B"), label = "START"), "reserved")
 })
 
+test_that("CSV round trips preserve numeric-looking labels and literal NA", {
+  path <- tempfile("c2t-literal-labels-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  for (labels in list(c("01", "1"), c("NA", "A"))) {
+    input <- data.frame(
+      subject_id = 1L, cohort_definition_id = c("0", labels),
+      cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+      cohort_end_date = as.Date("2020-01-01") + c(13, 6, 13)
+    )
+    inputFile <- file.path(path, "input.csv")
+    write.csv(input, inputFile, row.names = FALSE)
+    for (type in c("Discrete", "Continuous")) {
+      study <- cohort2TrajectoryConfiguration(
+        pathToStudy = path, studyName = paste0(type, labels[1]), useCDM = FALSE,
+        trajectoryDataObject = input, stateCohortLabels = labels,
+        stateCohortPriorityOrder = labels, stateSelectionType = "Priority",
+        trajectoryType = type, lengthOfStay = 7
+      )
+      getDataForStudy(studyEnv = study)
+      fromObject <- createTrajectories(studyEnv = study)
+      expect_identical(fromObject$state_label, c("START", labels, "EXIT"))
+      getDataForStudy(studyEnv = study, trajectoryDataObject = NULL, pathToData = inputFile)
+      expect_equal(createTrajectories(studyEnv = study), fromObject)
+    }
+  }
+})
+
 test_that("clinical boundary labels cannot be silently dropped by either engine", {
   input <- data.frame(
     subject_id = 1L, cohort_definition_id = c("0", "START"),
