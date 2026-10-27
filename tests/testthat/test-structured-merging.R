@@ -114,3 +114,32 @@ test_that("obsolete threshold settings warn and ambiguous legacy merging is reje
   saveRDS(legacy, file)
   expect_error(.readStudySnapshot(root, study$studyName), "Legacy merged-study settings")
 })
+
+test_that("merged labels do not override gap controls or named fallbacks", {
+  root <- tempfile("c2t-merged-gaps-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  labels <- c("None", "Last present state", "A", "B")
+  raw <- data.frame(
+    subject_id = 1L, cohort_definition_id = c("0", labels),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 7, 14, 21, 21),
+    cohort_end_date = as.Date("2020-01-01") + c(34, 13, 20, 27, 27)
+  )
+  study <- cohort2TrajectoryConfiguration(
+    pathToStudy = root, studyName = "gaps", useCDM = FALSE,
+    trajectoryDataObject = raw, stateCohortLabels = labels,
+    stateCohortPriorityOrder = labels, stateSelectionType = "Priority",
+    lengthOfStay = 7, mergeStates = TRUE,
+    mergedStateOverrides = list(mergedState(c("A", "B"), label = "Combined"))
+  )
+  getDataForStudy(studyEnv = study)
+  observed <- c("None", "Last present state", "Combined")
+  expect_identical(createTrajectories(studyEnv = study)$state_label,
+                   c("START", "OUT OF COHORT", observed, "OUT OF COHORT", "EXIT"))
+  expect_identical(createTrajectories(studyEnv = study, oocFix = "Last present state")$state_label,
+                   c("START", "OUT OF COHORT", observed, "Combined", "EXIT"))
+  for (fallback in c("A", "Combined")) {
+    expect_identical(createTrajectories(studyEnv = study, oocFix = fallback)$state_label,
+                     c("START", fallback, observed, fallback, "EXIT"))
+  }
+})

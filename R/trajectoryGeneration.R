@@ -12,6 +12,9 @@
 #'   Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
 #'   accepted with a deprecation warning. A selection must be specified before generation.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
+#'   "None" and "Last present state" always select gap-handling behaviour,
+#'   even when a clinical state has that label. Other labels select a named
+#'   fallback state, including a merged state's display label.
 #' @param trajectoryType Trajectory format: "Discrete" or "Continuous".
 #'   Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
 #'   with a deprecation warning.
@@ -168,8 +171,11 @@ createTrajectories <- function(cdm = NULL,
     allowedStatesList <- resolved$allowed
     stateCohortAbsorbing <- resolved$absorbing
     configuredStates <- registry$state_key
-    fallback <- match(oocFix, registry$label)
-    if (!is.na(fallback)) oocFix <- registry$state_key[fallback]
+    # Gap controls are not clinical labels, even if a state shares their name.
+    if (!oocFix %in% c("None", "Last present state")) {
+      fallback <- match(oocFix, registry$label)
+      if (!is.na(fallback)) oocFix <- registry$state_key[fallback]
+    }
   }
 
   
