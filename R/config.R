@@ -10,9 +10,9 @@
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
-#' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority)
+#' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
-#' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)
+#' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.
 #' @param lengthOfStay The length of stay (days) in one state (Effect only in discrete case)
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
@@ -76,6 +76,14 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
                                            mergeThreshold = 0.5,
                                            
                                            batchSize = 1000) {
+  # Validate choices before creating study files. NULL remains available for
+  # workflows that supply these settings later or load a saved study.
+  stateSelectionType <- .configurationChoice(
+    stateSelectionType, c(First = 1, Overlap = 2, Priority = 3), "stateSelectionType"
+  )
+  trajectoryType <- .configurationChoice(
+    trajectoryType, c(Discrete = 0, Continuous = 1), "trajectoryType"
+  )
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")
@@ -90,33 +98,18 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   }
   
   if(is.data.frame(trajectoryDataObject)){
-    if(methods::is(trajectoryDataObject$cohort_start_date,'Date')){
+    if(!inherits(trajectoryDataObject$cohort_start_date, 'Date')){
       cli::cli_warn("{.warning cohort_start_date column is not in Date format! Convert using <as.Date> function.}")
     }
-    if(methods::is(trajectoryDataObject$cohort_end_date,'Date')){
+    if(!inherits(trajectoryDataObject$cohort_end_date, 'Date')){
       cli::cli_warn("{.warning cohort_end_date column is not in Date format! Convert using <as.Date> function.}")
     }
-    if(methods::is(trajectoryDataObject$subject_id, 'numeric')){
+    if(!is.numeric(trajectoryDataObject$subject_id)){
       cli::cli_warn("{.warning subject_id column is not in numeric format! Convert using <as.integer> function.}")
     }
-    if(methods::is(trajectoryDataObject$cohort_definition_id, 'character')){
+    if(!is.character(trajectoryDataObject$cohort_definition_id)){
       cli::cli_warn("{.warning cohort_definition_id column is not in character format! Convert using <as.character> function.}")
     }
-  }
-  
-  if (!is.null(stateSelectionType)) {
-    stateSelectionType = switch(
-      stateSelectionType,
-      "First" = 1,
-      "Overlap" = 2,
-      "Priority" = 3
-    )
-  }
-  
-  if (!is.null(trajectoryType)) {
-    trajectoryType = switch(trajectoryType,
-                            "Discrete" = 0,
-                            "Continuous" = 1)
   }
   
   #studyName <<- NULL
@@ -156,4 +149,14 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   )
   
   return(studyEnv)
+}
+
+.configurationChoice <- function(value, choices, argument) {
+  if (is.null(value)) return(NULL)
+  if (is.character(value) && length(value) == 1L && !is.na(value)) {
+    index <- match(tolower(trimws(value)), tolower(names(choices)))
+    if (!is.na(index)) return(unname(choices[index]))
+  }
+  stop(argument, " must be one of: ", paste(names(choices), collapse = ", "),
+       ".", call. = FALSE)
 }

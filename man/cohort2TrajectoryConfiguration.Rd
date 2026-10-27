@@ -51,11 +51,11 @@ cohort2TrajectoryConfiguration(
 
 \item{stateCohortAbsorbing}{vector of the customized labels of the state cohorts which are absorbing}
 
-\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority)}
+\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.}
 
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)}
 
-\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)}
+\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.}
 
 \item{lengthOfStay}{The length of stay (days) in one state (Effect only in discrete case)}
 
