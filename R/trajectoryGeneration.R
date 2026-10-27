@@ -87,7 +87,7 @@ createTrajectories <- function(cdm = NULL,
   # Keep configured states even when absent, and append additional labels in a
   # deterministic order (for example, labels created by state merging).
   gapState <- if (as.numeric(trajectoryType) == 0) {
-    if (oocFix %in% c("None", "Last present state")) "OUT OF COHORT" else oocFix
+    if (oocFix %in% c("None", "Last present state")) "OUT OF COHORT" else c("OUT OF COHORT", oocFix)
   } else {
     character(0)
   }

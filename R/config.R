@@ -23,6 +23,18 @@
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
 #' @param batchSize customizable batch size for cohort generation 
+#' @details For discrete trajectories, selection ranks only overlapping states
+#'   allowed from the last selected state. First chooses the earliest start,
+#'   Overlap chooses the greatest overlap, and Priority follows the priority
+#'   vector. Date intervals include both endpoints, so a shared boundary date
+#'   counts as one day of overlap. Ties use priority order. If no candidate
+#'   qualifies, oocFix is used.
+#'   Carry-forward requires an allowed self-transition, and a named fallback
+#'   must also be permitted. Otherwise the cycle is OUT OF COHORT. This unresolved
+#'   marker preserves the last selected state for checking later transitions.
+#'   An empty allowedStatesList imposes no transition restrictions. In a nonempty
+#'   list, each selected state must have an entry, with character(0) meaning no
+#'   permitted destinations. Rules are applied independently for each patient.
 #'
 #' @export
 #' @examples

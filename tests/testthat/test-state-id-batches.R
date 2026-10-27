@@ -15,7 +15,7 @@ make_state_id_fixture <- function() {
 }
 
 run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "Unused"),
-                                 gap = "None") {
+                                 gap = "None", rules = createStateList(c("A", "B", "Unused", "Background"))) {
   study_path <- tempfile("c2t-state-ids-")
   dir.create(study_path)
   on.exit(unlink(study_path, recursive = TRUE), add = TRUE)
@@ -25,7 +25,7 @@ run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "U
     stateCohortPriorityOrder = c("B", "A", "Unused"),
     stateSelectionType = "Priority", trajectoryType = type,
     lengthOfStay = 7, batchSize = batch_size, oocFix = gap,
-    allowedStatesList = createStateList(c("A", "B", "Unused")),
+    allowedStatesList = rules,
     runSavedStudy = TRUE
   )
   utils::write.csv(data, file.path(study_path, "ids", "Data", "importedDataCleaned_0.csv"),
@@ -59,6 +59,17 @@ test_that("state IDs and histories are independent of batch size and row order",
     exit_id <- if (type == "Discrete") "6" else "5"
     expect_true(all(as.character(whole$state_id[whole$state_label == "EXIT"]) == exit_id))
   }
+})
+
+test_that("a prohibited named fallback has a valid unresolved-state ID", {
+  data <- make_state_id_fixture()
+  data$cohort_start_date[7] <- as.Date("2020-01-16")
+  data$cohort_end_date[7] <- as.Date("2020-01-22")
+  rules <- list(A = "A", B = "B", Unused = "Unused")
+  output <- run_state_id_fixture(data, "Discrete", 1, gap = "Background", rules = rules)
+  expect_true("OUT OF COHORT" %in% output$state_label)
+  expect_false("Background" %in% output$state_label)
+  expect_false(anyNA(suppressWarnings(as.numeric(output$state_id))))
 })
 
 test_that("unconfigured labels and gap states receive study-wide IDs", {

@@ -80,6 +80,20 @@ cohort2TrajectoryConfiguration(
 \description{
 C2T configuration for initiating the parameter values in the study environment
 }
+\details{
+For discrete trajectories, selection ranks only overlapping states
+  allowed from the last selected state. First chooses the earliest start,
+  Overlap chooses the greatest overlap, and Priority follows the priority
+  vector. Date intervals include both endpoints, so a shared boundary date
+  counts as one day of overlap. Ties use priority order. If no candidate
+  qualifies, oocFix is used.
+  Carry-forward requires an allowed self-transition, and a named fallback
+  must also be permitted. Otherwise the cycle is OUT OF COHORT. This unresolved
+  marker preserves the last selected state for checking later transitions.
+  An empty allowedStatesList imposes no transition restrictions. In a nonempty
+  list, each selected state must have an entry, with character(0) meaning no
+  permitted destinations. Rules are applied independently for each patient.
+}
 \examples{
 \dontrun{cohort2TrajectoryConfiguration(cdm = cdm,
 studyName = "TestCohort2Trajectory",

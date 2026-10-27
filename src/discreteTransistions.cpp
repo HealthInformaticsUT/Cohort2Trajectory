@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <cctype>
 using namespace Rcpp;
 using namespace std;
 
@@ -13,27 +14,10 @@ int daysOverlap(Date dateStart,
                 Date dateEnd,
                 Date controlStart,
                 Date controlEnd) {
-  int ans;
-  if (dateStart > controlStart &&
-      dateEnd > controlEnd) {
-    ans = controlEnd - dateStart;
-  }
-  else if (dateStart <= controlStart &&
-           dateEnd > controlEnd) {
-    ans = controlEnd - controlStart + 1;
-  }
-  else if (dateStart <= controlStart &&
-           dateEnd <= controlEnd) {
-    ans = dateEnd - controlStart + 1;
-  }
-  else if (dateEnd <= controlEnd &&
-            dateStart >= controlStart ) {
-    ans = dateEnd - controlStart + 1;
-  } else {
-    ans = dateEnd - dateStart;
-  }
-  if (ans > 0){return ans;}
-  return 0;
+  // Cohort intervals include both their start and end dates.
+  Date overlapStart = std::max(dateStart, controlStart);
+  Date overlapEnd = std::min(dateEnd, controlEnd);
+  return std::max(0, static_cast<int>(overlapEnd - overlapStart) + 1);
 }
 
 NumericVector dateDiff(Date referenceDate, std::vector<Date> dateVector){
@@ -64,6 +48,10 @@ DataFrame getDiscreteStates(int stateSelection,
                   std::vector<std::string> statePriorityVector,
                   Rcpp::List allowedStatesList){
 
+  if (stateSelection < 1 || stateSelection > 3) {
+    stop("stateSelection must be 1 (First), 2 (Overlap), or 3 (Priority).");
+  }
+
   //Initiating dataframe output data
   NumericVector outpatientIDs;
   std::vector<std::string> outStates;
@@ -93,7 +81,6 @@ DataFrame getDiscreteStates(int stateSelection,
   // Getting patient id
   int patientID = patientIDs[p];
   // Let's get data of this person
-  std::string lastLegalState = "$$not_intialized_yet$$";
 
   std::vector<int>::iterator iter = patientsIDs.begin();
   while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end())
@@ -114,324 +101,84 @@ DataFrame getDiscreteStates(int stateSelection,
   if (1 > totalStateDurations){
     totalStateDurations = 1;
   }
-  int vectorLength = (int) controlStart.size();
-  if(stateSelection == 1){
-    for (int iteration=1; iteration <= totalStateDurations; iteration++) {
+  // Remember the last selected clinical state across cycles. An unresolved
+  // OUT OF COHORT cycle does not erase the transition constraints.
+  std::string lastState;
+  for (int iteration = 1; iteration <= totalStateDurations; iteration++) {
+    double time = (iteration - 1) * stateDuration / 365.25;
+    Date startDate = cohortstartDate + (iteration - 1) * stateDuration;
+    Date endDate = startDate + (stateDuration - 1);
 
-      NumericVector daysOverlapVector;
-      std::string state;
-      std::string lastState = "$$not_intialized_yet$$";
-      double time = (iteration - 1)*stateDuration/365.25;
-      Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration + (-1);
-      
-      for (int i=0; i < vectorLength; i++){
-        daysOverlapVector.push_back(daysOverlap(startDate,
-                                                endDate,
-                                                controlStart[i],
-                                                            controlEnd[i]));
+    std::vector<std::string> allowedStates = statePriorityVector;
+    if (!lastState.empty() && allowedStatesList.size() > 0) {
+      if (!allowedStatesList.containsElementNamed(lastState.c_str())) {
+        stop("No allowed-transition entry for state '%s'.", lastState.c_str());
       }
-      int sumV = sum(daysOverlapVector);
-      if(sumV == 0) {
-        if (oocFix == "None"){
-        state = "OUT OF COHORT";
-        }
-        else if (oocFix == "Last present state"){
-          if (lastLegalState == "$$not_intialized_yet$$") {
-            lastLegalState =  "OUT OF COHORT";
-          }
-          state = lastLegalState;
-        }
-        else{
-          state = oocFix;
-        }
-        }
-      else {
-        // # Let's calculate the shift in days, all shifts in the past according to startingDate will be given a value of -Inf
-        NumericVector daysShift = dateDiff(startDate, controlStart);
-        // as.numeric(as.Date(startDate) -as.Date(personData$cohort_start_date))
-        daysShift = replaceOnTreshold(daysShift,0,std::numeric_limits<int>::min());
-        NumericVector daysShift_copy = daysShift;
- 
-        //std::sort(daysShift_copy.begin(), daysShift_copy.end(), greater<int>()); // Sort an array of in greatest-first order.
-        
-        
-        Rcpp::StringVector allowedStates;
-        if(lastState == "$$not_intialized_yet$$"){
-          allowedStates = statePriorityVector;
-        }
-        else{
-          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
-        }
-        
-        for (int value=0; value < vectorLength; value++){
-        
-        auto it =  std::find(daysShift.begin(), daysShift.end(), daysShift[value]);
-        
-        int index = it - daysShift.begin();
-         int maxElementIndex = std::max_element(daysShift.begin(),daysShift.end()) - daysShift.begin();
-        // indexMax = which.max(daysShift)
-         state = states[maxElementIndex];
-        //state = states[index];
-        
-        // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-        std::string lowercaseState = state;
-        std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
-        
-        bool isPresent = false;
-        int numAllowedStates = allowedStates.size();
-        
-        for (int i = 0; i < numAllowedStates; i++) {
-          std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
-          std::string lowercaseAllowedState = allowedState;
-          std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
-          
-          if (lowercaseAllowedState == lowercaseState) {
-            isPresent = true;
-            break;
-          }
-        }
-        
-        if (isPresent){
-          lastState = state;
-          break;
-        }
-        else if (it == daysShift.end()){
-          
-          if (oocFix == "None"){
-            state = "OUT OF COHORT";
-          }
-          else if (oocFix == "Last present state"){
-            if (lastLegalState == "$$not_intialized_yet$$") {
-              lastLegalState =  "OUT OF COHORT";
-            }
-            state = lastLegalState;
-          }
-          else{
-            state = oocFix;
-          }          break;
-        }
-        
-        // state = personData$cohort_definition_id[indexMax]
+      allowedStates = as<std::vector<std::string>>(allowedStatesList[lastState]);
+    }
+    auto isAllowed = [&](const std::string& candidate) {
+      std::string lowerCandidate = candidate;
+      std::transform(lowerCandidate.begin(), lowerCandidate.end(),
+                     lowerCandidate.begin(), [](unsigned char c) { return std::tolower(c); });
+      for (std::string allowed : allowedStates) {
+        std::transform(allowed.begin(), allowed.end(), allowed.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        if (allowed == lowerCandidate) return true;
+      }
+      return false;
+    };
+
+    int best = -1;
+    int bestOverlap = -1;
+    int bestPriority = std::numeric_limits<int>::max();
+    for (size_t i = 0; i < states.size(); i++) {
+      int overlap = daysOverlap(startDate, endDate, controlStart[i], controlEnd[i]);
+      if (overlap <= 0 || !isAllowed(states[i])) continue;
+
+      auto priorityIt = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[i]);
+      if (priorityIt == statePriorityVector.end()) {
+        stop("State '%s' is missing from statePriorityVector.", states[i].c_str());
+      }
+      int priority = std::distance(statePriorityVector.begin(), priorityIt);
+      bool better = best < 0;
+      if (best >= 0) {
+        if (stateSelection == 1) {
+          better = controlStart[i] < controlStart[best] ||
+            (controlStart[i] == controlStart[best] && priority < bestPriority);
+        } else if (stateSelection == 2) {
+          better = overlap > bestOverlap ||
+            (overlap == bestOverlap && priority < bestPriority);
+        } else {
+          better = priority < bestPriority;
         }
       }
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(state);
-      outStartDates.push_back(startDate);
-      outEndDates.push_back(endDate);
-      outtimeCohort.push_back(time);
-      lastLegalState = state;
+      if (better) {
+        best = i;
+        bestOverlap = overlap;
+        bestPriority = priority;
+      }
     }
 
+    std::string state = "OUT OF COHORT";
+    if (best >= 0) {
+      state = states[best];
+    } else if (oocFix == "Last present state") {
+      // Carry-forward must not introduce a prohibited self-transition.
+      if (!lastState.empty() && isAllowed(lastState)) state = lastState;
+    } else if (oocFix != "None") {
+      // A named fallback is a state too, and must respect the same rules.
+      if (lastState.empty() || allowedStatesList.size() == 0 || isAllowed(oocFix)) {
+        state = oocFix;
+      }
+    }
+
+    if (state != "OUT OF COHORT") lastState = state;
+    outpatientIDs.push_back(patientID);
+    outStates.push_back(state);
+    outStartDates.push_back(startDate);
+    outEndDates.push_back(endDate);
+    outtimeCohort.push_back(time);
   }
-  else if(stateSelection == 2){
-    for (int iteration=1; iteration <= totalStateDurations; iteration++) {
-
-      NumericVector daysOverlapVector;
-      std::string state;
-      std::string lastState = "$$not_intialized_yet$$";
-      double time = (iteration - 1)*stateDuration/365.25;
-      Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration + (-1);
-
-
-      // Let's choose the state that overlaps the most with the present date interval
-      // The function daysOverlap is defined in Helpers.R
-      for (int i=0; i < vectorLength; i++){
-        daysOverlapVector.push_back(daysOverlap(startDate,
-                                                endDate,
-                                                controlStart[i],
-                                                            controlEnd[i]));
-      }
-      
-      int sumV = sum(daysOverlapVector);
-      if(sumV == 0) {
-        if (oocFix == "None"){
-          state = "OUT OF COHORT";
-        }
-        else if (oocFix == "Last present state"){
-          if (lastLegalState == "$$not_intialized_yet$$") {
-            lastLegalState =  "OUT OF COHORT";
-          }
-          state = lastLegalState;
-        }
-        else{
-          state = oocFix;
-        }
-        }
-      else {
-        
-        Rcpp::StringVector allowedStates;
-        if(lastState == "$$not_intialized_yet$$"){
-          allowedStates = statePriorityVector;
-        }
-        else{
-          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
-        }
-
-        for (int value=0; value < vectorLength; value++){
-          
-          int maxElementIndex = std::max_element(daysOverlapVector.begin(),daysOverlapVector.end()) - daysOverlapVector.begin();
-          state = states[maxElementIndex];
-          
-          std::string lowercaseState = state;
-          std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
-          
-          bool isPresent = false;
-          int numAllowedStates = allowedStates.size();
-          
-          for (int i = 0; i < numAllowedStates; i++) {
-            std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
-            std::string lowercaseAllowedState = allowedState;
-            std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
-            
-            if (lowercaseAllowedState == lowercaseState) {
-              isPresent = true;
-              break;
-            }
-          }
-          // auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-          //if (isPresent != allowedStates.end()){
-          if (isPresent){
-            lastState = state;
-            break;
-          }
-          else {
-            daysOverlapVector[maxElementIndex] = 0;
-            if (sum(daysOverlapVector) == 0){
-              if (oocFix == "None"){
-                state = "OUT OF COHORT";
-              }
-              else if (oocFix == "Last present state"){
-                if (lastLegalState == "$$not_intialized_yet$$") {
-                  lastLegalState =  "OUT OF COHORT";
-                }
-                state = lastLegalState;
-              }
-              else{
-                state = oocFix;
-              }
-            break;
-            }
-          }
-          
-        }
-      }
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(state);
-      outStartDates.push_back(startDate);
-      outEndDates.push_back(endDate);
-      outtimeCohort.push_back(time);
-      lastLegalState = state;
-    }
-
-  }
-  else if (stateSelection == 3) {
-    for (int iteration=1; iteration <= totalStateDurations; iteration++) {
-
-      NumericVector daysOverlapVector;
-      std::string state;
-      std::string lastState = "$$not_intialized_yet$$";
-      double time = (iteration - 1)*stateDuration/365.25;
-      Date startDate = cohortstartDate + (iteration - 1)*stateDuration;
-      Date endDate = startDate + stateDuration + (-1);
-
-      // Let's implement the prioritization of state cohorts.
-      // This means that we will select the state which is present in the given timespan and has the highest priority
-      for (int i=0; i < vectorLength; i++){
-        daysOverlapVector.push_back(daysOverlap(startDate,
-                                                endDate,
-                                                controlStart[i],
-                                                controlEnd[i]));
-      }
-      
-      int sumV = sum(daysOverlapVector);
-      if(sumV == 0) {
-        if (oocFix == "None"){
-          state = "OUT OF COHORT";
-        }
-        else if (oocFix == "Last present state"){
-          if (lastLegalState == "$$not_intialized_yet$$") {
-            lastLegalState =  "OUT OF COHORT";
-          }
-          state = lastLegalState;
-        }
-        else{
-          state = oocFix;
-        }
-      }
-      else {
-        Rcpp::StringVector allowedStates;
-        if(lastState == "$$not_intialized_yet$$"){
-          allowedStates = statePriorityVector;
-        }
-        else{
-          Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
-        }
-        int maxPriorityIndex = std::numeric_limits<int>::max();
-        for (int j=0; j < vectorLength; j++){
-          if (daysOverlapVector[j] > 0){
-            std::vector<std::string>::iterator it = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[j]);
-            int index_result = std::distance(statePriorityVector.begin(), it);
-            // int index_result = index_result - statePriorityVector.end();
-            std::string candidateState;
-            candidateState = statePriorityVector[index_result];
-            
-            //auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), candidateState);
-            std::string lowercaseState = candidateState;
-            std::transform(lowercaseState.begin(), lowercaseState.end(), lowercaseState.begin(), ::tolower);
-            
-            bool isPresent = false;
-            int numAllowedStates = allowedStates.size();
-            
-            for (int i = 0; i < numAllowedStates; i++) {
-              std::string allowedState = Rcpp::as<std::string>(allowedStates[i]);
-              std::string lowercaseAllowedState = allowedState;
-              std::transform(lowercaseAllowedState.begin(), lowercaseAllowedState.end(), lowercaseAllowedState.begin(), ::tolower);
-              
-              if (lowercaseAllowedState == lowercaseState) {
-                isPresent = true;
-                break;
-              }
-            }
-            
-            if(index_result < maxPriorityIndex && isPresent){
-              maxPriorityIndex = index_result;
-              state = candidateState;
-            }
-            else {
-            daysOverlapVector[j] = 0;
-            if (sum(daysOverlapVector) == 0){
-              if (oocFix == "None"){
-                state = "OUT OF COHORT";
-              }
-              else if (oocFix == "Last present state"){
-                if (lastLegalState == "$$not_intialized_yet$$") {
-                  lastLegalState =  "OUT OF COHORT";
-                  }
-                state = lastLegalState;
-              }
-              else{
-                state = oocFix;
-              }
-              break;
-            }
-            }
-          }
-          if (j == vectorLength) {
-            lastState = state;
-            break;
-          }
-        }
-      }
-      outpatientIDs.push_back(patientID);
-      outStates.push_back(state);
-      outStartDates.push_back(startDate);
-      outEndDates.push_back(endDate);
-      outtimeCohort.push_back(time);
-      lastLegalState = state;
-    }
-    }
   }
   DataFrame outPatientData = DataFrame::create( Named("subject_id") = outpatientIDs,
                                                 _["state_label"] = outStates,

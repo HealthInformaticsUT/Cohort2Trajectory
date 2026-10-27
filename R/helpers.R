@@ -85,25 +85,9 @@ daysOverlap <- function(dateStart,
                         dateEnd,
                         controlStart,
                         controlEnd) {
-  if (dateStart > controlStart &
-      dateEnd > controlEnd) {
-    return(max(as.numeric(controlEnd - dateStart), 0))
-  }
-  else if (dateStart <= controlStart &
-           dateEnd > controlEnd) {
-    return(max(as.numeric(controlEnd - controlStart) + 1, 0))
-  }
-  else if (dateStart <= controlStart &
-           dateEnd <= controlEnd) {
-    return(max(as.numeric(dateEnd - controlStart) + 1, 0))
-  }
-  else if (dateStart > controlStart &
-           dateEnd <= controlEnd) {
-    return(max(as.numeric(dateEnd - dateStart), 0))
-  }
-  else {
-    return(0)
-  }
+  overlapStart <- max(dateStart, controlStart)
+  overlapEnd <- min(dateEnd, controlEnd)
+  max(as.numeric(overlapEnd - overlapStart) + 1, 0)
 }
 
 #' Function to check if two periods overlap
