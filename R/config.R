@@ -12,9 +12,9 @@
 #'   NULL or character(0) means no mandatory states.
 #' @param stateCohortAbsorbing Vector of absorbing state labels.
 #'   NULL or character(0) means no absorbing states.
-#' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.
+#' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
-#' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.
+#' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.
 #' @param lengthOfStay Positive whole-number cycle length in days for discrete
 #'   trajectories. NULL may be supplied during configuration, but a cycle length
 #'   is required when generating discrete trajectories. The final
@@ -135,7 +135,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   trajectoryType <- .configurationChoice(
     trajectoryType, c(Discrete = 0, Continuous = 1), "trajectoryType"
   )
-  if (isTRUE(trajectoryType == 0) && !is.null(lengthOfStay)) {
+  if (isTRUE(trajectoryType == "Discrete") && !is.null(lengthOfStay)) {
     .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
   .validatePositiveInteger(batchSize, "batchSize", "patients")
@@ -206,11 +206,20 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   return(studyEnv)
 }
 
-.configurationChoice <- function(value, choices, argument) {
-  if (is.null(value)) return(NULL)
+.configurationChoice <- function(value, choices, argument, allowNull = TRUE, warnCodes = TRUE) {
+  if (is.null(value) && allowNull) return(NULL)
   if (is.character(value) && length(value) == 1L && !is.na(value)) {
     index <- match(tolower(trimws(value)), tolower(names(choices)))
-    if (!is.na(index)) return(unname(choices[index]))
+    if (!is.na(index)) return(names(choices)[index])
+  }
+  if (is.numeric(value) && !is.complex(value) && length(value) == 1L &&
+      is.finite(value) && value %in% unname(choices)) {
+    name <- names(choices)[match(value, choices)]
+    if (warnCodes) {
+      warning(argument, " = ", value, " is deprecated. Use ", argument,
+              ' = "', name, '" instead.', call. = FALSE)
+    }
+    return(name)
   }
   stop(argument, " must be one of: ", paste(names(choices), collapse = ", "),
        ".", call. = FALSE)

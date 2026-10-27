@@ -9,7 +9,7 @@ test_that("invalid batch sizes fail before creating files or reading patient dat
   expect_length(list.files(path), 0)
 
   # Explicit generation overrides must be checked too, for either format.
-  for (type in 0:1) {
+  for (type in c("Discrete", "Continuous")) {
     for (size in list(c(1, NA), NA_real_, 0, -1, 1.5, Inf, NULL)) {
       expect_error(createTrajectories(
         trajectoryType = type, lengthOfStay = 7, batchSize = size

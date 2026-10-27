@@ -31,12 +31,23 @@
          call. = FALSE)
   }
   saved <- readRDS(path)
-  if (!is.list(saved) || !identical(saved$version, 1L) ||
+  if (!is.list(saved) || !(identical(saved$version, 1L) || identical(saved$version, 2L)) ||
       !is.list(saved$import) || !is.list(saved$generation) ||
       !all(.studyImportFields() %in% names(saved$import)) ||
       !all(.studyGenerationFields() %in% names(saved$generation))) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
   }
+  # Migrate legacy snapshots in memory without rewriting the user's file or
+  # warning about codes that the package itself previously saved.
+  saved$generation$trajectoryType <- .configurationChoice(
+    saved$generation$trajectoryType, c(Discrete = 0, Continuous = 1),
+    "trajectoryType", allowNull = FALSE, warnCodes = FALSE
+  )
+  saved$generation$stateSelectionType <- .configurationChoice(
+    saved$generation$stateSelectionType, c(First = 1, Overlap = 2, Priority = 3),
+    "stateSelectionType", allowNull = FALSE, warnCodes = FALSE
+  )
+  saved$version <- 2L
   saved
 }
 
@@ -67,7 +78,7 @@
   if (is.null(imported)) {
     imported <- mget(.studyImportFields(), envir = studyEnv, inherits = FALSE)
   }
-  snapshot <- list(version = 1L, import = imported, generation = generation,
+  snapshot <- list(version = 2L, import = imported, generation = generation,
                    definitions = studyEnv$.cohortDefinitions)
   saveRDS(snapshot, file.path(studyEnv$pathToStudy, studyEnv$studyName,
                              "Settings", "analysisSettings.rds"))

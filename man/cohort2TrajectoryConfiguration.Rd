@@ -53,11 +53,11 @@ NULL or character(0) means no mandatory states.}
 \item{stateCohortAbsorbing}{Vector of absorbing state labels.
 NULL or character(0) means no absorbing states.}
 
-\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive.}
+\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.}
 
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)}
 
-\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive.}
+\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.}
 
 \item{lengthOfStay}{Positive whole-number cycle length in days for discrete
 trajectories. NULL may be supplied during configuration, but a cycle length

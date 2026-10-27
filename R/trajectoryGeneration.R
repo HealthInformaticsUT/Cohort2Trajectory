@@ -6,9 +6,13 @@
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
-#' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority)
+#' @param stateSelectionType State selection: "First", "Overlap" or "Priority".
+#'   Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
+#'   accepted with a deprecation warning. A selection must be specified before generation.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
-#' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)
+#' @param trajectoryType Trajectory format: "Discrete" or "Continuous".
+#'   Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
+#'   with a deprecation warning.
 #' @param lengthOfStay Positive whole-number cycle length in days, required for
 #'   discrete trajectories. The final
 #'   cycle is shortened if the trajectory boundary falls partway through it.
@@ -96,13 +100,21 @@ createTrajectories <- function(cdm = NULL,
          "successfully before creating trajectories. Previous patient files ",
          "will not be reused.", call. = FALSE)
   }
-  # Save the rules before data-dependent merged-state expansion so a new site
-  # can apply the same expansion to its own observed states.
-  generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)
-  if (isTRUE(as.numeric(trajectoryType) == 0)) {
+  trajectoryType <- .configurationChoice(
+    trajectoryType, c(Discrete = 0, Continuous = 1), "trajectoryType",
+    allowNull = FALSE
+  )
+  if (trajectoryType == "Discrete") {
     .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
   .validatePositiveInteger(batchSize, "batchSize", "patients")
+  stateSelectionType <- .configurationChoice(
+    stateSelectionType, c(First = 1, Overlap = 2, Priority = 3), "stateSelectionType",
+    allowNull = FALSE
+  )
+  # Save validated choices before data-dependent merged-state expansion so a
+  # new site can apply the same expansion to its own observed states.
+  generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)
   
   studyName = studyEnv$studyName
   pathToData = paste0(studyEnv$pathToStudy, '/', studyName, '/', 'Data')
@@ -143,7 +155,7 @@ createTrajectories <- function(cdm = NULL,
   # Define IDs once for the whole study, before splitting patients into batches.
   # Keep configured states even when absent, and append additional labels in a
   # deterministic order (for example, labels created by state merging).
-  gapState <- if (as.numeric(trajectoryType) == 0) {
+  gapState <- if (trajectoryType == "Discrete") {
     if (oocFix %in% c("None", "Last present state")) "OUT OF COHORT" else c("OUT OF COHORT", oocFix)
   } else {
     character(0)
@@ -170,7 +182,9 @@ createTrajectories <- function(cdm = NULL,
   
   
   # Creating trajectories
-  if (as.numeric(trajectoryType) == 0) {
+  # Numeric selection codes are only used by the internal trajectory engines.
+  selectionCode <- unname(c(First = 1, Overlap = 2, Priority = 3)[stateSelectionType])
+  if (trajectoryType == "Discrete") {
     i = 0
     for (batch in batches) {
       i = i + 1  #index of batch
@@ -187,7 +201,7 @@ createTrajectories <- function(cdm = NULL,
           cdm = cdm,
           stateDuration = lengthOfStay,
           oocFix = oocFix,
-          stateSelection = stateSelectionType,
+          stateSelection = selectionCode,
           statePriorityVector = stateCohortPriorityOrder,
           absorbingStates = stateCohortAbsorbing,
           studyName = studyName,
@@ -212,7 +226,7 @@ createTrajectories <- function(cdm = NULL,
     ))
     
   }
-  else if (as.numeric(trajectoryType) == 1) {
+  else if (trajectoryType == "Continuous") {
     i = 0
     for (batch in batches) {
       i = i + 1
@@ -226,7 +240,7 @@ createTrajectories <- function(cdm = NULL,
         getTrajectoriesContinuous(
           cdm = cdm,
           patientData =  batch_data,
-          stateSelection = stateSelectionType,
+          stateSelection = selectionCode,
           statePriorityVector = stateCohortPriorityOrder,
           absorbingStates = stateCohortAbsorbing,
           studyName = studyName,

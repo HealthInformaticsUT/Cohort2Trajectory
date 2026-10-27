@@ -30,7 +30,9 @@ createTrajectories(
 
 \item{studyEnv}{environment created with cohort2TrajectoryConfiguration}
 
-\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)}
+\item{trajectoryType}{Trajectory format: "Discrete" or "Continuous".
+Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
+with a deprecation warning.}
 
 \item{runSavedStudy}{Generate using the restored saved-study settings after
 getDataForStudy has imported fresh data. Analysis overrides are not accepted
@@ -49,7 +51,9 @@ cycle is shortened if the trajectory boundary falls partway through it.}
 
 \item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
 
-\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority)}
+\item{stateSelectionType}{State selection: "First", "Overlap" or "Priority".
+Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
+accepted with a deprecation warning. A selection must be specified before generation.}
 
 \item{stateCohortAbsorbing}{vector of the customized labels of the state cohorts which are absorbing}
 

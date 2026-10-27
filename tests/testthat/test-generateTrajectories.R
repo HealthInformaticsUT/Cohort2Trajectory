@@ -12,7 +12,7 @@ testthat::test_that("Create trajectories discrete", {
   
   createTrajectories(
     cdm = cdm,
-    trajectoryType = 0,
+    trajectoryType = "Discrete",
     runSavedStudy = FALSE,
     studyEnv = studyEnv,
     oocFix = "None",
@@ -22,7 +22,7 @@ testthat::test_that("Create trajectories discrete", {
     stateCohortPriorityOrder = c("TestState1","TestState2"),
     stateCohortMandatory = c("TestState2"),
     stateCohortAbsorbing = c("TestState2"),
-    stateSelectionType = 3,
+    stateSelectionType = "Priority",
     allowedStatesList = createStateList(c("TestState1","TestState2")),
     useCDM = TRUE)
   
@@ -47,7 +47,7 @@ testthat::test_that("Create trajectories continuous", {
   
   createTrajectories(pathToStudy,
                      cdm = cdm,
-                     trajectoryType = 1,
+                     trajectoryType = "Continuous",
                      runSavedStudy = FALSE,
                      studyEnv = studyEnv,
                      oocFix = "None",
@@ -57,7 +57,7 @@ testthat::test_that("Create trajectories continuous", {
                      stateCohortPriorityOrder = c("TestState1","TestState2"),
                      stateCohortMandatory = c("TestState2"),
                      stateCohortAbsorbing = c("TestState2"),
-                     stateSelectionType = 3,
+                     stateSelectionType = "Priority",
                      allowedStatesList = createStateList(c("TestState1","TestState2")),
                      useCDM = TRUE)
   

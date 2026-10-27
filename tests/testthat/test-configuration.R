@@ -9,7 +9,19 @@ test_that("valid input is accepted and configuration choices ignore case", {
     pathToStudy = path, useCDM = FALSE, trajectoryDataObject = data,
     trajectoryType = " discrete ", stateSelectionType = "priority"
   ), NA)
-  expect_equal(c(study$trajectoryType, study$stateSelectionType), c(0, 3))
+  expect_equal(c(study$trajectoryType, study$stateSelectionType), c("Discrete", "Priority"))
+  expect_warning(legacy <- cohort2TrajectoryConfiguration(
+    studyName = "legacy-trajectory",
+    pathToStudy = path, useCDM = FALSE, trajectoryDataObject = data,
+    trajectoryType = 1, stateSelectionType = "Priority"
+  ), 'trajectoryType = 1 is deprecated.*"Continuous"')
+  expect_identical(legacy$trajectoryType, "Continuous")
+  expect_warning(legacy <- cohort2TrajectoryConfiguration(
+    studyName = "legacy-selection",
+    pathToStudy = path, useCDM = FALSE, trajectoryDataObject = data,
+    stateSelectionType = 3
+  ), 'stateSelectionType = 3 is deprecated.*"Priority"')
+  expect_identical(legacy$stateSelectionType, "Priority")
 })
 
 test_that("incorrect column types produce the appropriate warning", {

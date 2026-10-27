@@ -12,7 +12,7 @@ test_that("invalid cycle lengths fail before configuration creates files", {
 
 test_that("generation rejects missing or invalid lengths before reading data", {
   # No study or input is needed to diagnose these invalid settings.
-  expect_error(createTrajectories(trajectoryType = 0, lengthOfStay = NULL),
+  expect_error(createTrajectories(trajectoryType = "Discrete", lengthOfStay = NULL),
                "lengthOfStay must be a single positive whole number")
   expect_error(getTrajectoriesDiscrete(NULL, NULL, stateDuration = 2.5),
                "stateDuration must be a single positive whole number")

@@ -18,6 +18,15 @@ settings file written or read by the package. The snapshot preserves import
 and generation settings separately, including allowed transitions, optional
 state lists, cycle length and merging options.
 
+Use readable names for `trajectoryType` (`"Discrete"` or `"Continuous"`) and
+`stateSelectionType` (`"First"`, `"Overlap"` or `"Priority"`) in both configuration
+and generation. Names ignore case and surrounding whitespace. The configuration
+and new RDS snapshots store the canonical names, not numeric engine codes.
+Legacy numeric arguments still work but warn with the replacement name.
+Existing version-1 RDS snapshots are converted in memory when loaded, without
+modifying the original file. New snapshots use version 2 and require the updated
+package when shared.
+
 ## Rerunning a study on another database
 
 Copy the study's **JSON** and **Settings** folders into a study folder at the
