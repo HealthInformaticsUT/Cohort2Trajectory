@@ -9,6 +9,8 @@
 #' @param stateCohortLabels Character vector of clinical state labels, unique
 #'   even when ignoring case. Labels must not be blank or missing. The labels
 #'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
+#'   Clinical labels need not start with a letter, including for CDM studies.
+#'   Database cohort names and definition filenames are managed separately.
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory Vector of state labels required in a trajectory.
 #'   Patients must have every supplied state within the retained observation
@@ -178,13 +180,6 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")
   }
   createMandatorySubDirs(pathToStudy, studyName)
-  
-  if (useCDM){
-      if (!all((grepl("[a-zA-Z]", substr(stateCohortLabels,1,1))))){
-        cli::cli_abort("{.error State labels necessary. Use state cohort labels that begin with a letter.}")
-        return(NULL)
-    }
-  }
   
   if(is.data.frame(trajectoryDataObject)){
     if(!inherits(trajectoryDataObject$cohort_start_date, 'Date')){

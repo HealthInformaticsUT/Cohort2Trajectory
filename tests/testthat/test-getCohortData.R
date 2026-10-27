@@ -29,8 +29,9 @@ test_that("CDM import keeps clinical labels separate from generated cohort names
   root <- tempfile("c2t-cohort-names-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
-  labels <- c("Recorded pneumonia", "target", "Recorded_pneumonia")
-  definitions <- c("clinical", "target", "clinical")
+  labels <- c("Recorded pneumonia", "target", "Recorded_pneumonia",
+              "30-day recovery", "(Other care)", "\u00c4ge faas")
+  definitions <- c("clinical", "target", rep("clinical", 4))
   study <- cohort2TrajectoryConfiguration(
     studyName = "names", pathToStudy = root, baseUrl = NULL,
     atlasTargetCohort = "target", atlasStateCohorts = definitions,
@@ -58,6 +59,10 @@ test_that("CDM import keeps clinical labels separate from generated cohort names
   # Reusing a definition must not duplicate rows or lose either clinical label.
   expect_equal(records("0"), records("target"))
   expect_equal(records("Recorded pneumonia"), records("Recorded_pneumonia"))
+  # Clinical labels are values, not SQL names or filenames.
+  for (label in labels[4:6]) {
+    expect_equal(records(label), records("Recorded pneumonia"))
+  }
 })
 
 test_that("getCohortData result nrow and ncol check ", {
