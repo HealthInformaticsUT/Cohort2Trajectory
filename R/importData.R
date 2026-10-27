@@ -593,6 +593,8 @@ getTrajectoriesDiscrete <- function(cdm,
 #'   records. Selected intervals retain their endpoints and simultaneous records
 #'   retain equal elapsed times. Gaps do not imply continued clinical state
 #'   membership. Absorbing states end the trajectory at their retained endpoint.
+#'   Priority selection assigns shared days to the higher-priority state and
+#'   retains only non-empty fragments of lower-priority intervals.
 #'   Transition rules are checked before the absorbing-state cutoff. Empty rules
 #'   mean unrestricted transitions. Rejected records do not change the last
 #'   retained state, and only a retained absorbing record can end the trajectory.
@@ -657,43 +659,24 @@ getTrajectoriesContinuous <- function(cdm,
               if (nrow(patientData) == 0) {
                 break
               }
-              if (priorityData[i, ]$cohort_start_date <= patientData[j, ]$cohort_start_date &
-                  priorityData[i, ]$cohort_end_date >= patientData[j, ]$cohort_end_date) {
-                # In this case the smaller priority state is absorbed by a higher priority state
+              lower <- patientData[j, ]
+              higherStart <- priorityData$cohort_start_date[i]
+              higherEnd <- priorityData$cohort_end_date[i]
+              if (lower$cohort_end_date < higherStart || lower$cohort_start_date > higherEnd) {
+                newpatientData <- rbind(newpatientData, lower)
                 next
               }
-              else if (priorityData[i, ]$cohort_start_date >= patientData[j, ]$cohort_start_date &
-                       priorityData[i, ]$cohort_end_date <= patientData[j, ]$cohort_end_date) {
-                if (priorityData[i, ]$cohort_start_date > patientData[j, ]$cohort_start_date) {
-                  head <- patientData[j, ]
-                  head$cohort_end_date <-
-                    priorityData[i, ]$cohort_start_date
-                  newpatientData <- rbind(newpatientData, head)
-                }
-                if (priorityData[i, ]$cohort_end_date <= patientData[j, ]$cohort_end_date) {
-                  tail <- patientData[j, ]
-                  tail$cohort_start_date <-
-                    priorityData[i, ]$cohort_end_date + 1
-                  newpatientData <- rbind(newpatientData, tail)
-                }
-              }
-              else if (priorityData[i, ]$cohort_start_date <= patientData[j, ]$cohort_end_date &
-                       priorityData[i, ]$cohort_end_date >= patientData[j, ]$cohort_end_date) {
-                head <- patientData[j, ]
-                head$cohort_end_date <-
-                  priorityData[i, ]$cohort_start_date
+              # Subtract the inclusive higher-priority interval. Strict tests
+              # keep only non-empty fragments, with no shared boundary days.
+              if (lower$cohort_start_date < higherStart) {
+                head <- lower
+                head$cohort_end_date <- higherStart - 1
                 newpatientData <- rbind(newpatientData, head)
-                next
               }
-              else if (priorityData[i, ]$cohort_start_date <= patientData[j, ]$cohort_start_date &
-                       priorityData[i, ]$cohort_end_date >= patientData[j, ]$cohort_start_date) {
-                tail <- patientData[j, ]
-                tail$cohort_start_date <-
-                  priorityData[i, ]$cohort_end_date
+              if (lower$cohort_end_date > higherEnd) {
+                tail <- lower
+                tail$cohort_start_date <- higherEnd + 1
                 newpatientData <- rbind(newpatientData, tail)
-              }
-              else {
-                newpatientData <- rbind(newpatientData, patientData[j, ])
               }
               
             }
