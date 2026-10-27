@@ -209,7 +209,10 @@ createStateList <- function(stateVector) {
 #' @param transitionTail State label which is the state where the transition is going to
 #' @details Removing an absent transition leaves the list unchanged. Removing
 #'   the last destination preserves an empty source entry, meaning no allowed
-#'   destinations. The input list is not modified in place.
+#'   destinations. Destination matching is case-insensitive using R's
+#'   locale-aware case conversion, as in trajectory generation. All matching
+#'   entries are removed. Source names still require exact spelling. The input
+#'   list is not modified in place.
 #' @return The updated transition list.
 #' @export
 removeListVectorEl <-
@@ -218,7 +221,7 @@ removeListVectorEl <-
            transitionTail) {
     destinations <- stateList[[transitionHead]]
     if (is.null(destinations)) return(stateList)
-    stateList[[transitionHead]] <- destinations[!destinations %in% transitionTail]
+    stateList[[transitionHead]] <- destinations[!tolower(destinations) %in% tolower(transitionTail)]
     return(stateList)
   }
 
@@ -228,16 +231,19 @@ removeListVectorEl <-
 #' @param stateList List of all the states storing the possible destination states
 #' @param transitionHead State label which is the state where the transition is coming from
 #' @param transitionTail State label which is the state where the transition is going to
-#' @details Repeated additions do not duplicate destinations. Existing
-#'   destination order is preserved and new destinations are appended.
-#'   The input list is not modified in place.
+#' @details Destinations are deduplicated case-insensitively using R's
+#'   locale-aware case conversion, as in trajectory generation. The first
+#'   spelling and order are preserved and new destinations are appended.
+#'   Source names still require exact spelling. The input list is not modified
+#'   in place.
 #' @return The updated transition list.
 #' @export
 addListVectorEl <-
   function(stateList,
            transitionHead,
            transitionTail) {
-    stateList[[transitionHead]] <- unique(c(stateList[[transitionHead]], transitionTail))
+    destinations <- c(stateList[[transitionHead]], transitionTail)
+    stateList[[transitionHead]] <- destinations[!duplicated(tolower(destinations))]
     return(stateList)
   }
 

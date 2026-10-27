@@ -20,7 +20,9 @@ The updated transition list.
 Add an allowed transition
 }
 \details{
-Repeated additions do not duplicate destinations. Existing
-  destination order is preserved and new destinations are appended.
-  The input list is not modified in place.
+Destinations are deduplicated case-insensitively using R's
+  locale-aware case conversion, as in trajectory generation. The first
+  spelling and order are preserved and new destinations are appended.
+  Source names still require exact spelling. The input list is not modified
+  in place.
 }

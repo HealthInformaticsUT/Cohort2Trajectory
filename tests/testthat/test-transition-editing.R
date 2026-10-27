@@ -15,3 +15,18 @@ test_that("adding an existing transition does not duplicate it", {
   expect_identical(added, createStateList(c("A", "B")))
   expect_identical(addListVectorEl(added, "A", "B"), added)
 })
+
+test_that("transition edits use the engines' case-insensitive destination matching", {
+  rules <- list(A = c("b", "B", "C"), B = "B")
+  original <- rules
+  removed <- removeListVectorEl(rules, "A", "B")
+  expect_identical(removed, list(A = "C", B = "B"))
+  expect_identical(removeListVectorEl(removed, "A", "b"), removed)
+  expect_identical(removeListVectorEl(removed, "A", "c"),
+                   list(A = character(0), B = "B"))
+
+  added <- addListVectorEl(rules, "A", c("B", "c", "D", "d"))
+  expect_identical(added, list(A = c("b", "C", "D"), B = "B"))
+  expect_identical(addListVectorEl(added, "A", c("B", "d")), added)
+  expect_identical(rules, original)
+})

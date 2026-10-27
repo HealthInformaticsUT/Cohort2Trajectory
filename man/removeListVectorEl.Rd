@@ -22,5 +22,8 @@ Remove an allowed transition
 \details{
 Removing an absent transition leaves the list unchanged. Removing
   the last destination preserves an empty source entry, meaning no allowed
-  destinations. The input list is not modified in place.
+  destinations. Destination matching is case-insensitive using R's
+  locale-aware case conversion, as in trajectory generation. All matching
+  entries are removed. Source names still require exact spelling. The input
+  list is not modified in place.
 }
