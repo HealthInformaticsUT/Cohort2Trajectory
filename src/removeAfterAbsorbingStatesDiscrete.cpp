@@ -79,6 +79,11 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
       
       iter++;
     }
+    // Without a row for this patient, back() would either access an empty
+    // vector or reuse the previous patient's ending date.
+    if (k == 0) {
+      stop("No input rows for requested internal patient ID %d. Derive patientIDs from the supplied data.", patientID);
+    }
     // Adding EXIT state
     Date exitDate = outEndDates.back() + 1;
     outpatientIDs.push_back(patientID);

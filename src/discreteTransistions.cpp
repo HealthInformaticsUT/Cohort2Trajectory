@@ -106,6 +106,9 @@ DataFrame getDiscreteStates(int stateSelection,
     times.push_back(timeCohort[index]);
     iter++;
   }
+  if (controlStart.empty()) {
+    stop("No input rows for requested internal patient ID %d. Derive patientIDs from the supplied data.", patientID);
+  }
   // Target rows preserve the full span even when clinical states are sparse.
   Date cohortstartDate = *std::min_element(controlStart.begin(), controlStart.end());
   Date cohortendDate = *std::max_element(controlEnd.begin(), controlEnd.end());

@@ -81,3 +81,21 @@ test_that("missing priority entries cannot silently turn records into gaps", {
   expect_identical(run(1, NULL, data[1, ])$state_label,
                     c("START", "OUT OF COHORT", "OUT OF COHORT", "EXIT"))
 })
+
+test_that("discrete routines reject requested patients without input rows", {
+  input <- transition_fixture("A", 0, 6)
+  generate <- function(data, ids) getDiscreteStates(3, "None", 7L, ids, data, "A", list())
+  cycles <- generate(input, 1L)
+  # Check both an empty output buffer and a missing patient after a valid one.
+  for (ids in list(c(2L, 1L), c(1L, 2L))) {
+    expect_error(generate(input, ids), "No input rows for requested internal patient ID 2")
+    expect_error(removeAfterAbsorbingStatesDiscrete(cycles, ids, character(0)),
+                 "No input rows for requested internal patient ID 2")
+  }
+  expect_error(generate(input[0, ], 1L), "No input rows for requested internal patient ID 1")
+  expect_error(removeAfterAbsorbingStatesDiscrete(cycles[0, ], 1L, character(0)),
+               "No input rows for requested internal patient ID 1")
+  # No requested patients is a valid empty operation, not a mismatch.
+  expect_equal(nrow(generate(input[0, ], integer(0))), 0L)
+  expect_equal(nrow(removeAfterAbsorbingStatesDiscrete(cycles[0, ], integer(0), character(0))), 0L)
+})
