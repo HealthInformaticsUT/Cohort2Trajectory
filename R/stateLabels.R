@@ -24,7 +24,7 @@
   .validateStateLabels(unique(c(configured, clinical)), "Clinical state labels")
 }
 
-.validateGapFallback <- function(value) {
+.validateGapFallback <- function(value, stateLabels = NULL) {
   if (!is.character(value) || length(value) != 1L || is.na(value) ||
       !nzchar(trimws(value))) {
     stop("oocFix must be one nonempty, non-missing string: 'None', ",
@@ -33,6 +33,15 @@
   # OUT OF COHORT is the existing explicit spelling for an unresolved gap.
   if (!value %in% c("None", "Last present state", "OUT OF COHORT")) {
     .validateStateLabels(value, "oocFix")
+    # Adding a fallback must not bypass the case-insensitive uniqueness rule
+    # that already applies to recorded and configured clinical labels.
+    labels <- as.character(stateLabels)
+    conflicts <- unique(labels[which(tolower(labels) == tolower(value) & labels != value)])
+    if (length(conflicts)) {
+      stop("oocFix ", shQuote(value), " differs only in case from an existing state label: ",
+           paste(shQuote(conflicts), collapse = ", "),
+           ". Use the exact state label, or choose a distinct fallback label.", call. = FALSE)
+    }
   }
   invisible(NULL)
 }

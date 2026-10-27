@@ -471,7 +471,8 @@ getTrajectoriesDiscrete <- function(cdm,
                                     stateLevels = NULL,
                                     outOfCohortAllowed = FALSE) {
   .validatePositiveInteger(stateDuration, "stateDuration", "days")
-  .validateGapFallback(oocFix)
+  .validateGapFallback(oocFix,
+                       c(cohortData$cohort_definition_id, statePriorityVector, stateLevels))
   encoded <- .encodeSubjectIds(cohortData)
   tmp_data <- .boundTrajectoryData(encoded$data, outOfCohortAllowed)
   

@@ -71,7 +71,8 @@
     "trajectoryType", allowNull = FALSE, warnCodes = FALSE
   )
   if (saved$generation$trajectoryType == "Discrete") {
-    .validateGapFallback(saved$generation$oocFix)
+    .validateGapFallback(saved$generation$oocFix,
+                         saved$generation$stateCohortLabels)
   }
   saved$generation$stateSelectionType <- .configurationChoice(
     saved$generation$stateSelectionType, c(First = 1, Overlap = 2, Priority = 3),

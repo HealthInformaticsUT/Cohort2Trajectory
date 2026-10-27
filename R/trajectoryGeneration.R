@@ -18,6 +18,8 @@
 #'   For discrete trajectories, supply one nonempty string. Boundary labels
 #'   "0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
 #'   also accepted to leave gaps unresolved.
+#'   Use the exact spelling of an existing state label. A new fallback label
+#'   must not differ only in case from a clinical or merged-state label.
 #' @param trajectoryType Trajectory format: "Discrete" or "Continuous".
 #'   Names are case-insensitive. Existing numeric codes 0 and 1 are also accepted
 #'   with a deprecation warning.
@@ -130,7 +132,7 @@ createTrajectories <- function(cdm = NULL,
     stateSelectionType, c(First = 1, Overlap = 2, Priority = 3), "stateSelectionType",
     allowNull = FALSE
   )
-  if (trajectoryType == "Discrete") .validateGapFallback(oocFix)
+  if (trajectoryType == "Discrete") .validateGapFallback(oocFix, stateCohortLabels)
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   # Save validated choices before data-dependent merged-state expansion so a
@@ -160,6 +162,9 @@ createTrajectories <- function(cdm = NULL,
   .validateObservedStateLabels(data$cohort_definition_id,
     if (!isTRUE(studyEnv$mergeStates)) stateCohortLabels else NULL)
   configuredStates <- as.character(stateCohortLabels)
+  if (trajectoryType == "Discrete" && !isTRUE(studyEnv$mergeStates)) {
+    .validateGapFallback(oocFix, c(configuredStates, data$cohort_definition_id))
+  }
   registry <- NULL
   if (isTRUE(studyEnv$mergeStates)) {
     if (is.null(studyEnv$stateDictionary)) {
@@ -169,6 +174,7 @@ createTrajectories <- function(cdm = NULL,
                              allowedStatesList, stateCohortAbsorbing,
                              mergedStateOverrides)
     registry <- resolved$registry
+    if (trajectoryType == "Discrete") .validateGapFallback(oocFix, registry$label)
     unknown <- setdiff(data$cohort_definition_id, c("0", registry$state_key))
     if (length(unknown)) stop("Cleaned data and state dictionary do not match. Rerun import.", call. = FALSE)
     stateCohortPriorityOrder <- resolved$priority

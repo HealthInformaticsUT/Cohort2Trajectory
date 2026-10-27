@@ -24,6 +24,8 @@
 #'   For discrete trajectories, supply one nonempty string. Boundary labels
 #'   "0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
 #'   also accepted to leave gaps unresolved.
+#'   Use the exact spelling of an existing state label. A new fallback label
+#'   must not differ only in case from a clinical or merged-state label.
 #' @param trajectoryType The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.
 #' @param lengthOfStay Positive whole-number cycle length in days for discrete
 #'   trajectories. NULL may be supplied during configuration, but a cycle length
@@ -162,7 +164,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
   .validatePositiveInteger(batchSize, "batchSize", "patients")
-  if (isTRUE(trajectoryType == "Discrete")) .validateGapFallback(oocFix)
+  if (isTRUE(trajectoryType == "Discrete")) .validateGapFallback(oocFix, stateCohortLabels)
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   

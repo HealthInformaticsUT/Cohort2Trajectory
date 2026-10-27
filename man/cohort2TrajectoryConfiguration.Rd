@@ -66,7 +66,9 @@ even when a clinical state has that label. Other labels select a named
 fallback state, including a merged state's display label.
 For discrete trajectories, supply one nonempty string. Boundary labels
 "0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
-also accepted to leave gaps unresolved.}
+also accepted to leave gaps unresolved.
+Use the exact spelling of an existing state label. A new fallback label
+must not differ only in case from a clinical or merged-state label.}
 
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.}
 

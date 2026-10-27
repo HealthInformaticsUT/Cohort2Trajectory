@@ -142,4 +142,5 @@ test_that("merged labels do not override gap controls or named fallbacks", {
     expect_identical(createTrajectories(studyEnv = study, oocFix = fallback)$state_label,
                      c("START", fallback, observed, fallback, "EXIT"))
   }
+  expect_error(createTrajectories(studyEnv = study, oocFix = "combined"), "oocFix.*Combined")
 })
