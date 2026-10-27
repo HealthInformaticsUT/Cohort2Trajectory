@@ -73,15 +73,22 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
         Date exitDate = patientsEnd[index] + 1;
         Date stateStart = patientsStart[index];
         double exitTime = timeCohort[index] + (exitDate - stateStart) / 365.25;
-        while (patientsStates[index] != "EXIT"){
-          index ++;
+        // Find this patient's boundary without reading past the table or
+        // borrowing an EXIT from another patient (rows may be interleaved).
+        size_t exitIndex = static_cast<size_t>(index) + 1;
+        while (exitIndex < patientsStates.size() &&
+               (patientsIDs[exitIndex] != patientID || patientsStates[exitIndex] != "EXIT")) {
+          ++exitIndex;
+        }
+        if (exitIndex == patientsStates.size()) {
+          stop("Missing EXIT after absorbing state for internal patient ID %d. Regenerate the continuous trajectory input.", patientID);
         }
         // Adding EXIT state
         outpatientIDs.push_back(patientID);
-        outStates.push_back(patientsStates[index]);
+        outStates.push_back(patientsStates[exitIndex]);
         outStartDates.push_back(exitDate);
         outEndDates.push_back(exitDate);
-        outstateIDs.push_back(stateIDs[index]);
+        outstateIDs.push_back(stateIDs[exitIndex]);
         outtimeCohort.push_back(exitTime);
         seqOrdinal.push_back(1);
         

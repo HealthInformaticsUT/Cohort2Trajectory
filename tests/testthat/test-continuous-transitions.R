@@ -40,3 +40,23 @@ test_that("continuous filtering counts retained repeats and diagnoses missing ru
   expect_error(continuous_rule_fixture(list(B = "B")),
                "No allowed-transition entry for state 'A'")
 })
+
+test_that("continuous absorbing cutoff requires the same patient's EXIT", {
+  data <- data.frame(
+    subject_id = c(1L, 1L, 2L, 2L, 1L),
+    state_label = c("START", "Death", "START", "EXIT", "EXIT"),
+    state_start_date = as.Date("2020-01-01") + c(0, 1, 0, 4, 4),
+    state_end_date = as.Date("2020-01-01") + c(0, 1, 0, 4, 4),
+    state_id = c(1, 2, 1, 99, 3), time_in_cohort = c(0, 1, 0, 4, 4) / 365.25
+  )
+  result <- removeAfterAbsorbingStatesContinuous(data, c(1L, 2L), "Death")
+  exits <- result[result$state_label == "EXIT", ]
+  expect_equal(exits$state_id, c(3, 99))
+  expect_equal(exits$state_start_date, as.Date(c("2020-01-03", "2020-01-05")))
+  # Another patient's EXIT must not conceal a missing boundary.
+  expect_error(removeAfterAbsorbingStatesContinuous(data[1:4, ], c(1L, 2L), "Death"),
+               "Missing EXIT after absorbing state for internal patient ID 1")
+  # Nor may the search run beyond the end when no EXIT remains at all.
+  expect_error(removeAfterAbsorbingStatesContinuous(data[1:2, ], 1L, "Death"),
+               "Missing EXIT after absorbing state for internal patient ID 1")
+})
