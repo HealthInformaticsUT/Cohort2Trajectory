@@ -105,6 +105,9 @@ State IDs are assigned once per study. START has ID 1, followed
   rounded them. Temporary IDs never appear in saved patient histories.
   When reading exported CSV files outside the package, read subject_id as
   character to retain long or zero-prefixed identifiers.
+  After an unsuccessful import in the current study environment, generation
+  is blocked until getDataForStudy succeeds again. Existing output files are
+  preserved, but are not reused as input for that failed attempt.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

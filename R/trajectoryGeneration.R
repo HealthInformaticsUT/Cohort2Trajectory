@@ -58,6 +58,9 @@
 #'   rounded them. Temporary IDs never appear in saved patient histories.
 #'   When reading exported CSV files outside the package, read subject_id as
 #'   character to retain long or zero-prefixed identifiers.
+#'   After an unsuccessful import in the current study environment, generation
+#'   is blocked until getDataForStudy succeeds again. Existing output files are
+#'   preserved, but are not reused as input for that failed attempt.
 #' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -84,6 +87,11 @@ createTrajectories <- function(cdm = NULL,
       stop("Configure the saved study and run getDataForStudy successfully first. ",
            "Copied patient files are not reused for a saved run.", call. = FALSE)
     }
+  }
+  if (identical(studyEnv$.dataReady, FALSE)) {
+    stop("The latest import did not complete successfully. Run getDataForStudy ",
+         "successfully before creating trajectories. Previous patient files ",
+         "will not be reused.", call. = FALSE)
   }
   # Save the rules before data-dependent merged-state expansion so a new site
   # can apply the same expansion to its own observed states.
