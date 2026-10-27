@@ -18,7 +18,8 @@
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param pathToStudy path to directory that contains study folder
-#' @param batchSize customizable batch size for trajectory generation process
+#' @param batchSize Maximum number of patients per batch, supplied as a single
+#'   positive whole number. Applies to both trajectory formats.
 #' @param updateAutomaticallyForMergedStates boolean for automatically updating priority order and allowed transitions after merging
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
@@ -67,8 +68,9 @@ createTrajectories <- function(cdm = NULL,
                                batchSize = studyEnv$batchSize,
                                updateAutomaticallyForMergedStates = FALSE) {
   if (isTRUE(as.numeric(trajectoryType) == 0)) {
-    .validateCycleLength(lengthOfStay)
+    .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
+  .validatePositiveInteger(batchSize, "batchSize", "patients")
   
   studyName = studyEnv$studyName
   pathToData = paste0(studyEnv$pathToStudy, '/', studyName, '/', 'Data')

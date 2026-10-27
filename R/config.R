@@ -28,7 +28,8 @@
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergeThreshold Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
-#' @param batchSize customizable batch size for cohort generation 
+#' @param batchSize Maximum number of patients per trajectory-generation batch.
+#'   Must be a single positive whole number. Defaults to 1000.
 #' @details For discrete trajectories, selection ranks only overlapping states
 #'   allowed from the last selected state. First chooses the earliest start,
 #'   Overlap chooses the greatest overlap, and Priority follows the priority
@@ -105,8 +106,9 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     trajectoryType, c(Discrete = 0, Continuous = 1), "trajectoryType"
   )
   if (isTRUE(trajectoryType == 0) && !is.null(lengthOfStay)) {
-    .validateCycleLength(lengthOfStay)
+    .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
+  .validatePositiveInteger(batchSize, "batchSize", "patients")
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")
@@ -184,10 +186,11 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
        ".", call. = FALSE)
 }
 
-.validateCycleLength <- function(value, argument = "lengthOfStay") {
-  if (!is.numeric(value) || length(value) != 1L || !is.finite(value) ||
+.validatePositiveInteger <- function(value, argument, unit) {
+  if (!is.numeric(value) || is.complex(value) || length(value) != 1L || !is.finite(value) ||
       value < 1 || value > .Machine$integer.max || value != trunc(value)) {
-    stop(argument, " must be a single positive whole number of days within the integer range.",
+    stop(argument, " must be a single positive whole number of ", unit,
+         " within the integer range.",
          call. = FALSE)
   }
   invisible(NULL)

@@ -506,7 +506,7 @@ getTrajectoriesDiscrete <- function(cdm,
                                     allowedStatesList = list(),
                                     stateLevels = NULL,
                                     outOfCohortAllowed = FALSE) {
-  .validateCycleLength(stateDuration, "stateDuration")
+  .validatePositiveInteger(stateDuration, "stateDuration", "days")
   tmp_data <- .boundTrajectoryData(cohortData, outOfCohortAllowed)
   
   # Getting all relevant patient ID's

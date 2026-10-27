@@ -58,7 +58,8 @@ cycle is shortened if the trajectory boundary falls partway through it.}
 
 \item{pathToStudy}{path to directory that contains study folder}
 
-\item{batchSize}{customizable batch size for trajectory generation process}
+\item{batchSize}{Maximum number of patients per batch, supplied as a single
+positive whole number. Applies to both trajectory formats.}
 
 \item{updateAutomaticallyForMergedStates}{boolean for automatically updating priority order and allowed transitions after merging}
 }

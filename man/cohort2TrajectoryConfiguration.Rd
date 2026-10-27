@@ -81,7 +81,8 @@ trajectory beyond the target interval's end. The target start is unchanged.}
 
 \item{mergeThreshold}{Value from 0 to 1. If mergeStates is TRUE the states will be label-merged given they overlap more than the specified threshold. Can be given as vector, then multiple iterations are runned,}
 
-\item{batchSize}{customizable batch size for cohort generation}
+\item{batchSize}{Maximum number of patients per trajectory-generation batch.
+Must be a single positive whole number. Defaults to 1000.}
 }
 \description{
 C2T configuration for initiating the parameter values in the study environment
