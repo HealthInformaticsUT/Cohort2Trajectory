@@ -12,7 +12,8 @@ getTrajectoriesContinuous(
   absorbingStates = NULL,
   studyName = "",
   addPersonalData = TRUE,
-  allowedStatesList = list()
+  allowedStatesList = list(),
+  stateLevels = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ getTrajectoriesContinuous(
 \item{addPersonalData}{Logical, indicating whether or not to add personal data for each patient}
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
+
+\item{stateLevels}{Ordered study-wide state labels used to assign stable IDs.}
 }
 \value{
 A dataframe ready for using msm package

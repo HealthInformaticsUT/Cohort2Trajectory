@@ -444,6 +444,7 @@ getInclusionTable <- function(cohortData,
 #' @param studyName name chosen for study, is used as a folder name
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
+#' @param stateLevels Ordered study-wide state labels used to assign stable IDs.
 #' @keywords internal
 getTrajectoriesDiscrete <- function(cdm,
                                     cohortData,
@@ -454,7 +455,8 @@ getTrajectoriesDiscrete <- function(cdm,
                                     oocFix = "None",
                                     studyName = "",
                                     addPersonalData = TRUE,
-                                    allowedStatesList = list()) {
+                                    allowedStatesList = list(),
+                                    stateLevels = NULL) {
   tmp_data <- dplyr::filter(cohortData, .data$cohort_definition_id != "0")
   tmp_data <-
     dplyr::arrange(tmp_data, "subject_id", "cohort_start_date")
@@ -503,7 +505,7 @@ getTrajectoriesDiscrete <- function(cdm,
   #
   ################################################################################
   
-  states = as.character(c("START", setdiff(
+  states = if (!is.null(stateLevels)) stateLevels else as.character(c("START", setdiff(
     unique(newPatientData$state_label), c('START', 'EXIT')
   ), "EXIT"))
   n = length(states)
@@ -538,6 +540,7 @@ getTrajectoriesDiscrete <- function(cdm,
 #' @param studyName name chosen for study, is used as a folder name
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param addPersonalData Logical, indicating whether or not to add personal data for each patient
+#' @param stateLevels Ordered study-wide state labels used to assign stable IDs.
 #' @return A dataframe ready for using msm package
 #' @keywords internal
 getTrajectoriesContinuous <- function(cdm,
@@ -547,7 +550,8 @@ getTrajectoriesContinuous <- function(cdm,
                                       absorbingStates = NULL,
                                       studyName = "",
                                       addPersonalData = TRUE,
-                                      allowedStatesList = list()) {
+                                      allowedStatesList = list(),
+                                      stateLevels = NULL) {
   data <- patientData
   data <- dplyr::mutate(
     data,
@@ -720,7 +724,7 @@ getTrajectoriesContinuous <- function(cdm,
   
   data <- dplyr::arrange(data, .data$subject_id, .data$time_in_cohort)
   # We have to map states to 1,..., n.
-  states <- as.character(c("START", setdiff(
+  states <- if (!is.null(stateLevels)) stateLevels else as.character(c("START", setdiff(
     unique(data$cohort_definition_id), c('START', 'EXIT')
   ), "EXIT"))
   n <- length(states)

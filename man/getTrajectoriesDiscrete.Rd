@@ -14,7 +14,8 @@ getTrajectoriesDiscrete(
   oocFix = "None",
   studyName = "",
   addPersonalData = TRUE,
-  allowedStatesList = list()
+  allowedStatesList = list(),
+  stateLevels = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ getTrajectoriesDiscrete(
 \item{addPersonalData}{Logical, indicating whether or not to add personal data for each patient}
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
+
+\item{stateLevels}{Ordered study-wide state labels used to assign stable IDs.}
 }
 \description{
 This function outputs a data.frame object which describes the movement of patients between the defined states
