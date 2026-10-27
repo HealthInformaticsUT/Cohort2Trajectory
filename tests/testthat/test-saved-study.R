@@ -61,6 +61,60 @@ test_that("a moved study preserves colliding clinical labels and reads a differe
   ), "Older CSV settings did not save")
 })
 
+test_that("downloaded definitions remain portable independently of clinical labels", {
+  root <- tempfile("c2t-atlas-portable-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  sourcePath <- file.path(root, "source")
+  destinationPath <- file.path(root, "destination")
+  dir.create(sourcePath)
+  dir.create(destinationPath)
+  expressions <- lapply(file.path("testStudyMain", "JSON",
+                                  c("test1.json", "test3.json", "test4.json")),
+                         RJSONIO::fromJSON, simplify = FALSE)
+  names(expressions) <- c("101", "202", "0")
+  allowDownloads <- TRUE
+  local_mocked_bindings(
+    getCohortDefinition = function(cohortId, baseUrl) {
+      if (!allowDownloads) stop("A restored study must not contact ATLAS.")
+      list(expression = expressions[[as.character(cohortId)]])
+    }, .package = "ROhdsiWebApi"
+  )
+  labels <- c("Swallowing / feeding", "Related care", "Airway support")
+  study <- cohort2TrajectoryConfiguration(
+    studyName = "atlas", pathToStudy = sourcePath, baseUrl = "https://atlas.example/WebAPI",
+    atlasTargetCohort = 101, atlasStateCohorts = c("0202", "202", "0"),
+    stateCohortLabels = labels, stateCohortPriorityOrder = labels,
+    stateCohortMandatory = labels[1], stateSelectionType = "Priority", lengthOfStay = 7
+  )
+  dbPath <- file.path(root, "test.duckdb")
+  file.copy(CDMConnector::eunomiaDir("GiBleed"), dbPath)
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPath)
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  cdm <- CDMConnector::cdmFromCon(con, cdmName = "test", cdmSchema = "main", writeSchema = "main")
+  getDataForStudy(cdm = cdm, studyEnv = study)
+  expected <- createTrajectories(cdm = cdm, studyEnv = study)
+  jsonPath <- file.path(sourcePath, "atlas", "JSON")
+  expect_equal(RJSONIO::fromJSON(file.path(jsonPath, "0.json"), simplify = FALSE), expressions[["101"]])
+  manifest <- read.csv(file.path(jsonPath, "CohortsToCreate.csv"))
+  expect_true(all(file.exists(file.path(jsonPath, manifest$jsonPath))))
+  snapshot <- readRDS(file.path(sourcePath, "atlas", "Settings", "analysisSettings.rds"))
+  expect_equal(snapshot$definitions, list(target = "0", states = c("atlas_202", "atlas_202", "atlas_0")))
+
+  dir.create(file.path(destinationPath, "atlas"))
+  file.copy(file.path(sourcePath, "atlas", c("JSON", "Settings")),
+            file.path(destinationPath, "atlas"), recursive = TRUE)
+  allowDownloads <- FALSE
+  restored <- cohort2TrajectoryConfiguration(
+    studyName = "atlas", pathToStudy = destinationPath, runSavedStudy = TRUE
+  )
+  expect_equal(restored$stateCohortLabels, labels)
+  getDataForStudy(cdm = cdm, studyEnv = restored)
+  actual <- createTrajectories(cdm = cdm, studyEnv = restored)
+  expect_equal(dplyr::arrange(actual, subject_id, time_in_cohort, state_label),
+                dplyr::arrange(expected, subject_id, time_in_cohort, state_label))
+})
+
 test_that("saved local studies preserve merging and optional rules in both formats", {
   root <- tempfile("c2t-portable-local-")
   dir.create(root)

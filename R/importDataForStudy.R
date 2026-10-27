@@ -33,10 +33,13 @@
 #'   the configured gap rule, and continuous trajectories retain boundaries
 #'   without inventing clinical states. An empty eligible cohort is not treated
 #'   as a successful import.
-#'   For non-CDM input, state labels are preserved as supplied, whether data
-#'   come from a data frame or CSV. Spaces and punctuation are not converted
+#'   State labels are preserved as supplied for CDM, data-frame and CSV input.
+#'   Spaces and punctuation are not converted
 #'   into filename-safe substitutes. Use the same labels in state definitions,
 #'   mandatory states, priorities and transition rules.
+#'   Downloaded ATLAS definitions use 0.json for the target and atlas_<id>.json
+#'   for states. Repeated state IDs share a definition file without changing
+#'   their clinical labels. Saved settings retain this filename mapping.
 #'
 #' @return log info
 #' @export
@@ -107,38 +110,10 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       stateCohortLabels = stateCohortLabels
     )
 
-    # getCohortData already assigned the final clinical labels. Mapping again
-    # by definition ID/filename could rename a different state's label.
-    
-    # Rename JSON file
-    if (!is.null(baseUrl)) {
-      for (i in 1:length(stateCohortLabels)) {
-        file.rename(
-          paste(
-            pathToStudy,
-            "/",
-            studyName,
-            "/JSON/",
-            atlasStateCohorts[i],
-            ".json",
-            sep = ""
-          ),
-          paste(
-            pathToStudy,
-            "/",
-            studyName,
-            "/JSON/",
-            stateCohortLabels[i],
-            ".json",
-            sep = ""
-          )
-        )
-      }
-    }
-    definitions <- list(
-      target = if (is.null(baseUrl)) as.character(atlasTargetCohort) else "0",
-      states = if (is.null(baseUrl)) as.character(atlasStateCohorts) else stateCohortLabels
-    )
+    # Preserve both the final clinical labels and the filenames used by the
+    # downloader and manifest. Renaming files to labels breaks repeated IDs,
+    # labels containing path separators, and subsequent saved-study imports.
+    definitions <- .cohortDefinitionFiles(atlasTargetCohort, atlasStateCohorts, baseUrl)
 
   } else {
     # get data from input

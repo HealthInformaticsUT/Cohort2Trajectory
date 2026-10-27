@@ -129,6 +129,10 @@ imports data from the new database before allowing trajectory generation.
 Connections, local paths and patient data are not part of the settings snapshot.
 Database permissions and adequate local data coverage are still required.
 
+New ATLAS downloads keep the target in `0.json` and state definitions in
+`atlas_<id>.json`. Clinical labels are not filenames, and repeated ATLAS IDs
+can share a definition file. Existing saved studies retain their stored mapping.
+
 For non-CDM studies, add `useCDM = FALSE` and provide fresh input through
 `pathToData` or `trajectoryDataObject`. Batch size can be changed without changing
 the analysis rules. Saved runs reject explicit analysis-setting overrides.

@@ -50,30 +50,19 @@ getCohortData <- function(cdm,
   #
   ##############################################################################
   selectedCohorts <- c(selectedTarget, selectedStates)
+  definitions <- .cohortDefinitionFiles(selectedTarget, selectedStates, baseUrl)
+  definitionFiles <- c(definitions$target, definitions$states)
   
   # Read json files from atlas
 
   if (!is.null(baseUrl)) {
-    for (i in 1:length(selectedCohorts)) {
+    for (i in seq_along(selectedCohorts)) {
       cohortId = as.integer(selectedCohorts[i])
       object <-
         ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
       json <- .toJSON(object$expression, pretty = TRUE)
-      # Target cohort always has "0" value
-      if (i == 1) {
-        cohortId = 0
-        selectedCohorts[i] = "0"
-      }
-      fileConn <-
-        file(paste(
-          pathToStudy,
-          "/",
-          studyName,
-          "/JSON/",
-          as.character(cohortId),
-          ".json",
-          sep = ""
-        ))
+      fileConn <- file(file.path(pathToStudy, studyName, "JSON",
+                                 paste0(definitionFiles[i], ".json")))
       writeLines(json, fileConn)
       close(fileConn)
       
@@ -82,7 +71,7 @@ getCohortData <- function(cdm,
   
   data = NULL
   
-  cohortSetCSV <- generateCohortSetCSV(selectedCohorts, stateCohortLabels, pathToStudy, studyName)
+  cohortSetCSV <- generateCohortSetCSV(definitionFiles, stateCohortLabels, pathToStudy, studyName)
   
   selectedCohortIds <- cohortSetCSV$cohortId
   

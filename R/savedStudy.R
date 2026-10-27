@@ -1,4 +1,14 @@
 # Keep portable analysis rules separate from connections, paths and patient data.
+.cohortDefinitionFiles <- function(target, states, baseUrl) {
+  if (is.null(baseUrl)) {
+    return(list(target = as.character(target), states = as.character(states)))
+  }
+  # Match the integer IDs sent to ATLAS without using clinical labels as paths.
+  # The prefix keeps a downloaded state with ID 0 separate from target 0.json.
+  stateFiles <- if (length(states)) paste0("atlas_", as.integer(states)) else character(0)
+  list(target = "0", states = stateFiles)
+}
+
 .studyImportFields <- function() {
   c("stateCohortLabels", "stateCohortPriorityOrder", "stateCohortMandatory",
     "stateCohortAbsorbing", "outOfCohortAllowed", "allowedStatesList",

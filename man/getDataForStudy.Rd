@@ -82,10 +82,13 @@ A nonempty target cohort remains valid when no state events survive
   the configured gap rule, and continuous trajectories retain boundaries
   without inventing clinical states. An empty eligible cohort is not treated
   as a successful import.
-  For non-CDM input, state labels are preserved as supplied, whether data
-  come from a data frame or CSV. Spaces and punctuation are not converted
+  State labels are preserved as supplied for CDM, data-frame and CSV input.
+  Spaces and punctuation are not converted
   into filename-safe substitutes. Use the same labels in state definitions,
   mandatory states, priorities and transition rules.
+  Downloaded ATLAS definitions use 0.json for the target and atlas_<id>.json
+  for states. Repeated state IDs share a definition file without changing
+  their clinical labels. Saved settings retain this filename mapping.
 }
 \examples{
 \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}
