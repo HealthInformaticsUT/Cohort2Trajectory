@@ -15,5 +15,7 @@ Load settings of the study from trajectorySettings.csv according to the customiz
 \details{
 Empty state-list cells, missing values and the legacy string NULL
   are restored as R NULL. Non-empty cells are split into state-label vectors.
+  Only .json files are loaded as cohort definitions. The target definition
+  is 0.json. If absent, targetJSON is empty and state definitions are retained.
 }
 \keyword{internal}

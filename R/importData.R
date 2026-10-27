@@ -840,46 +840,25 @@ getTrajectoriesContinuous <- function(cdm,
 #' @param studyName Customized name for the study
 #' @details Empty state-list cells, missing values and the legacy string NULL
 #'   are restored as R NULL. Non-empty cells are split into state-label vectors.
+#'   Only .json files are loaded as cohort definitions. The target definition
+#'   is 0.json. If absent, targetJSON is empty and state definitions are retained.
 #' @keywords internal
 loadSettings <- function(studyName, pathToStudy) {
   env <-
     rlang::new_environment(data = list(), parent = rlang::empty_env())
   
-  jsonFiles = list.files(
-    path = paste(pathToStudy, "/", studyName, "/JSON", sep = ""),
-    pattern = NULL,
-    all.files = FALSE,
-    full.names = TRUE
+  jsonFiles <- list.files(
+    path = file.path(pathToStudy, studyName, "JSON"),
+    pattern = "\\.json$", full.names = TRUE
   )
-  
-  stateNamesJSON <- list.files(
-    path = paste(pathToStudy, "/", studyName, "/JSON", sep = ""),
-    pattern = NULL,
-    all.files = FALSE,
-    full.names = FALSE
-  )
-  stateNamesJSON <-
-    substr(stateNamesJSON, 1, nchar(stateNamesJSON) - 5)
-  targetIndex <- which(stateNamesJSON == "0")
-  env$stateNamesJSON <- stateNamesJSON[-targetIndex]
-  
-  env$targetJSON <-
-    if (identical(jsonFiles[targetIndex], character(0))) {
-      ""
-    }
-  else {
-    paste(readLines(jsonFiles[targetIndex]), collapse = "\n")
-  }
-  env$jsonFiles <-  jsonFiles[-targetIndex]
-  
-  insertedJSONs <- c()
-  
-  for (jsonFile in env$jsonFiles) {
-    insertedJSONs <-
-      c(insertedJSONs, paste(readLines(jsonFile), collapse = "\n"))
-  }
-  
-  env$insertedJSONs <- insertedJSONs
+  jsonFiles <- jsonFiles[!dir.exists(jsonFiles)]
+  stateNamesJSON <- sub("\\.json$", "", basename(jsonFiles))
+  isTarget <- stateNamesJSON == "0"
+  env$stateNamesJSON <- stateNamesJSON[!isTarget]
+  env$jsonFiles <- jsonFiles[!isTarget]
+  readJSON <- function(path) paste(readLines(path), collapse = "\n")
+  env$targetJSON <- if (any(isTarget)) readJSON(jsonFiles[isTarget]) else ""
+  env$insertedJSONs <- vapply(env$jsonFiles, readJSON, character(1), USE.NAMES = FALSE)
   
   settings <-
     utils::read.csv(paste(
