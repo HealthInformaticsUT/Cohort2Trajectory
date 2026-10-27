@@ -52,5 +52,8 @@ This function outputs a data.frame object which describes the movement of patien
 EXIT is a boundary marker on the day after the final retained cycle.
   Its time_in_cohort is elapsed time in years (days divided by 365.25) from
   the trajectory start to that boundary. EXIT does not add observed time.
+  For all selection methods, every clinical state in the bounded input must
+  appear in statePriorityVector. First and Overlap use it to resolve ties.
+  Missing states raise an error, not an OUT OF COHORT replacement.
 }
 \keyword{internal}

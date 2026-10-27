@@ -40,6 +40,9 @@
 #'   vector. Date intervals include both endpoints, so a shared boundary date
 #'   counts as one day of overlap. Ties use priority order. If no candidate
 #'   qualifies, oocFix is used.
+#'   All three discrete selection methods require every clinical state within
+#'   the trajectory boundaries to appear in stateCohortPriorityOrder. An omitted
+#'   state raises an error rather than being converted into an unresolved cycle.
 #'   Carry-forward requires an allowed self-transition, and a named fallback
 #'   must also be permitted. Otherwise the cycle is OUT OF COHORT. This unresolved
 #'   marker preserves the last selected state for checking later transitions.

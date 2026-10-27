@@ -64,3 +64,20 @@ test_that("unrestricted and case-insensitive destination lists remain supported"
   expect_equal(discrete_labels(data, 3, list(A = "b", B = "c", C = "c")), c("A", "B", "C"))
   expect_error(discrete_labels(data, 3, list(B = "B")), "No allowed-transition entry for state 'A'")
 })
+
+test_that("missing priority entries cannot silently turn records into gaps", {
+  data <- transition_fixture(c("0", "A", "B", "Outside"), c(0, 0, 7, 21), c(13, 6, 13, 27))
+  run <- function(method, priority, input = data) {
+    getTrajectoriesDiscrete(NULL, input, stateDuration = 7,
+                            stateSelection = method, statePriorityVector = priority,
+                            addPersonalData = FALSE)
+  }
+  for (method in 1:3) {
+    expect_error(run(method, "A"), "State 'B' is missing from statePriorityVector", fixed = TRUE)
+    # Records outside the target interval do not require a priority entry.
+    expect_identical(run(method, c("A", "B"))$state_label, c("START", "A", "B", "EXIT"))
+  }
+  expect_error(run(1, NULL), "State 'A' is missing from statePriorityVector", fixed = TRUE)
+  expect_identical(run(1, NULL, data[1, ])$state_label,
+                    c("START", "OUT OF COHORT", "OUT OF COHORT", "EXIT"))
+})

@@ -71,6 +71,17 @@ DataFrame getDiscreteStates(int stateSelection,
   
   std::vector<std::string> patientsStates = patientData["cohort_definition_id"];
   std::vector<double> timeCohort = patientData["time_in_cohort"];
+
+  // Priority is a ranking (also used for First/Overlap ties), not a filter.
+  // Validate before allowed-destination filtering can hide unlisted records.
+  // The R caller has already bounded these records to the target intervals.
+  for (const auto& state : patientsStates) {
+    if (state != "0" &&
+        std::find(statePriorityVector.begin(), statePriorityVector.end(), state) == statePriorityVector.end()) {
+      stop("State '%s' is missing from statePriorityVector (stateCohortPriorityOrder in the study configuration).",
+           state.c_str());
+    }
+  }
   
   for (int p=0; p < (int) patientIDs.size(); p++){
 
@@ -141,9 +152,6 @@ DataFrame getDiscreteStates(int stateSelection,
       if (overlap <= 0 || !isAllowed(states[i])) continue;
 
       auto priorityIt = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[i]);
-      if (priorityIt == statePriorityVector.end()) {
-        stop("State '%s' is missing from statePriorityVector.", states[i].c_str());
-      }
       int priority = std::distance(statePriorityVector.begin(), priorityIt);
       bool better = best < 0;
       if (best >= 0) {
