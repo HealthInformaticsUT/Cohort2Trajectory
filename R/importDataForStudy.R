@@ -20,6 +20,13 @@
 #' @param stateCohortAbsorbing Vector of absorbing states
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
+#' @details A nonempty target cohort remains valid when no state events survive
+#'   cleaning, provided no mandatory-state requirement excludes those patients.
+#'   Their target intervals still define follow-up. Discrete trajectories use
+#'   the configured gap rule, and continuous trajectories retain boundaries
+#'   without inventing clinical states. An empty eligible cohort is not treated
+#'   as a successful import.
+#'
 #' @return log info
 #' @export
 #' @examples
@@ -222,11 +229,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     return(NULL)
   }
   
-  if (length(unique(data$cohort_definition_id)) < 2) {
-    return(
-      cli::cli_warn("{.warning No state data left after cleaning the imported data! Exiting ...}")
-    )
-  }
+  # Target-only histories are valid after mandatory-state filtering. Lack of
+  # recorded states does not erase the target interval or its observed time.
   # Generation must use the same rules that were used/expanded during import.
   studyEnv$.importSettings <- importSettings
   studyEnv$.cohortDefinitions <- definitions

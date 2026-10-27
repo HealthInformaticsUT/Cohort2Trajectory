@@ -61,7 +61,7 @@ test_that("absorbing states still end trajectories before the target endpoint", 
   }
 })
 
-test_that("the public workflow accepts a target-only batch", {
+test_that("fresh and saved workflows import target-only histories", {
   path <- tempfile("c2t-boundaries-")
   dir.create(path)
   on.exit(unlink(path, recursive = TRUE))
@@ -70,10 +70,26 @@ test_that("the public workflow accepts a target-only batch", {
     study <- cohort2TrajectoryConfiguration(
       pathToStudy = path, studyName = type, useCDM = FALSE,
       atlasTargetCohort = "0", stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7
+      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
+      trajectoryDataObject = data
     )
-    utils::write.csv(data, file.path(path, type, "Data", "importedDataCleaned_0.csv"), row.names = FALSE)
+    expect_warning(getDataForStudy(studyEnv = study), NA)
     result <- createTrajectories(studyEnv = study)
     expect_equal(result$state_start_date[result$state_label == "EXIT"], as.Date("2020-01-11"))
+    expect_equal(result$state_label, if (type == "Discrete") {
+      c("START", "OUT OF COHORT", "OUT OF COHORT", "EXIT")
+    } else {
+      c("START", "EXIT")
+    })
+    restored <- cohort2TrajectoryConfiguration(
+      pathToStudy = path, studyName = type, useCDM = FALSE,
+      runSavedStudy = TRUE, trajectoryDataObject = data
+    )
+    expect_warning(getDataForStudy(studyEnv = restored), NA)
+    expect_equal(createTrajectories(studyEnv = restored), result)
   }
+  # A required state must still exclude a patient who has no such record.
+  expect_warning(getDataForStudy(studyEnv = study, stateCohortMandatory = "A"),
+                  "No patients left after cleaning")
+  expect_false(study$.dataReady)
 })

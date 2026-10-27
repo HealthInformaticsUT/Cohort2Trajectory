@@ -66,6 +66,14 @@ log info
 \description{
 Import the data from CDM for the study
 }
+\details{
+A nonempty target cohort remains valid when no state events survive
+  cleaning, provided no mandatory-state requirement excludes those patients.
+  Their target intervals still define follow-up. Discrete trajectories use
+  the configured gap rule, and continuous trajectories retain boundaries
+  without inventing clinical states. An empty eligible cohort is not treated
+  as a successful import.
+}
 \examples{
 \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}
 }
