@@ -593,6 +593,9 @@ getTrajectoriesDiscrete <- function(cdm,
 #'   records. Selected intervals retain their endpoints and simultaneous records
 #'   retain equal elapsed times. Gaps do not imply continued clinical state
 #'   membership. Absorbing states end the trajectory at their retained endpoint.
+#'   Transition rules are checked before the absorbing-state cutoff. Empty rules
+#'   mean unrestricted transitions. Rejected records do not change the last
+#'   retained state, and only a retained absorbing record can end the trajectory.
 #' @return A dataframe of selected intervals and boundary markers. Models that
 #'   require unique timestamps need an explicit rule for simultaneous records.
 #' @keywords internal
@@ -785,11 +788,14 @@ getTrajectoriesContinuous <- function(cdm,
   # Keep the selected interval endpoints. A later EXIT or state record is not
   # evidence that the previous clinical state persisted through the gap.
   
-  ################################################################################
-  #
-  # Removing absorbing states
-  #
-  ################################################################################
+  # Only an allowed transition can enter an absorbing state. Filtering first
+  # prevents a rejected absorbing record from cutting off later valid states.
+  data <- removeProhibitedTransitionsContinuous(
+    patientData = data,
+    patientIDs = unique(data$subject_id),
+    allowedStatesList = allowedStatesList,
+    absorbingStates = absorbingStates
+  )
   data <- removeAfterAbsorbingStatesContinuous(
     patientData = data,
     patientIDs = unique(data$subject_id),
@@ -799,17 +805,6 @@ getTrajectoriesContinuous <- function(cdm,
     else {
       absorbingStates
     }
-  )
-  
-  ##############################################################################
-  #
-  # Remove prohibited transitions
-  #
-  ##############################################################################
-  data <- removeProhibitedTransitionsContinuous(
-    patientData = data,
-    patientIDs = unique(data$subject_id),
-    allowedStatesList = allowedStatesList
   )
   
   ##############################################################################

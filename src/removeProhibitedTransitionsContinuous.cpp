@@ -2,13 +2,15 @@
 #include <string>
 #include <cstring>
 #include <algorithm>
+#include <cctype>
 using namespace Rcpp;
 using namespace std;
 
 // [[Rcpp::export]]
 DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
                                                 std::vector<int> patientIDs,
-                                                List allowedStatesList){
+                                                List allowedStatesList,
+                                                Nullable<CharacterVector> absorbingStates = R_NilValue){
   
   
   //Initiating dataframe output data
@@ -27,7 +29,15 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   std::vector<std::string> patientsStates = patientData["state_label"];
   NumericVector stateIDs = patientData["state_id"];
   std::vector<double> timeCohort = patientData["time_in_cohort"];
-  NumericVector seqOrdinal = patientData["seq_ordinal"];
+  auto lower = [](std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    return value;
+  };
+  std::vector<std::string> absorbing;
+  if (absorbingStates.isNotNull()) {
+    absorbing = as<std::vector<std::string>>(absorbingStates.get());
+  }
   
   
   for (int p=0; p < (int) patientIDs.size(); p++){
@@ -37,60 +47,49 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
     
     // Let's get data of this person
     std::vector<int>::iterator iter = patientsIDs.begin();
-    std::string lastState; 
+    std::string lastState;
+    int seqCounter = 0;
+    bool absorbed = false;
     
     while ((iter = std::find(iter, patientsIDs.end(), patientID)) != patientsIDs.end()) {
       int index = std::distance(patientsIDs.begin(), iter);
       std::string state = patientsStates[index];
-      
-      
-      // If state is "START" or "EXIT" then move on to the next state
-      
-      if (state == "START" || state == "EXIT") {
-        lastState = "$$not_intialized_yet$$";
+      bool boundary = state == "START" || state == "EXIT";
+      // Once an allowed absorbing state is retained, later clinical records
+      // cannot affect the trajectory or require further transition rules.
+      if (!boundary && absorbed) {
         iter++;
-        // Add info to vectors
-        outpatientIDs.push_back(patientID);
-        outStates.push_back(state);
-        outStartDates.push_back(patientsStart[index]);
-        outEndDates.push_back(patientsEnd[index]);
-        outstateIDs.push_back(stateIDs[index]);
-        outtimeCohort.push_back(timeCohort[index]);
-        outSeqOrdinal.push_back(seqOrdinal[index]);
         continue;
       }
-      else if (lastState == "$$not_intialized_yet$$") {
-        lastState = state;
-        // Add info to vectors
+      bool permitted = true;
+      // Boundary markers and the first clinical state need no source rule.
+      // An empty list means unrestricted, as in discrete trajectories.
+      if (!boundary && !lastState.empty() && allowedStatesList.size() > 0) {
+        if (!allowedStatesList.containsElementNamed(lastState.c_str())) {
+          stop("No allowed-transition entry for state '%s'.", lastState.c_str());
+        }
+        std::vector<std::string> destinations =
+          as<std::vector<std::string>>(allowedStatesList[lastState]);
+        permitted = std::any_of(destinations.begin(), destinations.end(),
+                                [&](const std::string& candidate) {
+                                  return lower(candidate) == lower(state);
+                                });
+      }
+      if (permitted) {
+        seqCounter = !boundary && state == lastState ? seqCounter + 1 : 1;
         outpatientIDs.push_back(patientID);
         outStates.push_back(state);
         outStartDates.push_back(patientsStart[index]);
         outEndDates.push_back(patientsEnd[index]);
         outstateIDs.push_back(stateIDs[index]);
         outtimeCohort.push_back(timeCohort[index]);
-        outSeqOrdinal.push_back(seqOrdinal[index]);
-      }
-      // If there is a forbidden transition we do not add the targeted state
-      else {
-        // siin miski broken
-        Rcpp::StringVector allowedStates = as<Rcpp::StringVector>(allowedStatesList[lastState]);
-        //std::string nextState = patientsStates[index+1];
-        // Control: is the next state allowed
-        auto isPresent = std::find(allowedStates.begin(), allowedStates.end(), state);
-        if(isPresent != allowedStates.end()){
-          // Add info to vectors
-          outpatientIDs.push_back(patientID);
-          outStates.push_back(state);
-          outStartDates.push_back(patientsStart[index]);
-          outEndDates.push_back(patientsEnd[index]);
-          outstateIDs.push_back(stateIDs[index]);
-          outtimeCohort.push_back(timeCohort[index]);
-          outSeqOrdinal.push_back(seqOrdinal[index]);
-          
-          lastState = state;
+        outSeqOrdinal.push_back(seqCounter);
+        lastState = boundary ? "" : state;
+        if (!boundary && std::find(absorbing.begin(), absorbing.end(), state) != absorbing.end()) {
+          absorbed = true;
         }
       }
-      
+      // A rejected record does not change the last retained state.
       iter++;
     }
   }

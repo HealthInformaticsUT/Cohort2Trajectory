@@ -50,5 +50,8 @@ Target intervals supply START and EXIT boundaries even without state
   records. Selected intervals retain their endpoints and simultaneous records
   retain equal elapsed times. Gaps do not imply continued clinical state
   membership. Absorbing states end the trajectory at their retained endpoint.
+  Transition rules are checked before the absorbing-state cutoff. Empty rules
+  mean unrestricted transitions. Rejected records do not change the last
+  retained state, and only a retained absorbing record can end the trajectory.
 }
 \keyword{internal}

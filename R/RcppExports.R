@@ -17,7 +17,7 @@ removeAfterAbsorbingStatesDiscrete <- function(patientData, patientIDs, absorbin
     .Call(`_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete`, patientData, patientIDs, absorbingStates)
 }
 
-removeProhibitedTransitionsContinuous <- function(patientData, patientIDs, allowedStatesList) {
-    .Call(`_Cohort2Trajectory_removeProhibitedTransitionsContinuous`, patientData, patientIDs, allowedStatesList)
+removeProhibitedTransitionsContinuous <- function(patientData, patientIDs, allowedStatesList, absorbingStates = NULL) {
+    .Call(`_Cohort2Trajectory_removeProhibitedTransitionsContinuous`, patientData, patientIDs, allowedStatesList, absorbingStates)
 }
 

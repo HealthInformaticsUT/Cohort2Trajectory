@@ -67,15 +67,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // removeProhibitedTransitionsContinuous
-DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData, std::vector<int> patientIDs, List allowedStatesList);
-RcppExport SEXP _Cohort2Trajectory_removeProhibitedTransitionsContinuous(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP allowedStatesListSEXP) {
+DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData, std::vector<int> patientIDs, List allowedStatesList, Nullable<CharacterVector> absorbingStates);
+RcppExport SEXP _Cohort2Trajectory_removeProhibitedTransitionsContinuous(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP allowedStatesListSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< List >::type allowedStatesList(allowedStatesListSEXP);
-    rcpp_result_gen = Rcpp::wrap(removeProhibitedTransitionsContinuous(patientData, patientIDs, allowedStatesList));
+    Rcpp::traits::input_parameter< Nullable<CharacterVector> >::type absorbingStates(absorbingStatesSEXP);
+    rcpp_result_gen = Rcpp::wrap(removeProhibitedTransitionsContinuous(patientData, patientIDs, allowedStatesList, absorbingStates));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -85,7 +86,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_Cohort2Trajectory_getDiscreteStates", (DL_FUNC) &_Cohort2Trajectory_getDiscreteStates, 7},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesContinuous, 3},
     {"_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete", (DL_FUNC) &_Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete, 3},
-    {"_Cohort2Trajectory_removeProhibitedTransitionsContinuous", (DL_FUNC) &_Cohort2Trajectory_removeProhibitedTransitionsContinuous, 3},
+    {"_Cohort2Trajectory_removeProhibitedTransitionsContinuous", (DL_FUNC) &_Cohort2Trajectory_removeProhibitedTransitionsContinuous, 4},
     {NULL, NULL, 0}
 };
 

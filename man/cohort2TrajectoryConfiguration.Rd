@@ -94,9 +94,15 @@ For discrete trajectories, selection ranks only overlapping states
   Carry-forward requires an allowed self-transition, and a named fallback
   must also be permitted. Otherwise the cycle is OUT OF COHORT. This unresolved
   marker preserves the last selected state for checking later transitions.
-  An empty allowedStatesList imposes no transition restrictions. In a nonempty
-  list, each selected state must have an entry, with character(0) meaning no
+  In both trajectory formats, an empty allowedStatesList imposes no transition
+  restrictions. In a nonempty list, each state used as a transition source
+  must have an entry, with character(0) meaning no
   permitted destinations. Rules are applied independently for each patient.
+  Continuous output checks transitions from the last retained clinical state
+  and removes prohibited records before applying the absorbing-state cutoff.
+  A rejected absorbing record does not end follow-up. No further transition
+  rules are required after a retained absorbing state. Destination matching
+  is case-insensitive in both formats.
   The first target-cohort interval (label 0 in cleaned data) defines trajectory
   boundaries, including for patients with no state records. Discrete gaps use
   oocFix. The legacy OUT OF COHORT label means no selected state, not loss of
