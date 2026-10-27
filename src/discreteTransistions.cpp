@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <cctype>
+#include <map>
 using namespace Rcpp;
 using namespace std;
 
@@ -151,8 +152,9 @@ DataFrame getDiscreteStates(int stateSelection,
     };
 
     int best = -1;
-    int bestOverlap = -1;
     int bestPriority = std::numeric_limits<int>::max();
+    // Group by priority index so equal state coverage retains priority order.
+    std::map<int, std::vector<std::pair<Date, Date>>> overlapIntervals;
     for (size_t i = 0; i < states.size(); i++) {
       // Target rows define follow-up, but are not clinical state candidates.
       if (states[i] == "0") continue;
@@ -161,21 +163,22 @@ DataFrame getDiscreteStates(int stateSelection,
 
       auto priorityIt = std::find(statePriorityVector.begin(), statePriorityVector.end(), states[i]);
       int priority = std::distance(statePriorityVector.begin(), priorityIt);
+      if (stateSelection == 2) {
+        overlapIntervals[priority].push_back(std::make_pair(
+          std::max(startDate, controlStart[i]), std::min(endDate, controlEnd[i])));
+        continue;
+      }
       bool better = best < 0;
       if (best >= 0) {
         if (stateSelection == 1) {
           better = controlStart[i] < controlStart[best] ||
             (controlStart[i] == controlStart[best] && priority < bestPriority);
-        } else if (stateSelection == 2) {
-          better = overlap > bestOverlap ||
-            (overlap == bestOverlap && priority < bestPriority);
         } else {
           better = priority < bestPriority;
         }
       }
       if (better) {
         best = i;
-        bestOverlap = overlap;
         bestPriority = priority;
       }
     }
@@ -183,13 +186,39 @@ DataFrame getDiscreteStates(int stateSelection,
     std::string state = "OUT OF COHORT";
     if (best >= 0) {
       state = states[best];
-    } else if (oocFix == "Last present state") {
-      // Carry-forward must not introduce a prohibited self-transition.
-      if (!lastState.empty() && isAllowed(lastState)) state = lastState;
-    } else if (oocFix != "None") {
-      // A named fallback is a state too, and must respect the same rules.
-      if (lastState.empty() || allowedStatesList.size() == 0 || isAllowed(oocFix)) {
-        state = oocFix;
+    }
+    int bestOverlap = -1;
+    for (auto& entry : overlapIntervals) {
+      auto& intervals = entry.second;
+      std::sort(intervals.begin(), intervals.end());
+      Date coveredStart = intervals.front().first;
+      Date coveredEnd = intervals.front().second;
+      int coveredDays = 0;
+      // Count the union, not the sum, so repeated records cannot add days.
+      for (size_t i = 1; i < intervals.size(); i++) {
+        if (intervals[i].first <= coveredEnd) {
+          coveredEnd = std::max(coveredEnd, intervals[i].second);
+        } else {
+          coveredDays += static_cast<int>(coveredEnd - coveredStart) + 1;
+          coveredStart = intervals[i].first;
+          coveredEnd = intervals[i].second;
+        }
+      }
+      coveredDays += static_cast<int>(coveredEnd - coveredStart) + 1;
+      if (coveredDays > bestOverlap) {
+        bestOverlap = coveredDays;
+        state = statePriorityVector[entry.first];
+      }
+    }
+    if (state == "OUT OF COHORT") {
+      if (oocFix == "Last present state") {
+        // Carry-forward must not introduce a prohibited self-transition.
+        if (!lastState.empty() && isAllowed(lastState)) state = lastState;
+      } else if (oocFix != "None") {
+        // A named fallback is a state too, and must respect the same rules.
+        if (lastState.empty() || allowedStatesList.size() == 0 || isAllowed(oocFix)) {
+          state = oocFix;
+        }
       }
     }
 

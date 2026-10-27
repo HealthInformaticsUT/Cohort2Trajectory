@@ -55,6 +55,8 @@ EXIT is a boundary marker on the day after the final retained cycle.
   For all selection methods, every clinical state in the bounded input must
   appear in statePriorityVector. First and Overlap use it to resolve ties.
   Missing states raise an error, not an OUT OF COHORT replacement.
+  Overlap compares distinct covered days per state within each cycle,
+  combining separate intervals without double-counting repeated records.
   Generation stops after the selected absorbing cycle, without checking
   outgoing transition rules for later cycles. A prohibited absorbing record
   does not end follow-up.

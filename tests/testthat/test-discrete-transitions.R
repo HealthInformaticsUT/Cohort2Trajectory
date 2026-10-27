@@ -37,6 +37,30 @@ test_that("selection retains First, Overlap and Priority ranking among legal can
   expect_equal(discrete_labels(data, 3, rules, c("A", "C", "B")), c("A", "C"))
 })
 
+test_that("Overlap ranks unique days per state, not individual records", {
+  fragmented <- transition_fixture(c("0", "A", "A", "B"),
+                                    c(0, 0, 4, 2), c(6, 1, 5, 4))
+  cleaned <- cleanCohortData(fragmented, NULL)
+  result <- getTrajectoriesDiscrete(NULL, cleaned, stateDuration = 7,
+                                    stateSelection = 2, statePriorityVector = c("B", "A"),
+                                    addPersonalData = FALSE)
+  # A covers four distinct days, more than B's three, despite lower priority.
+  expect_equal(result$state_label, c("START", "A", "EXIT"))
+
+  # Splitting, reordering or duplicating records cannot increase coverage.
+  whole <- transition_fixture(c("0", "A", "B"), c(0, 0, 0), c(6, 3, 4))
+  split <- transition_fixture(c("0", "A", "A", "A", "B"),
+                               c(0, 0, 2, 2, 0), c(6, 2, 3, 3, 4))
+  rules <- createStateList(c("A", "B"))
+  expect_equal(discrete_labels(whole, 2, rules), "B")
+  expect_equal(discrete_labels(split[nrow(split):1, ], 2, rules), "B")
+  # Equal union coverage still uses priority, and is clipped to each cycle.
+  tied <- transition_fixture(c("0", "A", "A", "B"),
+                              c(0, 0, 4, 0), c(8, 1, 8, 4))
+  expect_equal(discrete_labels(tied, 2, rules, c("B", "A")), c("B", "A"))
+  expect_equal(discrete_labels(tied, 2, rules, c("A", "B")), c("A", "A"))
+})
+
 test_that("First only selects records overlapping the current cycle", {
   data <- transition_fixture(c("A", "B"), c(0, 14), c(13, 20))
   expect_equal(discrete_labels(data, 1, createStateList(c("A", "B"))), c("A", "A", "B"))

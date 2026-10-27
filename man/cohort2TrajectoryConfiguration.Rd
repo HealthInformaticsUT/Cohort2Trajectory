@@ -114,8 +114,10 @@ C2T configuration for initiating the parameter values in the study environment
 \details{
 For discrete trajectories, selection ranks only overlapping states
   allowed from the last selected state. First chooses the earliest start,
-  Overlap chooses the greatest overlap, and Priority follows the priority
-  vector. Date intervals include both endpoints, so a shared boundary date
+  Overlap chooses the state covering the most distinct days in the cycle,
+  and Priority follows the priority vector. Overlap combines separate records
+  for the same state without counting any day more than once.
+  Date intervals include both endpoints, so a shared boundary date
   counts as one day of overlap. Ties use priority order. If no candidate
   qualifies, oocFix is used.
   All three discrete selection methods require every clinical state within
