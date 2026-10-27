@@ -17,16 +17,48 @@
 # read_cohort_set cdmConnector
 # generate cohort set
 # collect data 
-# rename definition id
-# filter if target given as state cohort tmpData
-# set target 0
-# rbind tmpData and data with target 0
+# map generated IDs to clinical labels and target 0
 # select data 
 
 # test cases:
 # getCohortData with value length and size check
 # same but with target also as state
 # 
+
+test_that("CDM import keeps clinical labels separate from generated cohort names", {
+  root <- tempfile("c2t-cohort-names-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  labels <- c("Recorded pneumonia", "target", "Recorded_pneumonia")
+  definitions <- c("clinical", "target", "clinical")
+  study <- cohort2TrajectoryConfiguration(
+    studyName = "names", pathToStudy = root, baseUrl = NULL,
+    atlasTargetCohort = "target", atlasStateCohorts = definitions,
+    stateCohortLabels = labels
+  )
+  file.copy(file.path("testStudyMain", "JSON", c("test1.json", "test3.json")),
+            file.path(root, "names", "JSON", c("target.json", "clinical.json")))
+  expect_error(generateCohortSetCSV(c("target", definitions), c(labels, "Extra"),
+                                    root, "names"), "one label for each state cohort")
+  dbPath <- file.path(root, "test.duckdb")
+  file.copy(CDMConnector::eunomiaDir("GiBleed"), dbPath)
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPath)
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  cdm <- CDMConnector::cdmFromCon(con, cdmName = "test", cdmSchema = "main", writeSchema = "main")
+  data <- getCohortData(cdm = cdm, studyEnv = study, selectedTarget = "target",
+                        selectedStates = definitions, stateCohortLabels = labels,
+                        baseUrl = NULL)
+
+  expect_setequal(data$cohort_definition_id, c("0", labels))
+  records <- function(label) {
+    rows <- data[data$cohort_definition_id == label,
+                 c("subject_id", "cohort_start_date", "cohort_end_date")]
+    dplyr::arrange(rows, subject_id, cohort_start_date, cohort_end_date)
+  }
+  # Reusing a definition must not duplicate rows or lose either clinical label.
+  expect_equal(records("0"), records("target"))
+  expect_equal(records("Recorded pneumonia"), records("Recorded_pneumonia"))
+})
 
 test_that("getCohortData result nrow and ncol check ", {
   

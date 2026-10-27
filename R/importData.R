@@ -85,7 +85,6 @@ getCohortData <- function(cdm,
   cohortSetCSV <- generateCohortSetCSV(selectedCohorts, stateCohortLabels, pathToStudy, studyName)
   
   selectedCohortIds <- cohortSetCSV$cohortId
-  selectedCohortNames <- cohortSetCSV$cohortName
   
   cohortSet <- CDMConnector::readCohortSet(paste(pathToStudy, "/", studyName, "/JSON/", sep = ""))
   
@@ -100,37 +99,11 @@ getCohortData <- function(cdm,
     dplyr::collect()
   data$subject_id <- .simplifySubjectKeys(data$subject_id)
   
-  data$cohort_definition_id = cohortSetCSV$cohortName[match(data$cohort_definition_id, cohortSetCSV$cohortId)]
-  ##############################################################################
-  #
-  # We can have a situation where the target cohort is also given
-  # as a state cohort
-  #
-  ##############################################################################
-  data_tmp_target <- NULL
-  if (selectedTarget %in% selectedStates) {
-    data_tmp_target = dplyr::filter(data, .data$cohort_definition_id == selectedTarget)
-  }
-  
-  ##############################################################################
-  #
-  # For the purpose of easier target cohort handling we should have a special
-  # notation for target cohort id, therefore
-  #
-  ##############################################################################
-  
-  data <- dplyr::mutate(
-    data,
-    cohort_definition_id = ifelse(
-      .data$cohort_definition_id == "target",
-      0,
-      .data$cohort_definition_id
-    )
-  )
-  
-  if (!is.null(data_tmp_target)) {
-    data = rbind(data, data_tmp_target)
-  }
+  # Match generated IDs, not connector-normalised names, to the original labels.
+  # A target definition reused as a state already has its own generated ID.
+  outputLabels <- c("0", stateCohortLabels)
+  data$cohort_definition_id <- outputLabels[
+    match(data$cohort_definition_id, cohortSetCSV$cohortId)]
   
   data <- dplyr::select(
     data,
@@ -831,15 +804,18 @@ generateCohortSetCSV <- function(selectedStates,
                                  stateCohortLabels,
                                  pathToStudy,
                                  studyName) {
+  if (length(selectedStates) != length(stateCohortLabels) + 1L) {
+    stop("stateCohortLabels must provide one label for each state cohort.", call. = FALSE)
+  }
   if (file.exists(paste0(pathToStudy, studyName, '/JSON/CohortsToCreate.csv'))) {
     file.remove(paste0(pathToStudy, studyName, '/JSON/CohortsToCreate.csv'))
   }
   
-  cohortName <- c("target", stateCohortLabels)
   jsonPath <- paste0(selectedStates, ".json")
-  
-  max <- length(cohortName)
-  cohortId <- c(1:max)
+  cohortId <- seq_along(jsonPath)
+  # Clinical labels can collide with "target" or with each other after the
+  # connector normalises them. Keep database cohort names internal and unique.
+  cohortName <- paste0("cohort_", cohortId)
   
   cohortSet <- data.frame(cohortId, cohortName, jsonPath)
   
