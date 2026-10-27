@@ -108,6 +108,9 @@ State IDs are assigned once per study. START has ID 1, followed
   After an unsuccessful import in the current study environment, generation
   is blocked until getDataForStudy succeeds again. Existing output files are
   preserved, but are not reused as input for that failed attempt.
+  The trajectory CSV is written only after every patient batch finishes.
+  A batch error therefore does not overwrite a previous complete trajectory
+  file or leave a new partial trajectory file.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

@@ -61,6 +61,9 @@
 #'   After an unsuccessful import in the current study environment, generation
 #'   is blocked until getDataForStudy succeeds again. Existing output files are
 #'   preserved, but are not reused as input for that failed attempt.
+#'   The trajectory CSV is written only after every patient batch finishes.
+#'   A batch error therefore does not overwrite a previous complete trajectory
+#'   file or leave a new partial trajectory file.
 #' @export
 #' @examples
 #' \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
@@ -199,10 +202,8 @@ createTrajectories <- function(cdm = NULL,
         cli::cli_abort("{.error No trajectories generated as cohorts' do not increment any trajectory worthy data!}")
         return(NULL)
       }
-      save_object(result,
-                  path = paste(pathToData, "/patientDataDiscrete.csv", sep = ""))
-      
     }
+    save_object(result, path = file.path(pathToData, "patientDataDiscrete.csv"))
     cli::cli_alert_info(paste(
       "Saved trajectory dataframe: ",
       pathToData,
@@ -240,11 +241,9 @@ createTrajectories <- function(cdm = NULL,
         cli::cli_abort("{.error No trajectories generated as cohorts' do not increment any trajectory worthy data!}")
         return(NULL)
       }
-      
-      save_object(result,
-                  path = paste0(pathToData, '/', "patientDataContinuous.csv"))
     }
 
+    save_object(result, path = file.path(pathToData, "patientDataContinuous.csv"))
     cli::cli_alert_info(paste(
       "Saved trajectory dataframe: ",
       paste(pathToData, '/', "patientDataContinuous.csv", sep = ""),
