@@ -567,6 +567,9 @@ getTrajectoriesDiscrete <- function(cdm,
 #'   membership. Absorbing states end the trajectory at their retained endpoint.
 #'   Priority selection assigns shared days to the higher-priority state and
 #'   retains only non-empty fragments of lower-priority intervals.
+#'   Only transition-eligible states compete for priority. Continuing a selected
+#'   interval does not require a self-transition when another record starts or
+#'   ends. A selected absorbing interval retains its bounded recorded endpoint.
 #'   Every clinical state in the bounded input must appear in statePriorityVector.
 #'   Missing states raise an error rather than being silently discarded.
 #'   Transition rules are checked before the absorbing-state cutoff. Empty rules
@@ -606,73 +609,12 @@ getTrajectoriesContinuous <- function(cdm,
   #
   ##############################################################################
   
-  # Lets just create a new dataframe and add all the states in the order of priorities
+  # Resolve allowed transitions before a higher-priority record can displace
+  # valid lower-priority patient-time.
   if (stateSelection == 3) {
-    clinicalStates <- setdiff(unique(data$cohort_definition_id), c("START", "EXIT"))
-    missingStates <- setdiff(clinicalStates, statePriorityVector)
-    if (length(missingStates) > 0L) {
-      stop("States missing from statePriorityVector: ",
-           paste(missingStates, collapse = ", "), ".", call. = FALSE)
-    }
-    newData <-
-      dplyr::filter(data, .data$cohort_definition_id %in% c("START", "EXIT"))
-    for (patientID in unique(newData$subject_id)) {
-      patientData <- dplyr::filter(
-        data,
-        .data$subject_id == patientID &
-        .data$cohort_definition_id != "EXIT" &
-        .data$cohort_definition_id != "START"
-      )
-      
-      
-      for (p in seq_along(statePriorityVector)) {
-        priorityData <- dplyr::filter(patientData,
-                                      .data$cohort_definition_id == statePriorityVector[p])
-        if (nrow(priorityData) == 0) {
-          next
-        }
-        patientData <- dplyr::filter(patientData,
-                                     .data$cohort_definition_id != statePriorityVector[p])
-        if (nrow(patientData) > 0) {
-          for (i in 1:nrow(priorityData)) {
-            newpatientData <- patientData[0, ]
-            for (j in 1:nrow(patientData)) {
-              if (nrow(patientData) == 0) {
-                break
-              }
-              lower <- patientData[j, ]
-              higherStart <- priorityData$cohort_start_date[i]
-              higherEnd <- priorityData$cohort_end_date[i]
-              if (lower$cohort_end_date < higherStart || lower$cohort_start_date > higherEnd) {
-                newpatientData <- rbind(newpatientData, lower)
-                next
-              }
-              # Subtract the inclusive higher-priority interval. Strict tests
-              # keep only non-empty fragments, with no shared boundary days.
-              if (lower$cohort_start_date < higherStart) {
-                head <- lower
-                head$cohort_end_date <- higherStart - 1
-                newpatientData <- rbind(newpatientData, head)
-              }
-              if (lower$cohort_end_date > higherEnd) {
-                tail <- lower
-                tail$cohort_start_date <- higherEnd + 1
-                newpatientData <- rbind(newpatientData, tail)
-              }
-              
-            }
-            patientData <- newpatientData
-          }
-        }
-        
-        newData <- rbind(newData, priorityData)
-        
-      }
-      
-      
-    }
-    # Inherit the new value
-    data <- newData
+    data <- .selectContinuousPriorityIntervals(
+      data, statePriorityVector, allowedStatesList, absorbingStates
+    )
   }
   
   # Calculating other time_in_cohort values

@@ -43,3 +43,43 @@ test_that("continuous priority cannot silently discard unlisted states", {
   # No priority is needed when the patient has only a target interval.
   expect_equal(run(NULL, data[1, ])$state_label, c("START", "EXIT"))
 })
+
+test_that("continuous priority selects allowed states before removing overlaps", {
+  origin <- as.Date("2020-01-01")
+  input <- data.frame(
+    subject_id = 1L, cohort_definition_id = c("0", "C", "A", "B"),
+    cohort_start_date = origin + c(0, 0, 2, 2),
+    cohort_end_date = origin + c(6, 1, 4, 6)
+  )
+  run <- function(rules, absorbing = NULL) {
+    result <- getTrajectoriesContinuous(
+      NULL, input, stateSelection = 3, statePriorityVector = c("A", "B", "C"),
+      allowedStatesList = rules, absorbingStates = absorbing, addPersonalData = FALSE
+    )
+    data.frame(label = result$state_label,
+               start = as.numeric(result$state_start_date - origin),
+               end = as.numeric(result$state_end_date - origin))
+  }
+  # A cannot erase B's first three days. B needs no self-transition just
+  # because the rejected A record ends during its uninterrupted interval.
+  for (absorbing in list(NULL, "A")) {
+    expect_equal(run(list(C = "b", B = character(0)), absorbing),
+                  data.frame(label = c("START", "C", "B", "EXIT"),
+                             start = c(0, 0, 2, 7), end = c(0, 1, 6, 7)))
+  }
+  # B is prohibited from C, but becomes eligible after the permitted A ends.
+  expect_equal(run(list(C = "A", A = "B")),
+                data.frame(label = c("START", "C", "A", "B", "EXIT"),
+                           start = c(0, 0, 2, 5, 7), end = c(0, 1, 4, 6, 7)))
+  # A selected absorbing interval needs no outgoing rule and keeps its endpoint.
+  expect_equal(run(list(C = "A"), "A"),
+                data.frame(label = c("START", "C", "A", "EXIT"),
+                           start = c(0, 0, 2, 5), end = c(0, 1, 4, 5)))
+  # Later higher-priority records cannot shorten selected absorbing B.
+  # Ending one history must not stop or carry rules into the next patient.
+  input$cohort_start_date[input$cohort_definition_id == "A"] <- origin + 3
+  input <- rbind(input, transform(input, subject_id = 2L))
+  expect_equal(run(list(C = "B"), "B"),
+                data.frame(label = rep(c("START", "C", "B", "EXIT"), 2),
+                           start = rep(c(0, 0, 2, 7), 2), end = rep(c(0, 1, 6, 7), 2)))
+})

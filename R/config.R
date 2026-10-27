@@ -85,6 +85,11 @@
 #'   markers without filling undocumented gaps or shifting simultaneous events.
 #'   Continuous Priority selection requires every clinical state in the bounded
 #'   input to be listed in stateCohortPriorityOrder. Missing states raise an error.
+#'   Priority is resolved among transition-eligible states at each interval
+#'   boundary, so prohibited records cannot remove allowed patient-time.
+#'   Uninterrupted intervals do not require a self-transition at unrelated
+#'   record boundaries. A selected absorbing interval keeps its bounded recorded
+#'   endpoint even if higher-priority records arrive later.
 #'   Models requiring unique timestamps must resolve ties explicitly.
 #'   With mergeStates = TRUE, exact overlapping intervals form states with
 #'   structured membership before discretisation. Labels are never parsed.

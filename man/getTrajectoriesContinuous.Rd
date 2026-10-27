@@ -52,6 +52,9 @@ Target intervals supply START and EXIT boundaries even without state
   membership. Absorbing states end the trajectory at their retained endpoint.
   Priority selection assigns shared days to the higher-priority state and
   retains only non-empty fragments of lower-priority intervals.
+  Only transition-eligible states compete for priority. Continuing a selected
+  interval does not require a self-transition when another record starts or
+  ends. A selected absorbing interval retains its bounded recorded endpoint.
   Every clinical state in the bounded input must appear in statePriorityVector.
   Missing states raise an error rather than being silently discarded.
   Transition rules are checked before the absorbing-state cutoff. Empty rules
