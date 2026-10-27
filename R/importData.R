@@ -515,8 +515,8 @@ getTrajectoriesDiscrete <- function(cdm,
       addPersonalData(newPatientData, cdm)
   }
   else {
-    newPatientData$gender_concept_id = 0
-    newPatientData$birth_datetime = "1900-01-01"
+    newPatientData$gender_concept_id <- rep(NA_integer_, nrow(newPatientData))
+    newPatientData$age <- rep(NA_real_, nrow(newPatientData))
   }
   ################################################################################
   #
@@ -718,8 +718,8 @@ getTrajectoriesContinuous <- function(cdm,
     data <- addPersonalData(data, cdm)
   }
   else {
-    data$gender_concept_id = 0
-    data$birth_datetime = "1900-01-01"
+    data$gender_concept_id <- rep(NA_integer_, nrow(data))
+    data$age <- rep(NA_real_, nrow(data))
   }
   
   return(data)

@@ -49,7 +49,8 @@ createTrajectories(
 
 ## Adding personal data to self-inserted data
 
-To include personal data such as patient age and gender while creating trajectories, ensure `useCDM` is set to `TRUE`. 
+To join patient age and gender from a CDM while creating trajectories, supply the CDM object and set `useCDM = TRUE`.
+With `useCDM = FALSE`, both trajectory formats include `age` and `gender_concept_id` as `NA` in the returned data and exported CSV. No birth date is assumed. This replaces the earlier placeholder gender code and `birth_datetime = "1900-01-01"` column.
 
 ```{r, eval = FALSE, echo = TRUE}
 createTrajectories (

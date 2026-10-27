@@ -74,7 +74,9 @@ accepted with a deprecation warning. A selection must be specified before genera
 
 \item{allowedStatesList}{A list object which indicates accessible states from said state}
 
-\item{useCDM}{The package can also be run without the OMOP CDM}
+\item{useCDM}{Whether to join demographics from the supplied CDM. Without
+that join, age and gender_concept_id are returned as NA. No birth date is
+assumed or added to the trajectory output.}
 
 \item{pathToStudy}{path to directory that contains study folder}
 
@@ -135,6 +137,10 @@ State IDs are assigned once per study. START has ID 1, followed
   The trajectory CSV is written only after every patient batch finishes.
   A batch error therefore does not overwrite a previous complete trajectory
   file or leave a new partial trajectory file.
+  Both formats include age and gender_concept_id. With useCDM = FALSE these
+  columns contain missing values, replacing the previous placeholder gender
+  code and fabricated birth_datetime column. Non-CDM cohort input alone
+  does not supply demographics for this join.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}
