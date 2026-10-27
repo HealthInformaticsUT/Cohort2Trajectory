@@ -126,17 +126,21 @@ studyEnv <- cohort2TrajectoryConfiguration(
 
 ### Configuration with saved study 
 
+Copy the study's JSON and Settings folders to the new location. Settings are
+restored from `Settings/analysisSettings.rds`. Supply a connection to the new
+database for import and trajectory generation.
+
 ```{r, echo = TRUE, eval = FALSE}
 
 studyEnv <- cohort2TrajectoryConfiguration(
-    baseUrl = NULL,     
-    useCDM = FALSE,                                
-    studyName = "nameForStudy",                   #<--- name of the study in trajectorySettings.csv
+    studyName = "nameForStudy",                   # Name of the copied study folder
     pathToStudy = getwd(),
-    stateCohortLabels = c("label_for_cohort1", "label_for_cohort2"),
     runSavedStudy = TRUE,                           #<--- set run saved study to true
     batchSize = 10
   )
+
+getDataForStudy(cdm = newCdm, studyEnv = studyEnv)
+trajectories <- createTrajectories(cdm = newCdm, studyEnv = studyEnv)
 
 ```
 

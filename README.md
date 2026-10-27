@@ -12,7 +12,51 @@ For instructions and documentation please see the package's [wiki](https://healt
 
 # Features
 
-**Sharing the study**: For sharing the trajectory generation parameters and cohorts just share the study folder and settings file with your counterpart.
+**Sharing the study**: A successful import and trajectory-generation run saves
+the complete analysis rules in `Settings/analysisSettings.rds`. This is the only
+settings file written or read by the package. The snapshot preserves import
+and generation settings separately, including allowed transitions, optional
+state lists, cycle length and merging options.
+
+## Rerunning a study on another database
+
+Copy the study's **JSON** and **Settings** folders into a study folder at the
+new location. Do not share **Data**, which contains patient-level records.
+Use the updated package at both sites. With a CDMConnector connection to the
+destination database called `newCdm`, run:
+
+```r
+study <- cohort2TrajectoryConfiguration(
+  studyName = "MyStudy",
+  pathToStudy = "/new/location", # Contains the MyStudy folder
+  runSavedStudy = TRUE
+)
+getDataForStudy(cdm = newCdm, studyEnv = study)
+trajectories <- createTrajectories(cdm = newCdm, studyEnv = study)
+```
+
+No ATLAS connection or re-entry of analysis settings is needed. The saved
+mapping identifies which JSON files define the target and source states,
+independently of any merged output states. The package regenerates cohorts and
+imports data from the new database before allowing trajectory generation.
+Connections, local paths and patient data are not part of the settings snapshot.
+Database permissions and adequate local data coverage are still required.
+
+For non-CDM studies, add `useCDM = FALSE` and provide fresh input through
+`pathToData` or `trajectoryDataObject`. Batch size can be changed without changing
+the analysis rules. Saved runs reject explicit analysis-setting overrides.
+Configure a new study if you want different rules. To inspect the saved settings:
+
+```r
+settings <- readRDS("/new/location/MyStudy/Settings/analysisSettings.rds")
+str(settings)
+```
+
+Older CSV-only folders do not contain allowed-transition or merging rules.
+Rerun the original configured import and trajectory generation once with the
+updated package to create the complete snapshot before moving the study.
+Existing settings CSV files are left untouched and ignored. Patient-output CSVs
+and the cohort-definition manifest remain unchanged.
 
 # Technology
 

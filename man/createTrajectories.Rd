@@ -21,7 +21,8 @@ createTrajectories(
   useCDM = studyEnv$useCDM,
   pathToStudy = studyEnv$pathToStudy,
   batchSize = studyEnv$batchSize,
-  updateAutomaticallyForMergedStates = FALSE
+  updateAutomaticallyForMergedStates =
+    isTRUE(studyEnv$updateAutomaticallyForMergedStates)
 )
 }
 \arguments{
@@ -31,7 +32,9 @@ createTrajectories(
 
 \item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time)}
 
-\item{runSavedStudy}{running a predefined study from studyName/Settings/trajectorySettings.csv}
+\item{runSavedStudy}{Generate using the restored saved-study settings after
+getDataForStudy has imported fresh data. Analysis overrides are not accepted
+for a saved run. Configure a new study to change the analysis rules.}
 
 \item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)}
 
@@ -91,8 +94,9 @@ State IDs are assigned once per study. START has ID 1, followed
   For custom input without a target row, boundaries fall back to the recorded
   state span. The package does not infer observation coverage beyond the
   supplied intervals.
-  Empty state lists (NULL or character(0)) are saved as blank CSV cells and
-  restored as NULL when settings are loaded. No placeholder state is needed.
+  Analysis settings are saved only in Settings/analysisSettings.rds.
+  NULL, character(0) and nested transition lists retain their R types.
+  No placeholder state is needed.
   Patient IDs are mapped to temporary integers internally and restored before
   demographic joins and output. No user-supplied mapping is needed. File and
   CDM input preserve large identifiers and leading zeros as text. Canonical

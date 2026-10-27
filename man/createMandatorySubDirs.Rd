@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{createMandatorySubDirs}
 \alias{createMandatorySubDirs}
-\title{Function which creates mandatory subdirectories and files to the pathToStudy directory}
+\title{Create the mandatory study subdirectories}
 \usage{
 createMandatorySubDirs(pathToStudy, studyName)
 }
@@ -10,6 +10,6 @@ createMandatorySubDirs(pathToStudy, studyName)
 \item{pathToStudy}{Path to the package}
 }
 \description{
-Function which creates mandatory subdirectories and files to the pathToStudy directory
+Create the mandatory study subdirectories
 }
 \keyword{internal}

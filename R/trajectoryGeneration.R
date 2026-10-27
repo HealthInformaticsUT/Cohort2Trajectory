@@ -14,7 +14,9 @@
 #'   cycle is shortened if the trajectory boundary falls partway through it.
 #' @param outOfCohortAllowed Whether retained state records may extend the
 #'   trajectory beyond the target interval's end. The target start is unchanged.
-#' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
+#' @param runSavedStudy Generate using the restored saved-study settings after
+#'   getDataForStudy has imported fresh data. Analysis overrides are not accepted
+#'   for a saved run. Configure a new study to change the analysis rules.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param allowedStatesList A list object which indicates accessible states from said state
 #' @param pathToStudy path to directory that contains study folder
@@ -45,8 +47,9 @@
 #'   For custom input without a target row, boundaries fall back to the recorded
 #'   state span. The package does not infer observation coverage beyond the
 #'   supplied intervals.
-#'   Empty state lists (NULL or character(0)) are saved as blank CSV cells and
-#'   restored as NULL when settings are loaded. No placeholder state is needed.
+#'   Analysis settings are saved only in Settings/analysisSettings.rds.
+#'   NULL, character(0) and nested transition lists retain their R types.
+#'   No placeholder state is needed.
 #'   Patient IDs are mapped to temporary integers internally and restored before
 #'   demographic joins and output. No user-supplied mapping is needed. File and
 #'   CDM input preserve large identifiers and leading zeros as text. Canonical
@@ -74,7 +77,17 @@ createTrajectories <- function(cdm = NULL,
                                useCDM = studyEnv$useCDM,
                                pathToStudy = studyEnv$pathToStudy,
                                batchSize = studyEnv$batchSize,
-                               updateAutomaticallyForMergedStates = FALSE) {
+                               updateAutomaticallyForMergedStates = isTRUE(studyEnv$updateAutomaticallyForMergedStates)) {
+  if (isTRUE(runSavedStudy)) {
+    .checkSavedOverrides(match.call(), .studyGenerationFields())
+    if (is.null(studyEnv$.savedSettings) || !isTRUE(studyEnv$.dataReady)) {
+      stop("Configure the saved study and run getDataForStudy successfully first. ",
+           "Copied patient files are not reused for a saved run.", call. = FALSE)
+    }
+  }
+  # Save the rules before data-dependent merged-state expansion so a new site
+  # can apply the same expansion to its own observed states.
+  generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)
   if (isTRUE(as.numeric(trajectoryType) == 0)) {
     .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
   }
@@ -242,96 +255,11 @@ createTrajectories <- function(cdm = NULL,
 
   }
   
-  ############################################################################
-  #
-  # Saving study settings as new row
-  #
-  ############################################################################
-  
-  # TODO function: saveStudySettings?
   if (!runSavedStudy) {
-    if (trajectoryType == 0) {
-      savedTrajectoryType = "Discrete"
-    }
-    else {
-      savedTrajectoryType = "Continuous"
-    }
-    
-    savedTrajectoryStates <-
-      as.vector(sanitize_filenames(stateCohortLabels))
-    
-    savedPriorityOrder <-
-      as.vector(sanitize_filenames(stateCohortPriorityOrder))
-    
-    savedStateSelectionType <-
-      as.vector(sanitize_filenames(stateSelectionType))
-    
-    savedAbsorbingStates <-
-      as.vector(sanitize_filenames(stateCohortAbsorbing))
-    
-    savedMandatoryStates <-
-      as.vector(sanitize_filenames(stateCohortMandatory))
-    
-    savedLengthOfStay <- lengthOfStay
-    savedOutOfCohortAllowed <- as.logical(outOfCohortAllowed)
-    savedOutOfCohortFix <- oocFix
-    
-    # Every CSV field must have length one. Collapsing an empty vector gives
-    # a blank cell, whereas inserting NULL would break the one-row data frame.
-newSettings <- data.frame(
-  studyName = if (length(studyName) < 1) "Unnamed study" else studyName,
-  savedTrajectoryType = if (length(savedTrajectoryType) < 1) "Discrete" else savedTrajectoryType,
-  savedTrajectoryStates = paste(savedTrajectoryStates, collapse = ","),
-  savedPriorityOrder = paste(savedPriorityOrder, collapse = ","),
-  savedStateSelectionType = if (length(savedStateSelectionType) < 1) "First" else as.integer(savedStateSelectionType),
-  savedAbsorbingStates = paste(savedAbsorbingStates, collapse = ","),
-  savedMandatoryStates = paste(savedMandatoryStates, collapse = ","),
-  savedLengthOfStay = if (length(savedLengthOfStay) < 1) 30 else savedLengthOfStay,
-  savedOutOfCohortAllowed = if (length(savedOutOfCohortAllowed) < 1) FALSE else savedOutOfCohortAllowed,
-  savedOutOfCohortFix = if (length(savedOutOfCohortFix) < 1) "None" else savedOutOfCohortFix
-)
-    
-    settings <-
-      utils::read.csv(
-        paste(
-          pathToStudy,
-          "/",
-          studyName,
-          "/Settings/trajectorySettings.csv",
-          sep = ""
-        )
-      )
-    
-    if (studyName %in% settings$studyName) {
-      studyIndex <- which(settings$studyName == studyName)
-      settings[studyIndex, ] <- newSettings
-    } else {
-      colnames(newSettings) <- colnames(settings)
-      settings <- rbind(settings, newSettings)
-    }
-    
-    utils::write.csv(
-      settings,
-      paste(
-        pathToStudy,
-        "/",
-        studyName,
-        "/Settings/trajectorySettings.csv",
-        sep = ""
-      ),
-      row.names = FALSE
-    )
-
-    cli::cli_alert_info(paste(
+    .saveStudySnapshot(studyEnv, generationSettings)
+    cli::cli_alert_info(paste0(
       "Saved settings to: ",
-      paste(
-        pathToStudy,
-        "/",
-        studyName,
-        "/Settings/trajectorySettings.csv",
-        sep = ""
-      ),
-      sep = ""
+      file.path(pathToStudy, studyName, "Settings", "analysisSettings.rds")
     ))
   }
   
@@ -385,20 +313,17 @@ updateMergedStates <- function(data,
         priority_map <- stats::setNames(seq_along(stateCohortPriorityOrder), stateCohortPriorityOrder)
       }
       
-      # Step 1: Add newState as a transition for all its components
-      if (!newState %in% names(allowedStatesList)) {
-        allowedStatesList[[newState]] <- unique(unlist(allowedStatesList[valid_components]))
-      }
-      
-      # Step 2: Update all states that previously had any of the components as allowed transitions
-      for (component in valid_components) {
-        # Add the new combination to the individual component's transition list
-        allowedStatesList[[component]] <- unique(c(allowedStatesList[[component]], newState))
-        
-        # Now go through all other states and update their transition lists
-        for (state in names(allowedStatesList)) {
-          if (component %in% allowedStatesList[[state]]) {
-            allowedStatesList[[state]] <- unique(c(allowedStatesList[[state]], newState))
+      # An empty list means unrestricted transitions and must remain empty.
+      if (length(allowedStatesList)) {
+        if (!newState %in% names(allowedStatesList)) {
+          allowedStatesList[[newState]] <- unique(unlist(allowedStatesList[valid_components]))
+        }
+        for (component in valid_components) {
+          allowedStatesList[[component]] <- unique(c(allowedStatesList[[component]], newState))
+          for (state in names(allowedStatesList)) {
+            if (component %in% allowedStatesList[[state]]) {
+              allowedStatesList[[state]] <- unique(c(allowedStatesList[[state]], newState))
+            }
           }
         }
       }

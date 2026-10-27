@@ -67,7 +67,11 @@ cycle is shortened if the trajectory boundary falls partway through it.}
 \item{outOfCohortAllowed}{Whether retained state records may extend the
 trajectory beyond the target interval's end. The target start is unchanged.}
 
-\item{runSavedStudy}{running a predefined study from studyName/Settings/trajectorySettings.csv}
+\item{runSavedStudy}{Restore the complete analysis settings from
+studyName/Settings/analysisSettings.rds. Supply the new parent folder and
+study name, not the analysis settings again. Connections are supplied to
+getDataForStudy and createTrajectories. Older CSV-only studies must first
+be rerun with their original configuration to save the complete settings.}
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 

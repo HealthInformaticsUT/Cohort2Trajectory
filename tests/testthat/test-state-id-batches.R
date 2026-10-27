@@ -26,7 +26,7 @@ run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "U
     stateSelectionType = "Priority", trajectoryType = type,
     lengthOfStay = 7, batchSize = batch_size, oocFix = gap,
     allowedStatesList = rules,
-    runSavedStudy = TRUE
+    runSavedStudy = FALSE
   )
   utils::write.csv(data, file.path(study_path, "ids", "Data", "importedDataCleaned_0.csv"),
                    row.names = FALSE)

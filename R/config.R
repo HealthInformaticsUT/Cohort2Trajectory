@@ -21,7 +21,11 @@
 #'   cycle is shortened if the trajectory boundary falls partway through it.
 #' @param outOfCohortAllowed Whether retained state records may extend the
 #'   trajectory beyond the target interval's end. The target start is unchanged.
-#' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
+#' @param runSavedStudy Restore the complete analysis settings from
+#'   studyName/Settings/analysisSettings.rds. Supply the new parent folder and
+#'   study name, not the analysis settings again. Connections are supplied to
+#'   getDataForStudy and createTrajectories. Older CSV-only studies must first
+#'   be rerun with their original configuration to save the complete settings.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param allowedStatesList A list object which indicates accessible states from said state
@@ -102,6 +106,24 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
                                            mergeThreshold = 0.5,
                                            
                                            batchSize = 1000) {
+  if (isTRUE(runSavedStudy)) {
+    .checkSavedOverrides(match.call(), c(.studyImportFields(),
+      .studyGenerationFields(), "atlasTargetCohort", "atlasStateCohorts", "baseUrl"))
+    .validatePositiveInteger(batchSize, "batchSize", "patients")
+    saved <- .readStudySnapshot(pathToStudy, studyName)
+    if (useCDM) .checkSavedDefinitions(saved, pathToStudy, studyName)
+    createMandatorySubDirs(pathToStudy, studyName)
+    studyEnv <- rlang::env(
+      studyName = studyName, pathToStudy = pathToStudy, runSavedStudy = TRUE,
+      useCDM = useCDM, trajectoryDataObject = trajectoryDataObject,
+      pathToData = pathToData, batchSize = batchSize, baseUrl = NULL,
+      atlasTargetCohort = "0", atlasStateCohorts = saved$definitions$states,
+      .savedSettings = saved, .dataReady = FALSE
+    )
+    list2env(saved$import[.studyImportFields()], envir = studyEnv)
+    list2env(saved$generation[.studyGenerationFields()], envir = studyEnv)
+    return(studyEnv)
+  }
   # Validate choices before creating study files. NULL remains available for
   # workflows that supply these settings later or load a saved study.
   stateSelectionType <- .configurationChoice(

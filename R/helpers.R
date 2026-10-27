@@ -173,7 +173,7 @@ is_overlap <- function(start1, end1, start2, end2) {
   ))
 }
 
-#' Function which creates mandatory subdirectories and files to the pathToStudy directory
+#' Create the mandatory study subdirectories
 #'
 #' @param pathToStudy Path to the package 
 #' @keywords internal
@@ -184,26 +184,6 @@ createMandatorySubDirs <- function(pathToStudy, studyName) {
   dir.create(file.path(paste(pathToStudy, '/', studyName, sep = ""), 'Data'), showWarnings = FALSE)
   dir.create(file.path(paste(pathToStudy, '/', studyName, sep = ""), 'Settings'), showWarnings = FALSE)
   
-  output_path <- paste(pathToStudy,'/',studyName,'/Settings/trajectorySettings.csv', sep = "")
-  # Check if the file does not exist
-  if (!file.exists(output_path)) {
-    csv_content <- data.frame(
-      studyName = character(0),
-      trajectoryType = character(0),
-      trajectoryStates = character(0),
-      priorityOrder = character(0),
-      stateSelectionType = character(0),
-      absorbingStates = character(0),
-      mandatoryStates = character(0),
-      lengthOfStay = character(0),
-      outOfCohortAllowed = character(0),
-      outOfCohortFix = character(0)
-    )
-    
-    # Write the CSV file with the header only
-    utils::write.csv(csv_content, file = output_path, row.names = FALSE, quote = TRUE)
-    cat("trajectorySettings.csv file has been created at:", output_path, "\n")
-  }
 }
 
 

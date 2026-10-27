@@ -154,7 +154,7 @@ Expected output:
 ℹ Saved trajectory dataframe: /Git/Cohort2Trajectory/SampleCohort2Trajectory/Data/patientDataDiscrete.csv
 ℹ Saving trajectories to the specified temp schema ...
 ℹ Trajectories saved to the specified temp schema!
-ℹ Saved settings to: /Git/Cohort2Trajectory/SampleCohort2Trajectory/Settings/trajectorySettings.csv
+ℹ Saved settings to: /Git/Cohort2Trajectory/SampleCohort2Trajectory/Settings/analysisSettings.rds
 ✔ Trajectories generated!
 ```
 

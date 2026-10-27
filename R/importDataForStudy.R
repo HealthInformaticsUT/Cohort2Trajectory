@@ -9,7 +9,8 @@
 #' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
 #' @param stateCohortMandatory vector of the customized labels of the state cohorts which are mandatory in trajectory
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
-#' @param runSavedStudy running a predefined study from studyName/Settings/trajectorySettings.csv
+#' @param runSavedStudy Use the analysis rules restored by a saved-study
+#'   configuration and import fresh data from the supplied connection or input.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param mergeStates Boolean, if you want to merge states when they overlap
@@ -40,69 +41,37 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             mergeThreshold = studyEnv$mergeThreshold,
                             allowedStatesList = studyEnv$allowedStatesList,
                             stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
-                            pathToData = NULL)  {
+                            pathToData = studyEnv$pathToData)  {
   
   # Variables from global studyEnv (can't be altered)
   studyName = studyEnv$studyName
   pathToStudy = studyEnv$pathToStudy
-  
-  
-  cli::cli_progress_step("Importing data ...")
-  if (runSavedStudy) {
-    # get data from cdm using existing json files and previous study settings
-    
-    # loading settings
-    studyName <- sanitize_single(studyName)
-    settings <- loadSettings(studyName, pathToStudy)
-    
-    stateNamesJSON <- c("0", settings$stateNamesJSON)
-    
-    # TODO overwrite to studyEnv?
-    # Load the study parameters
-    stateCohortLabels <- as.vector(sanitize_filenames(settings$savedTrajectoryStates))
-    stateCohortPriorityOrder <- as.vector(sanitize_filenames(settings$savedPriorityOrder))
-    stateCohortMandatory <- as.vector(sanitize_filenames(settings$savedMandatoryStates))
-    stateCohortAbsorbing <- as.vector(sanitize_filenames(settings$savedAbsorbingStates))
-    stateSelectionType <- settings$savedStateSelectionType
-    oocFix <- settings$outOfCohortFix
-    
-    selectedTarget <- settings$targetJSON
-    selectedStates <- settings$insertedJSONs
-    trajectoryType <-
-    if (settings$savedTrajectoryType == "Discrete") {
-        0
-      }
-    else {
-      1
+  studyEnv$.dataReady <- FALSE
+  if (isTRUE(runSavedStudy)) {
+    .checkSavedOverrides(match.call(), c(.studyImportFields(),
+      "atlasTargetCohort", "atlasStateCohorts", "baseUrl"))
+    saved <- studyEnv$.savedSettings
+    if (is.null(saved)) {
+      stop("First configure the study with runSavedStudy = TRUE.", call. = FALSE)
     }
-    
-    lengthOfStay <- settings$savedLengthOfStay
-    outOfCohortAllowed <- settings$savedOutOfCohortAllowed
-    
+    list2env(saved$import[.studyImportFields()], envir = environment())
+    if (useCDM) .checkSavedDefinitions(saved, pathToStudy, studyName)
+    atlasTargetCohort <- "0"
+  }
+  importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
+  definitions <- NULL
+
+  cli::cli_progress_step("Importing data ...")
+  if (runSavedStudy && useCDM) {
+    definitions <- saved$definitions
     data <- getCohortData(
       cdm = cdm,
       studyEnv = studyEnv,
-      selectedTarget = "0",
-      selectedStates = stateCohortLabels,
+      selectedTarget = definitions$target,
+      selectedStates = definitions$states,
       baseUrl = NULL,
       stateCohortLabels = stateCohortLabels
     )
-    
-    # Apply state names and select
-    data$cohort_definition_id <- plyr::mapvalues(
-      x = data$cohort_definition_id,
-      from = 1:length(stateNamesJSON),
-      to = stateNamesJSON,
-      warn_missing = FALSE
-    )
-    
-    data <- dplyr::select(data,
-                          "subject_id",
-                          "cohort_definition_id",
-                          "cohort_start_date",
-                          "cohort_end_date")
-    
-    
   } else if (useCDM) {
     # get data from cdm using atlas for json file source
         data <- getCohortData(
@@ -151,6 +120,10 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
         )
       }
     }
+    definitions <- list(
+      target = if (is.null(baseUrl)) as.character(atlasTargetCohort) else "0",
+      states = if (is.null(baseUrl)) as.character(atlasStateCohorts) else stateCohortLabels
+    )
 
   } else {
     # get data from input
@@ -216,7 +189,6 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
         stateCohortPriorityOrder[grepl(state_name, stateCohortPriorityOrder)]
       })))
   }
-  saveObjectId = ifelse(is.null(atlasTargetCohort), "0", atlasTargetCohort)
   cli::cli_alert_success("Data cleaning completed!")
   
   save_object(
@@ -255,4 +227,16 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       cli::cli_warn("{.warning No state data left after cleaning the imported data! Exiting ...}")
     )
   }
+  # Generation must use the same rules that were used/expanded during import.
+  studyEnv$.importSettings <- importSettings
+  studyEnv$.cohortDefinitions <- definitions
+  studyEnv$atlasTargetCohort <- atlasTargetCohort
+  studyEnv$useCDM <- useCDM
+  list2env(mget(.studyImportFields(), envir = environment(), inherits = FALSE),
+           envir = studyEnv)
+  if (isTRUE(runSavedStudy)) {
+    list2env(saved$generation[.studyGenerationFields()], envir = studyEnv)
+  }
+  studyEnv$.dataReady <- TRUE
+  invisible(NULL)
 }

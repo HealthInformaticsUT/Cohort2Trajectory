@@ -21,11 +21,12 @@ getDataForStudy(
   mergeThreshold = studyEnv$mergeThreshold,
   allowedStatesList = studyEnv$allowedStatesList,
   stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
-  pathToData = NULL
+  pathToData = studyEnv$pathToData
 )
 }
 \arguments{
-\item{runSavedStudy}{running a predefined study from studyName/Settings/trajectorySettings.csv}
+\item{runSavedStudy}{Use the analysis rules restored by a saved-study
+configuration and import fresh data from the supplied connection or input.}
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 
