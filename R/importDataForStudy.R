@@ -37,6 +37,11 @@
 #'   as a successful import. It leaves the previous cleaned data, merged-state
 #'   artifacts and settings unchanged. Trajectory generation remains blocked
 #'   until a later import succeeds.
+#'   CDM imports stage cohort definitions and their manifest in a temporary
+#'   JSON folder. Downloaded definitions and the manifest are published only
+#'   after data retrieval, cleaning and saving succeed. Failed downloads,
+#'   queries or empty eligible cohorts leave the previous JSON files unchanged.
+#'   Existing local definitions and unrelated JSON files are not rewritten.
 #'   State labels are preserved as supplied for CDM, data-frame and CSV input.
 #'   Spaces and punctuation are not converted
 #'   into filename-safe substitutes. Use the same labels in state definitions,
@@ -91,6 +96,19 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
 
+  if (useCDM) {
+    # Keep downloads and manifest updates away from the last saved study until
+    # the import succeeds. A fixed staging name also keeps the copy self-contained.
+    definitionStage <- tempfile("c2t-definitions-")
+    if (!dir.create(definitionStage)) stop("Could not create the cohort-definition staging folder.", call. = FALSE)
+    on.exit(unlink(definitionStage, recursive = TRUE), add = TRUE)
+    dir.create(file.path(definitionStage, "study"))
+    jsonPath <- file.path(pathToStudy, studyName, "JSON")
+    if (!file.copy(jsonPath, file.path(definitionStage, "study"), recursive = TRUE)) {
+      stop("Could not stage the study's JSON folder. Check that it exists and is readable.", call. = FALSE)
+    }
+  }
+
   cli::cli_progress_step("Importing data ...")
   if (runSavedStudy && useCDM) {
     definitions <- saved$definitions
@@ -100,6 +118,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       selectedTarget = definitions$target,
       selectedStates = definitions$states,
       baseUrl = NULL,
+      pathToStudy = definitionStage,
+      studyName = "study",
       stateCohortLabels = stateCohortLabels
     )
   } else if (useCDM) {
@@ -110,8 +130,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       selectedTarget = atlasTargetCohort,
       selectedStates = atlasStateCohorts,
       baseUrl = baseUrl,
-      pathToStudy = studyEnv$pathToStudy,
-      studyName = studyEnv$studyName,
+      pathToStudy = definitionStage,
+      studyName = "study",
       stateCohortLabels = stateCohortLabels
     )
 
@@ -205,6 +225,20 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     atlasTargetCohort,
     ".csv"
   ))
+
+  if (useCDM) {
+    publish <- "CohortsToCreate.csv"
+    if (!runSavedStudy && !is.null(baseUrl)) {
+      publish <- c(publish, paste0(unique(c(definitions$target, definitions$states)), ".json"))
+    }
+    # Local and saved definitions were only read. Publish downloads and the
+    # new manifest, without replacing unrelated files from the staged copy.
+    copied <- file.copy(file.path(definitionStage, "study", "JSON", publish),
+                        jsonPath, overwrite = TRUE)
+    if (!all(copied)) {
+      stop("Could not save cohort-definition files: ", paste(publish[!copied], collapse = ", "), call. = FALSE)
+    }
+  }
   
   # Target-only histories are valid after mandatory-state filtering. Lack of
   # recorded states does not erase the target interval or its observed time.
