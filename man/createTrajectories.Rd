@@ -75,7 +75,9 @@ getDataForStudy. These cannot be changed during trajectory generation.
 Rerun getDataForStudy with the desired requirements first. Order and
 duplicates do not matter, and NULL and character(0) both mean none.}
 
-\item{allowedStatesList}{A list object which indicates accessible states from said state}
+\item{allowedStatesList}{Named list of allowed destinations for each source
+state. Source names must be unique, nonempty and non-missing. Combine all
+intended destinations for a source in one entry, for example list(A = c("B", "C")).}
 
 \item{useCDM}{Whether to join demographics from the supplied CDM. Without
 that join, age and gender_concept_id are returned as NA. No birth date is

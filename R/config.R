@@ -49,7 +49,9 @@
 #'   and generation must be reconfigured and rerun with the intended requirements.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
-#' @param allowedStatesList A list object which indicates accessible states from said state
+#' @param allowedStatesList Named list of allowed destinations for each source
+#'   state. Source names must be unique, nonempty and non-missing. Combine all
+#'   intended destinations for a source in one entry, for example list(A = c("B", "C")).
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergedStateOverrides List of mergedState() definitions. Omitted
 #'   properties inherit from the original member states.
@@ -186,6 +188,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   if (isTRUE(trajectoryType == "Discrete")) .validateGapFallback(oocFix, stateCohortLabels)
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
+  .validateAllowedStateSources(allowedStatesList)
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")

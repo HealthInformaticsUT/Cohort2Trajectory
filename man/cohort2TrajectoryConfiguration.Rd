@@ -101,7 +101,9 @@ and generation must be reconfigured and rerun with the intended requirements.}
 
 \item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
 
-\item{allowedStatesList}{A list object which indicates accessible states from said state}
+\item{allowedStatesList}{Named list of allowed destinations for each source
+state. Source names must be unique, nonempty and non-missing. Combine all
+intended destinations for a source in one entry, for example list(A = c("B", "C")).}
 
 \item{mergeStates}{Boolean, if you want to merge states when they overlap}
 

@@ -24,6 +24,25 @@
   .validateStateLabels(unique(c(configured, clinical)), "Clinical state labels")
 }
 
+# Source lookup uses exact names. Duplicate entries would silently select the
+# first rule, so reject ambiguity without changing destination semantics.
+.validateAllowedStateSources <- function(rules, argument = "allowedStatesList") {
+  if (!length(rules)) return(invisible(NULL))
+  sources <- names(rules)
+  if (is.null(sources) || anyNA(sources) || any(!nzchar(trimws(sources)))) {
+    stop(argument, " must name every entry with a nonempty, non-missing source state.",
+         call. = FALSE)
+  }
+  duplicates <- unique(sources[duplicated(sources)])
+  if (length(duplicates)) {
+    stop(argument, " has duplicate source entries: ",
+         paste(shQuote(duplicates), collapse = ", "),
+         ". Combine the intended destinations into one entry per source state.",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 .validateGapFallback <- function(value, stateLabels = NULL) {
   if (!is.character(value) || length(value) != 1L || is.na(value) ||
       !nzchar(trimws(value))) {

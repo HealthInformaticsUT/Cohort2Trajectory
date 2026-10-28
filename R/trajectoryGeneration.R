@@ -40,7 +40,9 @@
 #' @param useCDM Whether to join demographics from the supplied CDM. Without
 #'   that join, age and gender_concept_id are returned as NA. No birth date is
 #'   assumed or added to the trajectory output.
-#' @param allowedStatesList A list object which indicates accessible states from said state
+#' @param allowedStatesList Named list of allowed destinations for each source
+#'   state. Source names must be unique, nonempty and non-missing. Combine all
+#'   intended destinations for a source in one entry, for example list(A = c("B", "C")).
 #' @param pathToStudy path to directory that contains study folder
 #' @param batchSize Maximum number of patients per batch, supplied as a single
 #'   positive whole number. Applies to both trajectory formats.
@@ -149,6 +151,7 @@ createTrajectories <- function(cdm = NULL,
   if (trajectoryType == "Discrete") .validateGapFallback(oocFix, stateCohortLabels)
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
+  .validateAllowedStateSources(allowedStatesList)
   # Eligibility was applied before state merging. Generation cannot safely
   # change it or recover patients excluded from the cleaned input.
   imported <- studyEnv$.importSettings

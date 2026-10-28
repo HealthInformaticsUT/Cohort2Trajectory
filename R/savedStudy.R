@@ -72,6 +72,8 @@
   # warning about codes that the package itself previously saved.
   .validateStateLabels(saved$import$stateCohortLabels)
   .validateStateLabels(saved$generation$stateCohortLabels)
+  .validateAllowedStateSources(saved$import$allowedStatesList, "Saved import allowedStatesList")
+  .validateAllowedStateSources(saved$generation$allowedStatesList, "Saved generation allowedStatesList")
   saved$generation$trajectoryType <- .configurationChoice(
     saved$generation$trajectoryType, c(Discrete = 0, Continuous = 1),
     "trajectoryType", allowNull = FALSE, warnCodes = FALSE

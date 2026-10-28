@@ -60,7 +60,8 @@ Rerun this import to add or remove requirements before creating trajectories.}
 
 \item{mergeStates}{Boolean, if you want to merge states when they overlap}
 
-\item{allowedStatesList}{List of allowed transitions between states}
+\item{allowedStatesList}{Named list of allowed transitions between states.
+Each entry must have a unique, nonempty, non-missing source-state name.}
 
 \item{stateCohortAbsorbing}{Vector of absorbing states}
 

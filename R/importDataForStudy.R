@@ -24,7 +24,8 @@
 #' @param mergedStateOverrides List of mergedState() definitions.
 #' @param ... Compatibility only: legacy named mergeThreshold warns and is ignored.
 #' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
-#' @param allowedStatesList List of allowed transitions between states
+#' @param allowedStatesList Named list of allowed transitions between states.
+#'   Each entry must have a unique, nonempty, non-missing source-state name.
 #' @param stateCohortAbsorbing Vector of absorbing states
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration 
 #'
@@ -84,6 +85,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   }
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
+  .validateAllowedStateSources(allowedStatesList)
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
 
