@@ -10,7 +10,10 @@
 #'   getDataForStudy. These cannot be changed during trajectory generation.
 #'   Rerun getDataForStudy with the desired requirements first. Order and
 #'   duplicates do not matter, and NULL and character(0) both mean none.
-#' @param stateCohortAbsorbing vector of the customized labels of the state cohorts which are absorbing
+#' @param stateCohortAbsorbing Vector of absorbing state labels. In nonmerged
+#'   studies, use the exact spelling of a configured or observed state, or the
+#'   named discrete fallback. Configured states may be absent from the current
+#'   data. NULL and character(0) mean no absorbing states.
 #' @param stateSelectionType State selection: "First", "Overlap" or "Priority".
 #'   Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
 #'   accepted with a deprecation warning. A selection must be specified before generation.
@@ -196,8 +199,15 @@ createTrajectories <- function(cdm = NULL,
   .validateObservedStateLabels(data$cohort_definition_id,
     if (!isTRUE(studyEnv$mergeStates)) stateCohortLabels else NULL)
   configuredStates <- as.character(stateCohortLabels)
-  if (trajectoryType == "Discrete" && !isTRUE(studyEnv$mergeStates)) {
-    .validateGapFallback(oocFix, c(configuredStates, data$cohort_definition_id))
+  if (!isTRUE(studyEnv$mergeStates)) {
+    knownStates <- c(configuredStates, setdiff(data$cohort_definition_id, "0"))
+    if (trajectoryType == "Discrete") {
+      .validateGapFallback(oocFix, knownStates)
+      if (!oocFix %in% c("None", "Last present state", "OUT OF COHORT")) {
+        knownStates <- c(knownStates, oocFix)
+      }
+    }
+    .validateAbsorbingStateReferences(stateCohortAbsorbing, knownStates)
   }
   registry <- NULL
   if (isTRUE(studyEnv$mergeStates)) {

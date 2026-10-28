@@ -24,51 +24,24 @@ getDataForStudy(cdm = cdm, studyEnv = studyEnv)
 ```
 
 
-If the user opts out of using the previous configuration, the necessary inputs must be provided manually. Below is a sample with default values: 
-
-```{r, eval = FALSE, echo = TRUE}
-getDataForStudy(
-  runSavedStudy = studyEnv$runSavedStudy,
-  useCDM = studyEnv$useCDM,
-  trajectoryDataObject = NULL,
-  cdm = NULL,
-  studyEnv = NULL,
-  atlasStateCohorts = studyEnv$atlasStateCohorts,
-  atlasTargetCohort = studyEnv$atlasTargetCohort,
-  stateCohortLabels = studyEnv$stateCohortLabels,
-  baseUrl = studyEnv$baseUrl,
-  outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  stateCohortMandatory = studyEnv$stateCohortMandatory,
-  stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
-  mergeStates = studyEnv$mergeStates,
-  mergeThreshold = studyEnv$mergeThreshold,
-  pathToData = NULL
-)
-```
+Every import needs the `studyEnv` returned by
+`cohort2TrajectoryConfiguration()`. It supplies the study location, cohort
+definitions and cleaning settings. For a fresh study, individual settings can be
+overridden in the import call. A saved study restores its analytical settings.
 
 <br>
 
 ## Use CDM
 
-To use the CDM as a data source, set the `useCDM` variable to `TRUE`. The cohorts specified in `atlasStateCohorts` and `atlasTargetCohort` will be used. It is recommended to set `trajectoryDataObject`, `pathToData`, and `runSavedStudy` to `NULL`.
+For a fresh study configured with `runSavedStudy = FALSE`, set `useCDM = TRUE`
+to import the cohorts specified by `atlasStateCohorts` and `atlasTargetCohort`.
+Pass the connected CDM object as `cdm`.
 
 ```{r, echo = TRUE, eval = FALSE}
 getDataForStudy(
-  runSavedStudy = NULL,
-  useCDM = studyEnv$useCDM,
-  trajectoryDataObject = NULL,
-  cdm = NULL,
-  studyEnv = NULL,
-  atlasStateCohorts = studyEnv$atlasStateCohorts,
-  atlasTargetCohort = studyEnv$atlasTargetCohort,
-  stateCohortLabels = studyEnv$stateCohortLabels,
-  baseUrl = studyEnv$baseUrl,
-  outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  stateCohortMandatory = studyEnv$stateCohortMandatory,
-  stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
-  mergeStates = studyEnv$mergeStates,
-  mergeThreshold = studyEnv$mergeThreshold,
-  pathToData = NULL
+  cdm = cdm,
+  studyEnv = studyEnv,
+  useCDM = TRUE
 )
 ```
 
@@ -80,21 +53,10 @@ To use the CDM without ATLAS support, ensure the required JSON files are located
 
 ```{r, echo = TRUE, eval = FALSE}
 getDataForStudy(
-  runSavedStudy = NULL,
-  useCDM = studyEnv$useCDM,
-  trajectoryDataObject = NULL,
-  cdm = NULL,
-  studyEnv = NULL,
-  atlasStateCohorts = studyEnv$atlasStateCohorts,
-  atlasTargetCohort = studyEnv$atlasTargetCohort,
-  stateCohortLabels = studyEnv$stateCohortLabels,
-  baseUrl = NULL,
-  outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  stateCohortMandatory = studyEnv$stateCohortMandatory,
-  stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
-  mergeStates = studyEnv$mergeStates,
-  mergeThreshold = studyEnv$mergeThreshold,
-  pathToData = NULL
+  cdm = cdm,
+  studyEnv = studyEnv,
+  useCDM = TRUE,
+  baseUrl = NULL
 )
 ```
 
@@ -102,33 +64,42 @@ getDataForStudy(
 
 ## Run saved study
 
-If a saved study configuration is used, the previously set options are overridden by the saved settings. It is recommended to set `trajectoryDataObject`, `pathToData`, and `useCDM` to `NULL`.
+Copy the completed study's `Settings` folder into the named study folder,
+then configure it with `runSavedStudy = TRUE`. The RDS file contains both the
+analysis settings and the cohort definitions used by that run. Import fresh data
+from the new CDM using those saved definitions, without an ATLAS connection or
+working JSON files. Do not repeat analytical arguments such as
+state labels, transition rules or merging options in either call.
 
 ```{r, echo = TRUE, eval = FALSE}
-getDataForStudy(
-  runSavedStudy = studyEnv$runSavedStudy,
-  useCDM = NULL,
-  trajectoryDataObject = NULL,
-  cdm = NULL,
-  studyEnv = NULL,
-  atlasStateCohorts = studyEnv$atlasStateCohorts,
-  atlasTargetCohort = studyEnv$atlasTargetCohort,
-  stateCohortLabels = studyEnv$stateCohortLabels,
-  baseUrl = studyEnv$baseUrl,
-  outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  stateCohortMandatory = studyEnv$stateCohortMandatory,
-  stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
-  mergeStates = studyEnv$mergeStates,
-  mergeThreshold = studyEnv$mergeThreshold,
-  pathToData = NULL
+studyEnv <- cohort2TrajectoryConfiguration(
+  studyName = "nameForStudy",
+  pathToStudy = getwd(),
+  runSavedStudy = TRUE
 )
+getDataForStudy(cdm = newCdm, studyEnv = studyEnv)
 ```
 
 <br>
 
 ## Add data object or path to data 
 
-To add data manually, provide either the `trajectoryDataObject` or the `pathToData` as input. It is suggested to set both `useCDM` and `runSavedStudy` to `NULL`.
+For a fresh local-data study, configure `useCDM = FALSE` and
+`runSavedStudy = FALSE`. Import the configured input with
+`getDataForStudy(studyEnv = studyEnv)`, or choose one replacement input:
+
+```{r, echo = TRUE, eval = FALSE}
+# Use a new data frame, even if a CSV path was configured.
+getDataForStudy(studyEnv = studyEnv, trajectoryDataObject = rawData)
+
+# Alternatively, use a CSV, even if a data frame was configured.
+getDataForStudy(studyEnv = studyEnv, pathToData = "path/to/data/data.csv")
+```
+
+An explicitly supplied input takes precedence over the configured alternative.
+Do not supply both a non-NULL `trajectoryDataObject` and a non-NULL `pathToData`
+in the same call. With neither supplied, the configured input is used.
+An import override does not replace the configured local source for later calls.
 
 For appending personal data to existing datasets, refer to the [create trajectories](a03_trajectories.html#adding-personal-data-to-self-inserted-data) section.
 

@@ -31,7 +31,9 @@ configuration and import fresh data from the supplied connection or input.}
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 
-\item{trajectoryDataObject}{When using without OMOP CDM specify the data file  (if specified no need for pathToData)}
+\item{trajectoryDataObject}{Data frame for a non-CDM import. An explicitly
+supplied non-NULL object overrides the configured CSV path. Supply NULL
+to use the CSV path. Local source overrides apply to this import only.}
 
 \item{cdm}{object created with CDMConnector}
 
@@ -65,7 +67,12 @@ Each entry must have a unique, nonempty, non-missing source-state name.}
 
 \item{stateCohortAbsorbing}{Vector of absorbing states}
 
-\item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
+\item{pathToData}{CSV path for a non-CDM import. An explicitly supplied
+non-NULL path overrides the configured data object. Do not explicitly
+supply both non-NULL local sources. With neither supplied, the configured
+object is used when present, otherwise the configured CSV path is used.
+The same precedence applies to saved local studies. CDM imports ignore
+both local input arguments.}
 
 \item{mergedStateOverrides}{List of mergedState() definitions.}
 
@@ -100,7 +107,10 @@ A nonempty target cohort remains valid when no state events survive
   mandatory states, priorities and transition rules.
   Downloaded ATLAS definitions use 0.json for the target and atlas_<id>.json
   for states. Repeated state IDs share a definition file without changing
-  their clinical labels. Saved settings retain this filename mapping.
+  their clinical labels. Completed settings retain this filename mapping and
+  the definition contents captured by the successful import. Saved CDM runs
+  materialise these contents in a private folder and leave working JSON and
+  its manifest unchanged. A later import cannot change an earlier snapshot.
 }
 \examples{
 \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}

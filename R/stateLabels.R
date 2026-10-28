@@ -24,6 +24,17 @@
   .validateStateLabels(unique(c(configured, clinical)), "Clinical state labels")
 }
 
+.validateAbsorbingStateReferences <- function(absorbing, states) {
+  unknown <- setdiff(as.character(absorbing), as.character(states))
+  if (length(unknown)) {
+    stop("stateCohortAbsorbing contains unknown state labels: ",
+         paste(shQuote(unknown), collapse = ", "),
+         ". Use the exact spelling of a configured or observed state, or a named discrete fallback.",
+         call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 # Source lookup uses exact names. Duplicate entries would silently select the
 # first rule, so reject ambiguity without changing destination semantics.
 .validateAllowedStateSources <- function(rules, argument = "allowedStatesList") {

@@ -53,7 +53,7 @@ cdm <- CDMConnector::cdmFromCon(
   con = db,
   cdmSchema = cdmSchema,
   achillesSchema = cdmResultsSchema,
-  writeSchema = c(schema = writeSchema, prefix = writePrefix),
+  writeSchema = c(schema = writeSchema, prefix = writePrefix)
 )
 ```
 
@@ -88,9 +88,7 @@ studyEnv <- cohort2TrajectoryConfiguration(
   useCDM = TRUE,
   trajectoryDataObject = NULL,
   pathToData = './Cohort2Trajectory/Data/importedData.csv',
-  allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
-  mergeThreshold = 0.5,
   batchSize = 1000
 ) 
 ```
@@ -126,9 +124,15 @@ studyEnv <- cohort2TrajectoryConfiguration(
 
 ### Configuration with saved study 
 
-Copy the study's JSON and Settings folders to the new location. Settings are
-restored from `Settings/analysisSettings.rds`. Supply a connection to the new
-database for import and trajectory generation.
+Copy the completed study's Settings folder to the new location.
+`Settings/analysisSettings.rds` contains the analysis settings and the cohort
+definitions used during import. Saved runs do not read edited working JSON
+files. Supply a connection to the new database for import and trajectory generation.
+Older CDM snapshots without embedded definitions must first be regenerated
+by rerunning the original configured import and trajectory generation.
+Omit analytical settings such as
+state labels, transition rules and cycle length: they are restored from the saved
+study. Import fresh data before generating trajectories.
 
 ```{r, echo = TRUE, eval = FALSE}
 
@@ -178,7 +182,7 @@ studyEnv <- cohort2TrajectoryConfiguration(
 studyEnv <- cohort2TrajectoryConfiguration(
     baseUrl = NULL,   
     useCDM = FALSE,                       
-    pathToData = paste0(getwd(), "/path/to/data/data.csv")), #<--- path to data as input
+    pathToData = file.path(getwd(), "path", "to", "data", "data.csv"),
     studyName = "nameForStudy",
     pathToStudy = getwd(),
     stateCohortMandatory = c("label_for_cohort2"),

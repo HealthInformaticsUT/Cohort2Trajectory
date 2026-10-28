@@ -37,11 +37,11 @@
     stop("No complete saved-study settings found at ", path,
          ". Older CSV settings did not save transition or merging rules. ",
          "Rerun the original configured import and trajectory generation with this ",
-         "package version once, then copy JSON and Settings to the new location.",
+         "package version once, then copy Settings to the new location.",
          call. = FALSE)
   }
   saved <- readRDS(path)
-  if (!is.list(saved) || !any(vapply(1:3, function(v) identical(saved$version, v), logical(1))) ||
+  if (!is.list(saved) || !any(vapply(1:4, function(v) identical(saved$version, v), logical(1))) ||
       !is.list(saved$import) || !is.list(saved$generation)) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
   }
@@ -86,7 +86,7 @@
     saved$generation$stateSelectionType, c(First = 1, Overlap = 2, Priority = 3),
     "stateSelectionType", allowNull = FALSE, warnCodes = FALSE
   )
-  saved$version <- 3L
+  saved$version <- max(saved$version, 3L)
   saved
 }
 
@@ -107,19 +107,40 @@
     stop("Saved cohort definitions must use relative paths within the JSON folder, without parent traversal.",
          call. = FALSE)
   }
-  jsonPath <- file.path(pathToStudy, studyName, "JSON")
-  files <- file.path(jsonPath, paste0(ids, ".json"))
-  missing <- files[!file.exists(files) | dir.exists(files)]
-  if (length(missing)) {
-    stop("Missing saved cohort definition(s): ", paste(basename(missing), collapse = ", "),
-         ". Copy the study's JSON folder as well as Settings.", call. = FALSE)
+  contents <- saved$definitionContents
+  if (is.null(contents)) {
+    stop("These saved CDM settings do not contain the cohort definitions used by the completed run. ",
+         "Configure the original study with runSavedStudy = FALSE and rerun import and generation ",
+         "to save self-contained settings. Current JSON files cannot verify an older snapshot.", call. = FALSE)
   }
-  # Existing relative paths must not resolve outside JSON through a symlink.
-  # The trailing separator excludes sibling folders with a shared name prefix.
-  root <- paste0(normalizePath(jsonPath, winslash = "/", mustWork = TRUE), "/")
-  resolved <- normalizePath(files, winslash = "/", mustWork = TRUE)
-  if (any(!startsWith(resolved, root))) {
-    stop("Saved cohort definitions must resolve inside the JSON folder.", call. = FALSE)
+  if (!is.character(contents) || is.null(names(contents)) || anyNA(names(contents)) ||
+      anyDuplicated(names(contents)) || !setequal(names(contents), unique(ids)) ||
+      anyNA(contents) || any(!nzchar(trimws(contents)))) {
+    stop("Saved cohort-definition contents are incomplete or inconsistent with their mapping. ",
+         "Rerun the original configured import and generation.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+# Capture the actual definitions read by the import, not the mutable working
+# JSON files that might have changed by the time generation completes.
+.readDefinitionContents <- function(definitions, jsonPath) {
+  ids <- unique(c(definitions$target, definitions$states))
+  files <- file.path(jsonPath, paste0(ids, ".json"))
+  stats::setNames(vapply(files, function(path) {
+    readChar(path, nchars = file.info(path)$size, useBytes = TRUE)
+  }, character(1)), ids)
+}
+
+.stageSavedDefinitions <- function(saved, jsonPath) {
+  .checkSavedDefinitions(saved, NULL, NULL)
+  # Only called with a newly created private directory. No working-tree
+  # symlinks or edited definitions can influence the restored run.
+  dir.create(jsonPath, recursive = TRUE, showWarnings = FALSE)
+  for (id in names(saved$definitionContents)) {
+    path <- file.path(jsonPath, paste0(id, ".json"))
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    writeChar(saved$definitionContents[[id]], path, eos = NULL, useBytes = TRUE)
   }
   invisible(NULL)
 }
@@ -129,9 +150,16 @@
   if (is.null(imported)) {
     imported <- mget(.studyImportFields(), envir = studyEnv, inherits = FALSE)
   }
-  snapshot <- list(version = 3L, import = imported, generation = generation,
+  snapshot <- list(version = 4L, import = imported, generation = generation,
                    definitions = studyEnv$.cohortDefinitions,
+                   definitionContents = studyEnv$.cohortDefinitionContents,
                    stateDictionary = studyEnv$stateDictionary)
-  saveRDS(snapshot, file.path(studyEnv$pathToStudy, studyEnv$studyName,
-                             "Settings", "analysisSettings.rds"))
+  if (!is.null(snapshot$definitions)) .checkSavedDefinitions(snapshot, NULL, NULL)
+  settingsPath <- file.path(studyEnv$pathToStudy, studyEnv$studyName, "Settings")
+  staged <- tempfile(".analysisSettings-", tmpdir = settingsPath)
+  on.exit(unlink(staged), add = TRUE)
+  saveRDS(snapshot, staged)
+  if (!file.rename(staged, file.path(settingsPath, "analysisSettings.rds"))) {
+    stop("Could not publish the completed study settings. The previous snapshot has been retained.", call. = FALSE)
+  }
 }

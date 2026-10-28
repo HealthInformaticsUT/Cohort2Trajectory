@@ -20,6 +20,8 @@
 #'   import, not an override in createTrajectories.
 #' @param stateCohortAbsorbing Vector of absorbing state labels.
 #'   NULL or character(0) means no absorbing states.
+#'   Generation checks exact names against configured and observed states and
+#'   any named discrete fallback. Configured states may be absent from the data.
 #' @param stateSelectionType the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.
 #' @param oocFix the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
 #'   "None" and "Last present state" always select gap-handling behaviour,
@@ -40,16 +42,20 @@
 #'   cycle is shortened if the trajectory boundary falls partway through it.
 #' @param outOfCohortAllowed Whether retained state records may extend the
 #'   trajectory beyond the target interval's end. The target start is unchanged.
-#' @param runSavedStudy Restore the complete analysis settings from
-#'   studyName/Settings/analysisSettings.rds. Supply the new parent folder and
+#' @param runSavedStudy Restore the complete analysis settings and selected
+#'   cohort definitions from studyName/Settings/analysisSettings.rds. Supply the new parent folder and
 #'   study name, not the analysis settings again. Connections are supplied to
-#'   getDataForStudy and createTrajectories. Older CSV-only studies must first
-#'   be rerun with their original configuration to save the complete settings.
+#'   getDataForStudy and createTrajectories. Version 4 snapshots embed the exact
+#'   cohort JSON definitions captured during import. Saved CDM runs use these
+#'   definitions, not current files in JSON. Copying Settings is sufficient.
+#'   To change cohort definitions, configure a fresh study and rerun both steps.
+#'   Older CSV-only studies and CDM snapshots without embedded definitions must
+#'   first be rerun with their original configuration. Legacy non-CDM snapshots
+#'   remain supported where their analysis rules can be restored.
 #'   Saved settings with conflicting mandatory-state requirements for import
 #'   and generation must be reconfigured and rerun with the intended requirements.
 #'   Local state definitions may use relative subpaths such as states/A for
-#'   JSON/states/A.json. Copy these subfolders with JSON. Saved definition paths
-#'   must remain inside JSON, including when symbolic links are used.
+#'   JSON/states/A.json. Saved paths must not be absolute or contain parent traversal.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param allowedStatesList Named list of allowed destinations for each source

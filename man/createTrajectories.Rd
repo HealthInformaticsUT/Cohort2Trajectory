@@ -68,7 +68,10 @@ even when ignoring case. Labels must not be blank or missing. The labels
 Names are case-insensitive. Existing numeric codes 1, 2 and 3 are also
 accepted with a deprecation warning. A selection must be specified before generation.}
 
-\item{stateCohortAbsorbing}{vector of the customized labels of the state cohorts which are absorbing}
+\item{stateCohortAbsorbing}{Vector of absorbing state labels. In nonmerged
+studies, use the exact spelling of a configured or observed state, or the
+named discrete fallback. Configured states may be absent from the current
+data. NULL and character(0) mean no absorbing states.}
 
 \item{stateCohortMandatory}{Mandatory state requirements already applied by
 getDataForStudy. These cannot be changed during trajectory generation.

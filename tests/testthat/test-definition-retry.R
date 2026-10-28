@@ -60,5 +60,22 @@ test_that("failed CDM imports preserve the definitions used by saved studies", {
   expect_identical(RJSONIO::fromJSON(file.path(json, "0.json"), simplify = FALSE)$definition, "303")
   expect_true(file.exists(file.path(json, "atlas_404.json")))
   expect_identical(readLines(file.path(json, "unrelated.json")), "Unrelated local definition")
+  # A successful new import must not change the definitions of the last
+  # completed study when generation fails or has not yet been attempted.
+  expect_error(createTrajectories(studyEnv = study, useCDM = FALSE,
+                                  stateCohortPriorityOrder = "missing"), "missing from statePriorityVector")
+  restored <- cohort2TrajectoryConfiguration(pathToStudy = root, studyName = "replay", runSavedStudy = TRUE)
+  getDataForStudy(cdm = list(cohort = raw), studyEnv = restored)
+  expect_identical(seenTarget, "101")
+  writeLines('{"definition":"edited_after_import"}', file.path(json, "0.json"))
   expect_identical(unique(createTrajectories(studyEnv = study, useCDM = FALSE)$subject_id), "new_patient")
+  settingsFile <- file.path(root, "replay", "Settings", "analysisSettings.rds")
+  snapshot <- readRDS(settingsFile)
+  expect_identical(RJSONIO::fromJSON(snapshot$definitionContents[["0"]], simplify = FALSE)$definition, "303")
+  # A failed publication cannot truncate or replace the completed snapshot.
+  before <- tools::md5sum(settingsFile)
+  local_mocked_bindings(file.rename = function(...) FALSE, .package = "base")
+  expect_error(.saveStudySnapshot(study, snapshot$generation), "previous snapshot has been retained")
+  expect_identical(tools::md5sum(settingsFile), before)
+  expect_identical(list.files(dirname(settingsFile), all.files = TRUE, no.. = TRUE), "analysisSettings.rds")
 })

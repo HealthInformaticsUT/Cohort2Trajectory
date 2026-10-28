@@ -19,11 +19,18 @@
 #' @param runSavedStudy Use the analysis rules restored by a saved-study
 #'   configuration and import fresh data from the supplied connection or input.
 #' @param useCDM The package can also be run without the OMOP CDM
-#' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
+#' @param trajectoryDataObject Data frame for a non-CDM import. An explicitly
+#'   supplied non-NULL object overrides the configured CSV path. Supply NULL
+#'   to use the CSV path. Local source overrides apply to this import only.
 #' @param mergeStates Boolean, if you want to merge states when they overlap
 #' @param mergedStateOverrides List of mergedState() definitions.
 #' @param ... Compatibility only: legacy named mergeThreshold warns and is ignored.
-#' @param pathToData When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)
+#' @param pathToData CSV path for a non-CDM import. An explicitly supplied
+#'   non-NULL path overrides the configured data object. Do not explicitly
+#'   supply both non-NULL local sources. With neither supplied, the configured
+#'   object is used when present, otherwise the configured CSV path is used.
+#'   The same precedence applies to saved local studies. CDM imports ignore
+#'   both local input arguments.
 #' @param allowedStatesList Named list of allowed transitions between states.
 #'   Each entry must have a unique, nonempty, non-missing source-state name.
 #' @param stateCohortAbsorbing Vector of absorbing states
@@ -51,7 +58,10 @@
 #'   mandatory states, priorities and transition rules.
 #'   Downloaded ATLAS definitions use 0.json for the target and atlas_<id>.json
 #'   for states. Repeated state IDs share a definition file without changing
-#'   their clinical labels. Saved settings retain this filename mapping.
+#'   their clinical labels. Completed settings retain this filename mapping and
+#'   the definition contents captured by the successful import. Saved CDM runs
+#'   materialise these contents in a private folder and leave working JSON and
+#'   its manifest unchanged. A later import cannot change an earlier snapshot.
 #'
 #' @return log info
 #' @export
@@ -98,6 +108,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   .validateAllowedStateSources(allowedStatesList)
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
+  definitionContents <- NULL
 
   if (useCDM) {
     # Keep downloads and manifest updates away from the last saved study until
@@ -107,7 +118,9 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     on.exit(unlink(definitionStage, recursive = TRUE), add = TRUE)
     dir.create(file.path(definitionStage, "study"))
     jsonPath <- file.path(pathToStudy, studyName, "JSON")
-    if (!file.copy(jsonPath, file.path(definitionStage, "study"), recursive = TRUE)) {
+    if (runSavedStudy) {
+      .stageSavedDefinitions(saved, file.path(definitionStage, "study", "JSON"))
+    } else if (!file.copy(jsonPath, file.path(definitionStage, "study"), recursive = TRUE)) {
       stop("Could not stage the study's JSON folder. Check that it exists and is readable.", call. = FALSE)
     }
   }
@@ -144,8 +157,15 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     definitions <- .cohortDefinitionFiles(atlasTargetCohort, atlasStateCohorts, baseUrl)
 
   } else {
-    # get data from input
-    if (is.null(trajectoryDataObject)) {
+    # Explicit local inputs override the opposite configured source without
+    # changing which source a later import uses by default.
+    explicitObject <- !missing(trajectoryDataObject) && !is.null(trajectoryDataObject)
+    explicitPath <- !missing(pathToData) && !is.null(pathToData)
+    if (explicitObject && explicitPath) {
+      stop("Supply only one non-NULL local input: trajectoryDataObject or pathToData.",
+           call. = FALSE)
+    }
+    if (explicitPath || is.null(trajectoryDataObject)) {
       data = .readPatientCsv(pathToData)
     } else {
       # Clinical labels are values, not filenames. Renaming them here can
@@ -159,6 +179,12 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   
   # Print completion message
   cli::cli_alert_success("Get cohort data success!")
+
+  if (useCDM) {
+    definitionContents <- .readDefinitionContents(
+      definitions, file.path(definitionStage, "study", "JSON")
+    )
+  }
   
   # arrange data
   data <-
@@ -229,13 +255,13 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     ".csv"
   ))
 
-  if (useCDM) {
+  if (useCDM && !runSavedStudy) {
     publish <- "CohortsToCreate.csv"
-    if (!runSavedStudy && !is.null(baseUrl)) {
+    if (!is.null(baseUrl)) {
       publish <- c(publish, paste0(unique(c(definitions$target, definitions$states)), ".json"))
     }
-    # Local and saved definitions were only read. Publish downloads and the
-    # new manifest, without replacing unrelated files from the staged copy.
+    # Fresh local definitions were only read. Publish downloads and the new
+    # manifest without replacing unrelated files. Saved runs publish neither.
     copied <- file.copy(file.path(definitionStage, "study", "JSON", publish),
                         jsonPath, overwrite = TRUE)
     if (!all(copied)) {
@@ -248,6 +274,7 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   # Generation must use the same rules that were used/expanded during import.
   studyEnv$.importSettings <- importSettings
   studyEnv$.cohortDefinitions <- definitions
+  studyEnv$.cohortDefinitionContents <- definitionContents
   studyEnv$atlasTargetCohort <- atlasTargetCohort
   # Keep source selectors aligned with the imported target and clinical labels.
   # Saved imports already use their restored cohort-definition mapping.

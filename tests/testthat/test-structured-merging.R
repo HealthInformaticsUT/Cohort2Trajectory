@@ -73,7 +73,7 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
     expect_identical(together$state_label, rep(c("START", "Combined", "C", "EXIT"), 2))
     expect_equal(createTrajectories(studyEnv = study, batchSize = 1), together)
     saved <- readRDS(file.path(root, type, "Settings", "analysisSettings.rds"))
-    expect_identical(saved$version, 3L)
+    expect_identical(saved$version, 4L)
     expect_false("mergeThreshold" %in% names(saved$import))
     expect_identical(saved$generation$allowedStatesList, study$allowedStatesList)
     restored <- cohort2TrajectoryConfiguration(

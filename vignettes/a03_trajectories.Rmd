@@ -21,30 +21,29 @@ This section outlines the process for creating trajectories, including handling 
 The standard approach involves using the default configuration, data import, and pre-processing steps, as described in [getting started](a00_introduction.html#study-configuration).
 
 ```{r, eval = FALSE, echo = TRUE}
-createTrajectories (cdm = cdm, studyEnv = studyEnv)
+trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
 ```
 
-If the user opts out of using the previous configuration, the necessary inputs must be provided manually. Below is list of default values:
+Keep the configured `studyEnv` in every call and first run
+`getDataForStudy()` successfully. For a fresh study, individual generation
+settings can be overridden. For example, generate discrete trajectories in
+30-day cycles:
 
 ```{r, eval = FALSE, echo = TRUE}
-createTrajectories(
-  cdm = NULL,
-  studyEnv = NULL,
-  trajectoryType = studyEnv$trajectoryType,
-  runSavedStudy = studyEnv$runSavedStudy,
-  oocFix = studyEnv$oocFix,
-  outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  lengthOfStay = studyEnv$lengthOfStay,
-  stateCohortLabels = studyEnv$stateCohortLabels,
-  stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
-  stateSelectionType = studyEnv$stateSelectionType,
-  stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
-  stateCohortMandatory = studyEnv$stateCohortMandatory,
-  allowedStatesList = studyEnv$allowedStatesList,
-  useCDM = studyEnv$useCDM,
-  pathToStudy = studyEnv$pathToStudy,
-  batchSize = studyEnv$batchSize
+trajectories <- createTrajectories(
+  cdm = cdm,
+  studyEnv = studyEnv,
+  trajectoryType = "Discrete",
+  lengthOfStay = 30
 )
+```
+
+For a saved study configured with `runSavedStudy = TRUE`, use its restored
+settings without analytical overrides. Import fresh data before generation:
+
+```{r, eval = FALSE, echo = TRUE}
+getDataForStudy(cdm = newCdm, studyEnv = studyEnv)
+trajectories <- createTrajectories(cdm = newCdm, studyEnv = studyEnv)
 ```
 
 ## Adding personal data to self-inserted data
@@ -53,7 +52,7 @@ To join patient age and gender from a CDM while creating trajectories, supply th
 With `useCDM = FALSE`, both trajectory formats include `age` and `gender_concept_id` as `NA` in the returned data and exported CSV. No birth date is assumed. This replaces the earlier placeholder gender code and `birth_datetime = "1900-01-01"` column.
 
 ```{r, eval = FALSE, echo = TRUE}
-createTrajectories (
+trajectories <- createTrajectories(
   cdm = cdm,
   studyEnv = studyEnv,
   useCDM = TRUE

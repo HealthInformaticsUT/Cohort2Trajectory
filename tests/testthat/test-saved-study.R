@@ -28,7 +28,7 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
   expected <- createTrajectories(cdm = cdm1, studyEnv = study)
 
   dir.create(file.path(destinationPath, "portable"))
-  file.copy(file.path(sourcePath, "portable", c("JSON", "Settings")),
+  file.copy(file.path(sourcePath, "portable", "Settings"),
             file.path(destinationPath, "portable"), recursive = TRUE)
   restored <- cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, batchSize = 5
@@ -53,8 +53,9 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
   expect_equal(dplyr::arrange(actual, subject_id, time_in_cohort, state_label),
                 dplyr::arrange(expected, subject_id, time_in_cohort, state_label))
 
-  unlink(file.path(destinationPath, "portable", "JSON", "0.json"))
-  expect_error(getDataForStudy(cdm = cdm2, studyEnv = restored), "Missing saved cohort definition.*0.json")
+  # Legacy CDM snapshots cannot prove that working JSON still matches the run.
+  restored$.savedSettings$definitionContents <- NULL
+  expect_error(getDataForStudy(cdm = cdm2, studyEnv = restored), "do not contain the cohort definitions")
   expect_error(createTrajectories(cdm = cdm2, studyEnv = restored), "getDataForStudy successfully first")
   unlink(file.path(destinationPath, "portable", "Settings", "analysisSettings.rds"))
   expect_error(cohort2TrajectoryConfiguration(
