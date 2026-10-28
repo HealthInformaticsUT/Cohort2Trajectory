@@ -34,7 +34,9 @@
 #'   Their target intervals still define follow-up. Discrete trajectories use
 #'   the configured gap rule, and continuous trajectories retain boundaries
 #'   without inventing clinical states. An empty eligible cohort is not treated
-#'   as a successful import.
+#'   as a successful import. It leaves the previous cleaned data, merged-state
+#'   artifacts and settings unchanged. Trajectory generation remains blocked
+#'   until a later import succeeds.
 #'   State labels are preserved as supplied for CDM, data-frame and CSV input.
 #'   Spaces and punctuation are not converted
 #'   into filename-safe substitutes. Use the same labels in state definitions,
@@ -157,7 +159,12 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     mandatoryStates = stateCohortMandatory,
     outOfCohortAllowed = outOfCohortAllowed
   )
-  
+  # Reject an empty eligible cohort before replacing any cleaned-data or
+  # merged-state artifacts from the previous successful import.
+  if (nrow(data) == 0L) {
+    cli::cli_warn("{.warning No patients left after cleaning the data!}")
+    return(invisible(NULL))
+  }
   
   # Keep source rules unchanged. Only the resolved interval table uses state keys.
   registry <- NULL
@@ -198,12 +205,6 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     atlasTargetCohort,
     ".csv"
   ))
-  
-  if (length(dplyr::pull(data, .data$cohort_definition_id)) == 0) {
-    cli::cli_warn("{.warning No patients left after cleaning the data!}")
-    
-    return(NULL)
-  }
   
   # Target-only histories are valid after mandatory-state filtering. Lack of
   # recorded states does not erase the target interval or its observed time.

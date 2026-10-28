@@ -83,7 +83,9 @@ A nonempty target cohort remains valid when no state events survive
   Their target intervals still define follow-up. Discrete trajectories use
   the configured gap rule, and continuous trajectories retain boundaries
   without inventing clinical states. An empty eligible cohort is not treated
-  as a successful import.
+  as a successful import. It leaves the previous cleaned data, merged-state
+  artifacts and settings unchanged. Trajectory generation remains blocked
+  until a later import succeeds.
   State labels are preserved as supplied for CDM, data-frame and CSV input.
   Spaces and punctuation are not converted
   into filename-safe substitutes. Use the same labels in state definitions,
