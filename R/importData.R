@@ -480,6 +480,12 @@ getTrajectoriesDiscrete <- function(cdm,
                        c(cohortData$cohort_definition_id, statePriorityVector, stateLevels))
   encoded <- .encodeSubjectIds(cohortData)
   tmp_data <- .boundTrajectoryData(encoded$data, outOfCohortAllowed)
+  tmp_data$cohort_definition_id <- .utf8StateLabels(tmp_data$cohort_definition_id)
+  statePriorityVector <- .utf8StateLabels(statePriorityVector)
+  absorbingStates <- .utf8StateLabels(absorbingStates)
+  allowedStatesList <- .utf8TransitionRules(allowedStatesList)
+  stateLevels <- .utf8StateLabels(stateLevels)
+  oocFix <- .utf8StateLabels(oocFix)
   
   # Getting all relevant patient ID's
   patientIds <- unique(tmp_data$subject_id)
@@ -493,6 +499,8 @@ getTrajectoriesDiscrete <- function(cdm,
     allowedStatesList = allowedStatesList,
     absorbingStates = absorbingStates
   )
+  # The native output contains UTF-8 bytes but does not retain R's encoding mark.
+  Encoding(newPatientData$state_label) <- "UTF-8"
   ################################################################################
   #
   # Removing absorbing states
@@ -503,6 +511,7 @@ getTrajectoriesDiscrete <- function(cdm,
     patientIDs = patientIds,
     absorbingStates = if (is.null(absorbingStates)) character(0) else absorbingStates
   )
+  Encoding(newPatientData$state_label) <- "UTF-8"
   newPatientData <- .restoreSubjectIds(newPatientData, encoded$originals)
   ##############################################################################
   #
@@ -592,6 +601,11 @@ getTrajectoriesContinuous <- function(cdm,
                                       outOfCohortAllowed = FALSE) {
   encoded <- .encodeSubjectIds(patientData)
   data <- .boundTrajectoryData(encoded$data, outOfCohortAllowed)
+  data$cohort_definition_id <- .utf8StateLabels(data$cohort_definition_id)
+  statePriorityVector <- .utf8StateLabels(statePriorityVector)
+  absorbingStates <- .utf8StateLabels(absorbingStates)
+  allowedStatesList <- .utf8TransitionRules(allowedStatesList)
+  stateLevels <- .utf8StateLabels(stateLevels)
   isTarget <- data$cohort_definition_id == "0"
   exits <- data[isTarget, ]
   exits$cohort_start_date <- exits$cohort_end_date + 1
@@ -704,11 +718,13 @@ getTrajectoriesContinuous <- function(cdm,
     allowedStatesList = allowedStatesList,
     absorbingStates = absorbingStates
   )
+  Encoding(data$state_label) <- "UTF-8"
   data <- removeAfterAbsorbingStatesContinuous(
     patientData = data,
     patientIDs = unique(data$subject_id),
     absorbingStates = if (is.null(absorbingStates)) character(0) else absorbingStates
   )
+  Encoding(data$state_label) <- "UTF-8"
   data <- .restoreSubjectIds(data, encoded$originals)
   
   ##############################################################################

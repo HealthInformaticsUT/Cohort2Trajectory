@@ -148,6 +148,10 @@ State IDs are assigned once per study. START has ID 1, followed
   columns contain missing values, replacing the previous placeholder gender
   code and fabricated birth_datetime column. Non-CDM cohort input alone
   does not supply demographics for this join.
+  State labels are converted to UTF-8 in working data and rules so that
+  equivalent strings with different R encoding marks match consistently.
+  This conversion does not change label spelling or case.
+  Configuration and saved settings retain the supplied labels.
 }
 \examples{
 \dontrun{createTrajectories(cdm = cdm, runSavedStudy = F,studyEnv = studyEnv)}

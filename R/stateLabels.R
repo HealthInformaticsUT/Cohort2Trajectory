@@ -43,6 +43,20 @@
   invisible(NULL)
 }
 
+# Native engines compare bytes. Use one encoding for their working labels,
+# leaving the user's configuration and saved settings unchanged.
+.utf8StateLabels <- function(labels) {
+  if (is.null(labels)) return(NULL)
+  enc2utf8(as.character(labels))
+}
+
+.utf8TransitionRules <- function(rules) {
+  if (is.null(rules)) return(NULL)
+  result <- lapply(rules, .utf8StateLabels)
+  names(result) <- .utf8StateLabels(names(rules))
+  result
+}
+
 .validateGapFallback <- function(value, stateLabels = NULL) {
   if (!is.character(value) || length(value) != 1L || is.na(value) ||
       !nzchar(trimws(value))) {

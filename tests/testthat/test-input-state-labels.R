@@ -119,3 +119,42 @@ test_that("import and generation reject case collisions across patients", {
   input$cohort_definition_id[4] <- "a"
   expect_error(getDataForStudy(studyEnv = study, trajectoryDataObject = input), "ignoring case")
 })
+
+test_that("mixed label encodings preserve transition rules and absorbing cutoffs", {
+  path <- tempfile("c2t-label-encoding-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  labels <- c("\u00c4ge faas", "\u00d5endusravi", "Later")
+  supplied <- iconv(labels, from = "UTF-8", to = "latin1")
+  input <- data.frame(
+    subject_id = 1L, cohort_definition_id = c("0", supplied),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7, 14),
+    cohort_end_date = as.Date("2020-01-01") + c(20, 6, 13, 20)
+  )
+  for (type in c("Discrete", "Continuous")) {
+    study <- cohort2TrajectoryConfiguration(
+      pathToStudy = path, studyName = type, useCDM = FALSE,
+      trajectoryDataObject = input, stateCohortLabels = supplied,
+      stateCohortPriorityOrder = supplied, stateSelectionType = "Priority",
+      trajectoryType = type, lengthOfStay = 7, stateCohortAbsorbing = supplied[2],
+      allowedStatesList = setNames(list(supplied[2]), supplied[1])
+    )
+    getDataForStudy(studyEnv = study)
+    result <- createTrajectories(studyEnv = study)
+    expect_identical(result$state_label, c("START", labels[1:2], "EXIT"))
+    expect_equal(tail(result$state_start_date, 1), as.Date("2020-01-15"))
+    expect_identical(Encoding(result$state_label[2:3]), rep("UTF-8", 2))
+    expect_identical(Encoding(study$stateCohortLabels), Encoding(supplied))
+    saved <- readRDS(file.path(path, type, "Settings", "analysisSettings.rds"))
+    expect_identical(Encoding(saved$generation$stateCohortPriorityOrder), Encoding(supplied))
+    expect_identical(lapply(names(saved$generation$allowedStatesList), charToRaw),
+                      lapply(supplied[1], charToRaw))
+    if (type == "Discrete") {
+      # The same encoded absorbing label also works when used to fill a gap.
+      getDataForStudy(studyEnv = study, trajectoryDataObject = input[c(1, 2, 4), ])
+      fallback <- createTrajectories(studyEnv = study, oocFix = supplied[2])
+      expect_identical(fallback$state_label, result$state_label)
+      expect_equal(fallback$state_end_date, result$state_end_date)
+    }
+  }
+})
