@@ -763,10 +763,6 @@ generateCohortSetCSV <- function(selectedStates,
   if (length(selectedStates) != length(stateCohortLabels) + 1L) {
     stop("stateCohortLabels must provide one label for each state cohort.", call. = FALSE)
   }
-  if (file.exists(paste0(pathToStudy, studyName, '/JSON/CohortsToCreate.csv'))) {
-    file.remove(paste0(pathToStudy, studyName, '/JSON/CohortsToCreate.csv'))
-  }
-  
   jsonPath <- paste0(selectedStates, ".json")
   cohortId <- seq_along(jsonPath)
   # Clinical labels can collide with "target" or with each other after the
@@ -780,8 +776,9 @@ generateCohortSetCSV <- function(selectedStates,
     cohortName = cohortSet$cohortName,
     jsonPath = cohortSet$jsonPath
   )
+  # write.csv replaces the intended manifest. No separate deletion is needed.
   save_object(cohortSet,
-              paste0(pathToStudy, "/", studyName, '/JSON/CohortsToCreate.csv'))
+              file.path(pathToStudy, studyName, "JSON", "CohortsToCreate.csv"))
   
   return (cohortSet)
 }
