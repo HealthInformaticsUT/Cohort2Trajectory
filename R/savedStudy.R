@@ -99,15 +99,27 @@
          call. = FALSE)
   }
   ids <- c(definitions$target, definitions$states)
-  if (anyNA(ids) || any(!nzchar(ids)) || any(grepl("[/\\\\]", ids))) {
-    stop("Saved cohort definitions must be file names within the JSON folder.",
+  # Nested local definitions are valid manifest entries. Keep their relative
+  # paths, but reject absolute paths and parent traversal on either platform.
+  comparisonPaths <- gsub("\\\\", "/", ids)
+  if (anyNA(ids) || any(!nzchar(ids)) ||
+      any(grepl("^(/|[A-Za-z]:)|(^|/)\\.\\.(/|$)", comparisonPaths))) {
+    stop("Saved cohort definitions must use relative paths within the JSON folder, without parent traversal.",
          call. = FALSE)
   }
-  files <- file.path(pathToStudy, studyName, "JSON", paste0(ids, ".json"))
+  jsonPath <- file.path(pathToStudy, studyName, "JSON")
+  files <- file.path(jsonPath, paste0(ids, ".json"))
   missing <- files[!file.exists(files) | dir.exists(files)]
   if (length(missing)) {
     stop("Missing saved cohort definition(s): ", paste(basename(missing), collapse = ", "),
          ". Copy the study's JSON folder as well as Settings.", call. = FALSE)
+  }
+  # Existing relative paths must not resolve outside JSON through a symlink.
+  # The trailing separator excludes sibling folders with a shared name prefix.
+  root <- paste0(normalizePath(jsonPath, winslash = "/", mustWork = TRUE), "/")
+  resolved <- normalizePath(files, winslash = "/", mustWork = TRUE)
+  if (any(!startsWith(resolved, root))) {
+    stop("Saved cohort definitions must resolve inside the JSON folder.", call. = FALSE)
   }
   invisible(NULL)
 }

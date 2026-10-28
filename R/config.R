@@ -47,6 +47,9 @@
 #'   be rerun with their original configuration to save the complete settings.
 #'   Saved settings with conflicting mandatory-state requirements for import
 #'   and generation must be reconfigured and rerun with the intended requirements.
+#'   Local state definitions may use relative subpaths such as states/A for
+#'   JSON/states/A.json. Copy these subfolders with JSON. Saved definition paths
+#'   must remain inside JSON, including when symbolic links are used.
 #' @param useCDM The package can also be run without the OMOP CDM
 #' @param trajectoryDataObject When using without OMOP CDM specify the data file  (if specified no need for pathToData)
 #' @param allowedStatesList Named list of allowed destinations for each source

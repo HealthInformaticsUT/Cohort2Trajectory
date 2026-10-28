@@ -93,7 +93,10 @@ study name, not the analysis settings again. Connections are supplied to
 getDataForStudy and createTrajectories. Older CSV-only studies must first
 be rerun with their original configuration to save the complete settings.
 Saved settings with conflicting mandatory-state requirements for import
-and generation must be reconfigured and rerun with the intended requirements.}
+and generation must be reconfigured and rerun with the intended requirements.
+Local state definitions may use relative subpaths such as states/A for
+JSON/states/A.json. Copy these subfolders with JSON. Saved definition paths
+must remain inside JSON, including when symbolic links are used.}
 
 \item{useCDM}{The package can also be run without the OMOP CDM}
 

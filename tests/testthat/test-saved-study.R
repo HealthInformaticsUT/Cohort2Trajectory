@@ -1,4 +1,4 @@
-test_that("a moved study preserves colliding clinical labels and reads a different CDM", {
+test_that("a moved study preserves nested definitions and clinical labels on a different CDM", {
   root <- tempfile("c2t-portable-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
@@ -8,16 +8,17 @@ test_that("a moved study preserves colliding clinical labels and reads a differe
   dir.create(destinationPath)
   study <- cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = sourcePath, baseUrl = NULL,
-    atlasTargetCohort = "0", atlasStateCohorts = c("first", "second"),
-    # Clinical labels intentionally overlap the opposite definition filenames.
+    atlasTargetCohort = "0", atlasStateCohorts = c("first", "states/second"),
+    # One clinical label intentionally matches the opposite definition filename.
     # They must be assigned once, identically in fresh and restored imports.
     stateCohortLabels = c("second", "first"), stateCohortPriorityOrder = c("first", "second"),
     stateCohortMandatory = "first", stateCohortAbsorbing = "first",
     stateSelectionType = "Priority", lengthOfStay = 14,
     oocFix = "Last present state", allowedStatesList = list(second = c("second", "first"), first = "first")
   )
+  dir.create(file.path(sourcePath, "portable", "JSON", "states"))
   file.copy(file.path("testStudyMain", "JSON", c("test1.json", "test3.json", "test4.json")),
-            file.path(sourcePath, "portable", "JSON", c("0.json", "first.json", "second.json")))
+            file.path(sourcePath, "portable", "JSON", c("0.json", "first.json", "states/second.json")))
   dbPaths <- file.path(root, c("source.duckdb", "destination.duckdb"))
   for (path in dbPaths) file.copy(CDMConnector::eunomiaDir("GiBleed"), path)
   con1 <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPaths[1])
