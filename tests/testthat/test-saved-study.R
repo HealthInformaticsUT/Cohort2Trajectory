@@ -35,7 +35,6 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
   )
   expect_equal(restored$allowedStatesList, study$allowedStatesList)
   expect_equal(restored$lengthOfStay, 14)
-  expect_false("mergeThreshold" %in% names(restored))
   expect_error(createTrajectories(studyEnv = restored), "getDataForStudy successfully first")
   expect_error(cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, lengthOfStay = 7
@@ -53,14 +52,14 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
   expect_equal(dplyr::arrange(actual, subject_id, time_in_cohort, state_label),
                 dplyr::arrange(expected, subject_id, time_in_cohort, state_label))
 
-  # Legacy CDM snapshots cannot prove that working JSON still matches the run.
+  # Current CDM snapshots must contain the definitions from their completed run.
   restored$.savedSettings$definitionContents <- NULL
   expect_error(getDataForStudy(cdm = cdm2, studyEnv = restored), "do not contain the cohort definitions")
   expect_error(createTrajectories(cdm = cdm2, studyEnv = restored), "getDataForStudy successfully first")
   unlink(file.path(destinationPath, "portable", "Settings", "analysisSettings.rds"))
   expect_error(cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE
-  ), "Older CSV settings did not save")
+  ), "No complete saved-study settings found")
 })
 
 test_that("downloaded definitions remain portable independently of clinical labels", {

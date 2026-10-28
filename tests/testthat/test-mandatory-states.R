@@ -60,14 +60,12 @@ test_that("generation cannot silently change mandatory-state eligibility", {
   expect_equal(unique(createTrajectories(studyEnv = study)$subject_id), c(1, 2))
 
   snapshot <- readRDS(files[2])
-  for (version in c(1L, 3L)) {
-    snapshot$version <- version
-    snapshot$generation$stateCohortMandatory <- "A"
-    saveRDS(snapshot, files[2])
-    before <- tools::md5sum(files[2])
-    expect_error(cohort2TrajectoryConfiguration(
-      pathToStudy = path, studyName = "mandatory", useCDM = FALSE, runSavedStudy = TRUE
-    ), "requirements disagree between import and generation")
-    expect_identical(tools::md5sum(files[2]), before)
-  }
+  expect_identical(snapshot$version, 4L)
+  snapshot$generation$stateCohortMandatory <- "A"
+  saveRDS(snapshot, files[2])
+  before <- tools::md5sum(files[2])
+  expect_error(cohort2TrajectoryConfiguration(
+    pathToStudy = path, studyName = "mandatory", useCDM = FALSE, runSavedStudy = TRUE
+  ), "requirements disagree between import and generation")
+  expect_identical(tools::md5sum(files[2]), before)
 })

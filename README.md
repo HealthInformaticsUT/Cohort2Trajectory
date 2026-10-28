@@ -1,207 +1,129 @@
-
 # Cohort2Trajectory
 
-NOTE: After refactoring to CDMConnector the package execution code has significantly changed. You can find the old release v1.1.8 [here](https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.8). (January 2025)
+Cohort2Trajectory turns cohort intervals into patient trajectories. The target
+cohort defines each patient's observation period. State cohorts describe what
+happened during that period. The analyst defines those cohorts and decides
+which state takes priority when records overlap.
 
-# Introduction
+The package accepts cohorts generated in an OMOP Common Data Model database,
+an R data frame or a CSV file. It produces either fixed-length cycles or
+continuous intervals. It does not infer diagnoses, recovery or a history state
+from the names of the supplied cohorts.
 
-Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database.
-The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time.
+## Start here
 
-For instructions and documentation please see the package's [wiki](https://healthinformaticsut.github.io/Cohort2Trajectory/) page.
+The [documentation site](https://healthinformaticsut.github.io/Cohort2Trajectory/)
+contains the function reference and these articles:
 
-# Features
+- [Getting started](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html): a small example that needs no database.
+- [Configure a study](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html): observation bounds, selection rules and overlapping states.
+- [Import cohort data](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html): local data, ATLAS definitions and saved studies.
+- [Create trajectories](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html): discrete and continuous output.
+- [A weekly worked example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html): pneumonia history, two death states and a saved-study rerun.
+- [Read the output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html): columns, dates, saved files and downstream use.
 
-**Sharing the study**: A successful import and trajectory-generation run saves
-the complete analysis rules in `Settings/analysisSettings.rds`. This is the only
-settings file written or read by the package. The snapshot preserves import
-and generation settings separately, including allowed transitions, optional
-state lists, cycle length and merging options.
-
-Use readable names for `trajectoryType` (`"Discrete"` or `"Continuous"`) and
-`stateSelectionType` (`"First"`, `"Overlap"` or `"Priority"`) in both configuration
-and generation. Names ignore case and surrounding whitespace. The configuration
-and new RDS snapshots store the canonical names, not numeric engine codes.
-Legacy numeric arguments still work but warn with the replacement name.
-Supported legacy RDS settings are converted in memory without modifying the
-original file when replayed with fresh non-CDM input. Removed threshold settings
-produce a warning. New snapshots use version 4 and include the imported cohort
-definitions for CDM studies. Older CDM snapshots must be regenerated using the
-original configured import and generation. Use the updated package at each site.
-Legacy version-1 and version-2 merged studies must be reconfigured from their original
-state definitions because their saved labels do not reliably identify membership.
-
-## Combining overlapping states
-
-Use `mergeStates = TRUE` to represent simultaneous original states as a single
-combined state over their exact overlapping interval. No threshold is used.
-For example, A on days 1-10 and B on days 5-7 produce A on days 1-4, A+B on
-days 5-7, and A on days 8-10. Composition follows observation-boundary and
-mandatory-state filtering, and precedes weekly or other discretisation.
-Two events on different days of the same week are not automatically combined.
-
-Membership is stored explicitly, never recovered from labels. An original state
-called `A+B` remains an original state. It is not confused with the combination
-of A and B. Only observed combinations and explicitly specified definitions are
-registered, without enumerating permutations of all possible combinations.
-
-By default:
-
-- Permitted destinations are inherited by union across the source members.
-  Thus A+B can enter C when A allows C, even if B does not.
-- Entering a composite destination requires permission for every newly added
-  member. A permission for C alone does not allow entry into C+D.
-- Self-transitions and transitions only removing members require permission for
-  the retained destination members. Empty original-state destination lists do
-  not silently acquire self-transitions.
-- A combination is absorbing if any member is absorbing. Absorbing behaviour
-  takes precedence over permitted outgoing transitions.
-- Priority follows the highest-priority member, with larger combinations first
-  at equal priority. With no supplied priority order, original labels supply a
-  deterministic order. The priority rule selects among intervals within a
-  discrete cycle, not among duplicate original and combined patient-time.
-
-Use `mergedState()` only for exceptions:
-
-```r
-study <- cohort2TrajectoryConfiguration(
-  useCDM = FALSE,
-  trajectoryDataObject = input,
-  stateCohortLabels = c("A", "B", "C"),
-  stateCohortPriorityOrder = c("A", "B", "C"),
-  stateSelectionType = "Priority",
-  trajectoryType = "Discrete",
-  lengthOfStay = 7,
-  stateCohortAbsorbing = "A",
-  allowedStatesList = list(A = "C", B = character(0), C = "C"),
-  mergeStates = TRUE,
-  mergedStateOverrides = list(
-    mergedState(c("A", "B"), absorbing = FALSE, label = "Combined")
-  )
-)
-getDataForStudy(studyEnv = study)
-trajectories <- createTrajectories(studyEnv = study)
-study$stateDictionary
-```
-
-Omitted override properties inherit. `allowedTransitions = character(0)` means
-no destinations, and `absorbing = FALSE` explicitly removes inherited absorbing
-status. A supplied destination list replaces, rather than extends, inheritance.
-For example, `allowedTransitions = list("C", c("C", "D"))` explicitly permits
-both C alone and the C+D combination. Members always refer to original states.
-Names containing punctuation need no escaping or manual numeric remapping.
-
-The configuration and saved rules retain original-state definitions and
-structured overrides. Resolved memberships, labels, absorbing flags and allowed
-destination keys are available in `study$stateDictionary` and
-`Data/stateDictionary.rds`. Merged trajectory outputs contain readable
-`state_label` values and a stable `state_key`. Numeric `state_id` values are local
-to the run and should not be used to identify combinations across databases.
-Generated display-label collisions are disambiguated without changing membership.
-Bounded original-state intervals are retained in `Data/sourceIntervals.rds`.
-This file contains patient-level data and must not be included when sharing a study.
-
-Legacy named `mergeThreshold` arguments warn and are ignored. The previous native
-merger never used the threshold. `updateAutomaticallyForMergedStates` also warns
-when explicitly supplied and is ignored because structured rules are always
-resolved automatically. Merging results can differ from older versions because
-overlapping patient-time is now resolved once and rule inheritance is explicit.
-
-## Rerunning a study on another database
-
-Copy the completed study's **Settings** folder into a study folder at the
-new location. Do not share **Data**, which contains patient-level records.
-Use the updated package at both sites. With a CDMConnector connection to the
-destination database called `newCdm`, run:
+The usual workflow has three steps:
 
 ```r
 study <- cohort2TrajectoryConfiguration(
   studyName = "MyStudy",
-  pathToStudy = "/new/location", # Contains the MyStudy folder
+  pathToStudy = tempdir(),
+  useCDM = FALSE,
+  trajectoryDataObject = input,
+  stateCohortLabels = c("A", "B"),
+  stateCohortPriorityOrder = c("B", "A"),
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7
+)
+
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+```
+
+Here `input` is your cohort table. It needs `subject_id`,
+`cohort_definition_id`, `cohort_start_date` and `cohort_end_date`. Use `"0"`
+for target-cohort rows and the clinical labels for state rows. Supply dates as
+`Date` values in R or `YYYY-MM-DD` in CSV. The getting-started article supplies
+a complete input table.
+
+Use names such as `"Discrete"` and `"Priority"` for the public options.
+They ignore case and surrounding spaces. Numeric option codes are not accepted.
+
+## What the trajectory means
+
+A discrete trajectory assigns one state to each cycle. A seven-day cycle has
+seven days, including both endpoints. The final cycle can be shorter. Its
+selected state does not mean that the patient spent every day in that state.
+For example, a death recorded within the week can determine the week's label.
+
+A continuous trajectory keeps selected interval dates. It does not fill gaps
+or move simultaneous records onto different dates. In either format, `START`
+and `EXIT` mark boundaries, not clinical states. `OUT OF COHORT` means that no
+state was selected for a discrete cycle. It does not mean observation ended.
+
+Overlapping states can be combined with `mergeStates = TRUE`. Membership is
+stored explicitly. A label containing `+` is never split to guess its members.
+Use `mergedState()` when a particular combination needs different allowed
+destinations, absorbing status or a display label. The configuration article
+explains the inheritance rules and their limits.
+
+## Rerun a saved study
+
+A successful import and trajectory run saves its rules in
+`Settings/analysisSettings.rds`. For CDM studies, this file also contains the
+cohort JSON definitions used during import.
+
+Copy the completed study's `Settings` folder to the new study folder. Do not
+copy `Data` when sharing a study because it contains patient-level records.
+For a CDM rerun, supply a connection to the new database:
+
+```r
+study <- cohort2TrajectoryConfiguration(
+  studyName = "MyStudy",
+  pathToStudy = "/new/location",
   runSavedStudy = TRUE
 )
 getDataForStudy(cdm = newCdm, studyEnv = study)
 trajectories <- createTrajectories(cdm = newCdm, studyEnv = study)
 ```
 
-No ATLAS connection or re-entry of analysis settings is needed. Version 4 RDS
-snapshots contain the selected cohort JSON definitions as well as their mapping
-and analysis settings. The package regenerates cohorts from those saved
-definitions and imports data from the new database before allowing trajectory generation.
-Working JSON files are not used or changed by saved replay. A later import or
-an edit to those files cannot silently change a completed study's definitions.
-Connections, local paths and patient data are not part of the settings snapshot.
-Database permissions and adequate local data coverage are still required.
+There is no need to re-enter the analytical settings or connect to ATLAS.
+For local data, also set `useCDM = FALSE` and supply fresh input through
+`trajectoryDataObject` or `pathToData`. To change the analysis rules, configure
+a new run instead of overriding a saved study.
 
-New ATLAS downloads keep the target in `0.json` and state definitions in
-`atlas_<id>.json`. Clinical labels are not filenames, and repeated ATLAS IDs
-can share a definition file. Definitions are captured during import and saved
-with the settings only after generation succeeds. The completed RDS is replaced
-atomically. To change definitions, start a fresh configured run.
+Only the current RDS format, version 4, is supported. Older studies must be
+reconfigured and rerun. Settings CSV files and the removed arguments
+`mergeThreshold` and `updateAutomaticallyForMergedStates` are not supported.
 
-Older CDM snapshots without embedded definitions must be regenerated by rerunning
-the original configured import and generation. The package cannot verify whether
-their current JSON files still match the completed run. Supported legacy non-CDM
-settings can still be replayed with fresh local data.
+## Database access
 
-For non-CDM studies, add `useCDM = FALSE` and provide fresh input through
-`pathToData` or `trajectoryDataObject`. Batch size can be changed without changing
-the analysis rules. Saved runs reject explicit analysis-setting overrides.
-Configure a new study if you want different rules. To inspect the saved settings:
+CDM studies use a CDMConnector connection. The database account needs read
+access to the required CDM and vocabulary tables, and permission to create
+and populate tables in the configured write schema. Start with a small cohort
+when checking a new server connection.
 
-```r
-settings <- readRDS("/new/location/MyStudy/Settings/analysisSettings.rds")
-str(settings)
-```
+## Related packages
 
-Older CSV-only folders do not contain allowed-transition or merging rules.
-Rerun the original configured import and trajectory generation once with the
-updated package to create the complete snapshot before moving the study.
-Existing settings CSV files are left untouched and ignored. Patient-output CSVs
-and the cohort-definition manifest remain unchanged.
+- [CohortContrast](https://github.com/HealthInformaticsUT/CohortContrast)
+- [TrajectoryMarkovAnalysis](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis)
+- [TrajectoryViz](https://github.com/HealthInformaticsUT/TrajectoryViz)
 
-# Technology
+These packages have separate interfaces. Do not assume that an older analysis
+package can read the current trajectory output without checking its expected
+column names and handling of boundary rows.
 
-Cohort2Trajectory is an R package, with some functions implemented in C++.
+## Publication and citation
 
-For running the package with OMOP CDM, the user must have: 
+Haug M, Oja M, Pajusalu M, et al. *Markov modeling for cost-effectiveness using
+federated health data network*. Journal of the American Medical Informatics
+Association, 2024. [doi:10.1093/jamia/ocae044](https://doi.org/10.1093/jamia/ocae044).
 
-1. Permissions to select on ohdsi cdm data schema.
+When reporting an analysis, also record the package version or Git commit and
+retain the settings used for the run.
 
-2. Permissions to select on ohdsi cdm results schema.
+## License and contact
 
-3. Permissions to select, create and insert on ohdsi temp/scratch schema.
-
-# License
-
-Cohort2Trajectory is licensed under Apache License 2.0
-
-# Development
-
-Cohort2Trajectory is being developed in R Studio.
-
-Feel free to contact the maintainer with questions: [markus.haug\@ut.ee](mailto:markus.haug@ut.ee){.email}
-
-# See also 
-
-[HealthInformaticsUT/CohortContrast](https://github.com/HealthInformaticsUT/CohortContrast)
-
-[HealthInformaticsUT/TrajectoryMarkovAnalysis](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis)
-
-[HealthInformaticsUT/TrajectoryViz](https://github.com/HealthInformaticsUT/TrajectoryViz)
-
-# Publications
-
-Markus Haug, Marek Oja, Maarja Pajusalu, Kerli Mooses, Sulev Reisberg, Jaak Vilo, Antonio Fernández Giménez, Thomas Falconer, Ana Danilović, Filip Maljkovic, Dalia Dawoud, Raivo Kolde, Markov modeling for cost-effectiveness using federated health data network, Journal of the American Medical Informatics Association, 2024;, ocae044, <https://doi.org/10.1093/jamia/ocae044>
-
-# Citation
-
-Haug, M.
-(2023, May).
-Cohort2Trajectory, v1.1.3.
-GitHub.
-<https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.8>
-
-# Acknowledgements
-
-Research group of Health-Informatics in University of Tartu <https://health-informatics.cs.ut.ee/>
+Apache License 2.0. Developed by the University of Tartu Health Informatics
+research group. Contact [Markus Haug](mailto:markus.haug@ut.ee).

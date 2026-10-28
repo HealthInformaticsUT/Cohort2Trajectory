@@ -35,29 +35,18 @@
   path <- file.path(pathToStudy, studyName, "Settings", "analysisSettings.rds")
   if (!file.exists(path)) {
     stop("No complete saved-study settings found at ", path,
-         ". Older CSV settings did not save transition or merging rules. ",
-         "Rerun the original configured import and trajectory generation with this ",
-         "package version once, then copy Settings to the new location.",
+         ". Configure a study and complete getDataForStudy and createTrajectories ",
+         "successfully, then copy its Settings folder to the new location.",
          call. = FALSE)
   }
   saved <- readRDS(path)
-  if (!is.list(saved) || !any(vapply(1:4, function(v) identical(saved$version, v), logical(1))) ||
-      !is.list(saved$import) || !is.list(saved$generation)) {
-    stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
+  if (!is.list(saved) || !identical(saved$version, 4L)) {
+    stop("Unsupported saved-study format at ", path,
+         ". Only version 4 is supported. Configure the study with runSavedStudy = FALSE ",
+         "and complete import and trajectory generation with this package version.",
+         call. = FALSE)
   }
-  if (saved$version < 3L) {
-    if (isTRUE(saved$import$mergeStates)) {
-      stop("Legacy merged-study settings have no structured membership. Reconfigure with the original state definitions and mergedStateOverrides, then rerun import and generation. Labels will not be parsed to guess membership.", call. = FALSE)
-    }
-    if ("mergeThreshold" %in% names(saved$import)) {
-      warning("Removed obsolete mergeThreshold from legacy saved settings. No threshold is used.", call. = FALSE)
-    }
-    saved$import$mergeThreshold <- NULL
-    saved$generation$updateAutomaticallyForMergedStates <- NULL
-    saved$import$mergedStateOverrides <- list()
-    saved$generation$mergedStateOverrides <- list()
-  }
-  if (
+  if (!is.list(saved$import) || !is.list(saved$generation) ||
       !all(.studyImportFields() %in% names(saved$import)) ||
       !all(.studyGenerationFields() %in% names(saved$generation))) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
@@ -68,25 +57,23 @@
          "getDataForStudy and createTrajectories. The saved file has not been changed.",
          call. = FALSE)
   }
-  # Migrate legacy snapshots in memory without rewriting the user's file or
-  # warning about codes that the package itself previously saved.
+  # Validate the current snapshot without rewriting the user's file.
   .validateStateLabels(saved$import$stateCohortLabels)
   .validateStateLabels(saved$generation$stateCohortLabels)
   .validateAllowedStateSources(saved$import$allowedStatesList, "Saved import allowedStatesList")
   .validateAllowedStateSources(saved$generation$allowedStatesList, "Saved generation allowedStatesList")
   saved$generation$trajectoryType <- .configurationChoice(
-    saved$generation$trajectoryType, c(Discrete = 0, Continuous = 1),
-    "trajectoryType", allowNull = FALSE, warnCodes = FALSE
+    saved$generation$trajectoryType, c("Discrete", "Continuous"),
+    "trajectoryType", allowNull = FALSE
   )
   if (saved$generation$trajectoryType == "Discrete") {
     .validateGapFallback(saved$generation$oocFix,
                          saved$generation$stateCohortLabels)
   }
   saved$generation$stateSelectionType <- .configurationChoice(
-    saved$generation$stateSelectionType, c(First = 1, Overlap = 2, Priority = 3),
-    "stateSelectionType", allowNull = FALSE, warnCodes = FALSE
+    saved$generation$stateSelectionType, c("First", "Overlap", "Priority"),
+    "stateSelectionType", allowNull = FALSE
   )
-  saved$version <- max(saved$version, 3L)
   saved
 }
 
@@ -111,7 +98,7 @@
   if (is.null(contents)) {
     stop("These saved CDM settings do not contain the cohort definitions used by the completed run. ",
          "Configure the original study with runSavedStudy = FALSE and rerun import and generation ",
-         "to save self-contained settings. Current JSON files cannot verify an older snapshot.", call. = FALSE)
+         "to save self-contained settings.", call. = FALSE)
   }
   if (!is.character(contents) || is.null(names(contents)) || anyNA(names(contents)) ||
       anyDuplicated(names(contents)) || !setequal(names(contents), unique(ids)) ||

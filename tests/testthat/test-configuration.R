@@ -10,18 +10,6 @@ test_that("valid input is accepted and configuration choices ignore case", {
     trajectoryType = " discrete ", stateSelectionType = "priority"
   ), NA)
   expect_equal(c(study$trajectoryType, study$stateSelectionType), c("Discrete", "Priority"))
-  expect_warning(legacy <- cohort2TrajectoryConfiguration(
-    studyName = "legacy-trajectory",
-    pathToStudy = path, useCDM = FALSE, trajectoryDataObject = data,
-    trajectoryType = 1, stateSelectionType = "Priority"
-  ), 'trajectoryType = 1 is deprecated.*"Continuous"')
-  expect_identical(legacy$trajectoryType, "Continuous")
-  expect_warning(legacy <- cohort2TrajectoryConfiguration(
-    studyName = "legacy-selection",
-    pathToStudy = path, useCDM = FALSE, trajectoryDataObject = data,
-    stateSelectionType = 3
-  ), 'stateSelectionType = 3 is deprecated.*"Priority"')
-  expect_identical(legacy$stateSelectionType, "Priority")
 })
 
 test_that("incorrect column types produce the appropriate warning", {
@@ -43,15 +31,19 @@ test_that("incorrect column types produce the appropriate warning", {
   }
 })
 
-test_that("unknown choices fail before creating study files", {
+test_that("unknown and numeric choices fail before creating study files", {
   path <- tempfile("c2t-config-")
   dir.create(path)
   on.exit(unlink(path, recursive = TRUE))
-  expect_error(cohort2TrajectoryConfiguration(
-    pathToStudy = path, trajectoryType = "typo"
-  ), "trajectoryType must be one of: Discrete, Continuous")
-  expect_error(cohort2TrajectoryConfiguration(
-    pathToStudy = path, stateSelectionType = "typo"
-  ), "stateSelectionType must be one of: First, Overlap, Priority")
+  for (value in list("typo", 0, 1, "0")) {
+    expect_error(cohort2TrajectoryConfiguration(
+      pathToStudy = path, trajectoryType = value
+    ), "trajectoryType must be one of: Discrete, Continuous")
+  }
+  for (value in list("typo", 1, 2, 3, "1")) {
+    expect_error(cohort2TrajectoryConfiguration(
+      pathToStudy = path, stateSelectionType = value
+    ), "stateSelectionType must be one of: First, Overlap, Priority")
+  }
   expect_length(list.files(path), 0)
 })

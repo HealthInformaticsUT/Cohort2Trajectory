@@ -2,7 +2,7 @@
 % Please edit documentation in R/config.R
 \name{cohort2TrajectoryConfiguration}
 \alias{cohort2TrajectoryConfiguration}
-\title{C2T configuration for initiating the parameter values in the study environment}
+\title{Configure a trajectory study}
 \usage{
 cohort2TrajectoryConfiguration(
   cdm = NULL,
@@ -27,169 +27,243 @@ cohort2TrajectoryConfiguration(
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
   batchSize = 1000,
-  mergedStateOverrides = list(),
-  ...
+  mergedStateOverrides = list()
 )
 }
 \arguments{
-\item{cdm}{object created with CDMConnector}
+\item{cdm}{Not used by this function. Pass a connected CDMConnector object
+to \code{getDataForStudy()} and \code{createTrajectories()} when those
+steps use a CDM.}
 
-\item{studyName}{name chosen for study, is used as a folder name}
+\item{studyName}{Study name, used as the folder name.}
 
-\item{baseUrl}{the base URL for the WebApi instance}
+\item{baseUrl}{ATLAS WebAPI URL for cohort definitions. Use \code{NULL}
+to read local definitions from the study's \code{JSON} folder during import.}
 
-\item{pathToStudy}{path to folder which contains folder named after studyName}
+\item{pathToStudy}{Parent folder containing the study folder.}
 
-\item{atlasTargetCohort}{the id of the target cohort defined in OHDSI tool ATLAS}
+\item{atlasTargetCohort}{ATLAS ID of the target cohort. With
+\code{baseUrl = NULL}, supply its local JSON filename without the extension.
+The first target interval defines each patient's observation period.}
 
-\item{atlasStateCohorts}{the ids of the state cohorts defined in OHDSI tool ATLAS}
+\item{atlasStateCohorts}{ATLAS IDs of the state cohorts, in the same order
+as \code{stateCohortLabels}. With \code{baseUrl = NULL}, supply local JSON
+filenames without their extensions.}
 
-\item{stateCohortLabels}{Character vector of clinical state labels, unique
-even when ignoring case. Labels must not be blank or missing. The labels
-"0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
-Clinical labels need not start with a letter, including for CDM studies.
-Database cohort names and definition filenames are managed separately.}
+\item{stateCohortLabels}{Character vector of state labels. Supply one per
+state cohort for CDM input. Labels must be nonempty, non-missing and unique
+even when ignoring case. \code{"0"}, \code{"START"}, \code{"EXIT"} and
+\code{"OUT OF COHORT"} are reserved, including case variants. Labels may
+contain spaces or punctuation and need not start with a letter. They are
+separate from database cohort names and definition filenames.}
 
-\item{stateCohortPriorityOrder}{vector of the customized labels of the state cohorts in priority order}
+\item{stateCohortPriorityOrder}{State labels from highest to lowest priority.
+All states within the observation bounds must be listed for discrete
+selection or continuous \code{"Priority"} selection. For a merged study,
+\code{NULL} uses a deterministic order of original states.}
 
-\item{stateCohortMandatory}{Vector of state labels required in a trajectory.
-Patients must have every supplied state within the retained observation
-bounds. NULL or character(0) means no mandatory states. All supplied labels
-are literal, including the former placeholder "No mandatory state".
-Requirements are applied by getDataForStudy. Changing them requires a new
-import, not an override in createTrajectories.}
+\item{stateCohortMandatory}{State labels that every included patient must
+have within the retained observation bounds. \code{NULL} or
+\code{character(0)} imposes no requirement. All labels are literal,
+including \code{"No mandatory state"}. These requirements are applied
+during import. Rerun \code{getDataForStudy()} to change them.}
 
-\item{stateCohortAbsorbing}{Vector of absorbing state labels.
-NULL or character(0) means no absorbing states.
-Generation checks exact names against configured and observed states and
-any named discrete fallback. Configured states may be absent from the data.}
+\item{stateCohortAbsorbing}{State labels that end follow-up when selected.
+\code{NULL} or \code{character(0)} means none. For an unmerged study, use
+exact configured or observed labels, or a named discrete fallback.
+Configured states may be absent from the current data. For merged studies,
+supply original state labels here and use \code{mergedStateOverrides}
+for exceptions.}
 
-\item{stateSelectionType}{the type of state selection ("First" - First occurring, "Overlap" - Max overlap, "Priority" - Priority). Names are case-insensitive. Legacy numeric codes 1, 2 and 3 are accepted with a deprecation warning.}
+\item{stateSelectionType}{\code{"First"}, \code{"Overlap"} or
+\code{"Priority"}. Names ignore case and surrounding whitespace.
+\code{NULL} is allowed during configuration, but generation needs a choice.}
 
-\item{oocFix}{the method to use for replacing "OUT OF COHORT" states with more relevant states ("None" -> "OUT OF COHORT"; "Last present state" -> repeat the last one; random str -> used as state)
-"None" and "Last present state" always select gap-handling behaviour,
-even when a clinical state has that label. Other labels select a named
-fallback state, including a merged state's display label.
-For discrete trajectories, supply one nonempty string. Boundary labels
-"0", "START" and "EXIT" are not valid fallbacks. "OUT OF COHORT" is
-also accepted to leave gaps unresolved.
-Use the exact spelling of an existing state label. A new fallback label
-must not differ only in case from a clinical or merged-state label.
-For merged trajectories, select states by display label, not internal
-state_key. Declare key-like text in stateCohortLabels to use it as a
-distinct literal state.}
+\item{oocFix}{Discrete gap rule. \code{"None"} or \code{"OUT OF COHORT"}
+leaves an unresolved cycle. \code{"Last present state"} carries the last
+selected state forward when permitted. Any other nonempty, non-missing
+string names a fallback state. See the gap rules below.}
 
-\item{trajectoryType}{The type of the trajectory ("Discrete" - Discrete time, "Continuous" - Continuous time). Names are case-insensitive. Legacy numeric codes 0 and 1 are accepted with a deprecation warning.}
+\item{trajectoryType}{\code{"Discrete"} or \code{"Continuous"}.
+Names ignore case and surrounding whitespace. \code{NULL} is allowed
+during configuration, but generation needs a choice.}
 
-\item{lengthOfStay}{Positive whole-number cycle length in days for discrete
-trajectories. NULL may be supplied during configuration, but a cycle length
-is required when generating discrete trajectories. The final
-cycle is shortened if the trajectory boundary falls partway through it.}
+\item{lengthOfStay}{Positive whole-number cycle length in days, within R's
+integer range. Required when generating discrete trajectories. It may be
+\code{NULL} during configuration. The final cycle is shortened at the
+observation boundary.}
 
 \item{outOfCohortAllowed}{Whether retained state records may extend the
 trajectory beyond the target interval's end. The target start is unchanged.}
 
-\item{runSavedStudy}{Restore the complete analysis settings and selected
-cohort definitions from studyName/Settings/analysisSettings.rds. Supply the new parent folder and
-study name, not the analysis settings again. Connections are supplied to
-getDataForStudy and createTrajectories. Version 4 snapshots embed the exact
-cohort JSON definitions captured during import. Saved CDM runs use these
-definitions, not current files in JSON. Copying Settings is sufficient.
-To change cohort definitions, configure a fresh study and rerun both steps.
-Older CSV-only studies and CDM snapshots without embedded definitions must
-first be rerun with their original configuration. Legacy non-CDM snapshots
-remain supported where their analysis rules can be restored.
-Saved settings with conflicting mandatory-state requirements for import
-and generation must be reconfigured and rerun with the intended requirements.
-Local state definitions may use relative subpaths such as states/A for
-JSON/states/A.json. Saved paths must not be absolute or contain parent traversal.}
+\item{runSavedStudy}{Set \code{TRUE} to restore the completed study from
+\code{studyName/Settings/analysisSettings.rds}. Supply its location and
+fresh input or connections, without repeating analytical settings.}
 
-\item{useCDM}{The package can also be run without the OMOP CDM}
+\item{useCDM}{Whether to use a CDM for import and demographic joins during
+generation. Use \code{FALSE} for a local data frame or CSV.}
 
-\item{trajectoryDataObject}{When using without OMOP CDM specify the data file  (if specified no need for pathToData)}
+\item{trajectoryDataObject}{Data frame for local input, with columns
+\code{subject_id}, \code{cohort_definition_id}, \code{cohort_start_date}
+and \code{cohort_end_date}. Use label \code{"0"} for observation intervals
+and the chosen state labels for state intervals.}
 
-\item{pathToData}{When using without OMOP CDM specify the path to data file (if specified no need for trajectoryDataObject)}
+\item{pathToData}{CSV path for local input when no data frame is configured.
+The CSV uses the same columns as \code{trajectoryDataObject}. Individual
+imports can select a different input through \code{getDataForStudy()}.}
 
-\item{allowedStatesList}{Named list of allowed destinations for each source
-state. Source names must be unique, nonempty and non-missing. Combine all
-intended destinations for a source in one entry, for example list(A = c("B", "C")).}
+\item{allowedStatesList}{Named list of allowed destinations, for example
+\code{list(A = c("B", "C"))}. Source names must be unique, nonempty and
+non-missing. Put all destinations for one source in a single entry.
+An empty list allows all transitions. \code{character(0)} or \code{NULL}
+in an individual entry permits no destinations.}
 
-\item{mergeStates}{Boolean, if you want to merge states when they overlap}
+\item{mergeStates}{Set \code{TRUE} to represent overlapping state intervals
+as a combined state with explicit membership.}
 
-\item{batchSize}{Maximum number of patients per trajectory-generation batch.
-Must be a single positive whole number. Defaults to 1000.}
+\item{batchSize}{Maximum patients per generation batch. Supply one positive
+whole number within R's integer range. The default is 1000.}
 
-\item{mergedStateOverrides}{List of mergedState() definitions. Omitted
-properties inherit from the original member states.}
-
-\item{...}{Compatibility only: legacy named mergeThreshold is ignored with
-a warning. No overlap threshold is used.}
+\item{mergedStateOverrides}{List of \code{mergedState()} definitions.
+Requires \code{mergeStates = TRUE}. Supply at most one definition for
+each membership set. Omitted properties inherit from the original states.}
+}
+\value{
+An environment containing the study settings.
 }
 \description{
-C2T configuration for initiating the parameter values in the study environment
+Choose the observation cohort, state definitions and rules for a study.
+The analyst defines what each cohort means. This function creates the study
+folders and returns an environment used by \code{getDataForStudy()} and
+\code{createTrajectories()}. It does not import data or generate trajectories.
 }
-\details{
-For discrete trajectories, selection ranks only overlapping states
-  allowed from the last selected state. First chooses the earliest start,
-  Overlap chooses the state covering the most distinct days in the cycle,
-  and Priority follows the priority vector. Overlap combines separate records
-  for the same state without counting any day more than once.
-  Date intervals include both endpoints, so a shared boundary date
-  counts as one day of overlap. Ties use priority order. If no candidate
-  qualifies, oocFix is used.
-  All three discrete selection methods require every clinical state within
-  the trajectory boundaries to appear in stateCohortPriorityOrder. An omitted
-  state raises an error rather than being converted into an unresolved cycle.
-  Carry-forward requires an allowed self-transition, and a named fallback
-  must also be permitted. Otherwise the cycle is OUT OF COHORT. This unresolved
-  marker preserves the last selected state for checking later transitions.
-  In both trajectory formats, an empty allowedStatesList imposes no transition
-  restrictions. In a nonempty list, each state used as a transition source
-  must have an entry, with character(0) meaning no
-  permitted destinations. Rules are applied independently for each patient.
-  Continuous output checks transitions from the last retained clinical state
-  and removes prohibited records before applying the absorbing-state cutoff.
-  A rejected absorbing record does not end follow-up. Discrete generation
-  stops after retaining the absorbing cycle. No further transition
-  rules are required after a retained absorbing state. Destination matching
-  is case-insensitive in both formats using R's locale-aware case conversion.
-  Original clinical labels are preserved in output. Source-rule names must
-  still use the exact clinical labels.
-  The first target-cohort interval (label 0 in cleaned data) defines trajectory
-  boundaries, including for patients with no state records. Discrete gaps use
-  oocFix. The legacy OUT OF COHORT label means no selected state, not loss of
-  observation. Continuous output retains interval endpoints and boundary
-  markers without filling undocumented gaps or shifting simultaneous events.
-  Continuous Priority selection requires every clinical state in the bounded
-  input to be listed in stateCohortPriorityOrder. Missing states raise an error.
-  Priority is resolved among transition-eligible states at each interval
-  boundary, so prohibited records cannot remove allowed patient-time.
-  Uninterrupted intervals do not require a self-transition at unrelated
-  record boundaries. A selected absorbing interval keeps its bounded recorded
-  endpoint even if higher-priority records arrive later.
-  Models requiring unique timestamps must resolve ties explicitly.
-  With mergeStates = TRUE, exact overlapping intervals form states with
-  structured membership before discretisation. Labels are never parsed.
-  Destinations are inherited by union. Every newly introduced destination
-  member must be permitted by at least one source member. Self-transitions
-  and transitions only removing members require permission for all retained
-  destination members. A combination is absorbing if any member is absorbing.
-  Explicit mergedState() properties replace inheritance. Absorbing status
-  takes precedence over outgoing transitions. The stateDictionary in the
-  study environment and Data/stateDictionary.rds describes the resolved states.
-  Patient IDs may be numeric whole numbers, character or integer64 values.
-  Temporary integer IDs are assigned internally and originals are restored
-  before output. No manual remapping is needed. For in-memory IDs at or above
-  2^53, use character or integer64 input to avoid prior rounding by doubles.
-  Missing and blank identifiers are rejected.
+\section{Observation and state definitions}{
+
+The target cohort supplies observation intervals. State cohorts describe
+events or periods within them, according to definitions chosen by the
+analyst. The first target interval for each patient sets the trajectory
+bounds, including for patients without state records.
+
+Date intervals include both endpoints. A shared boundary date counts as
+one day of overlap. Discrete trajectories assign a state to each cycle.
+Continuous trajectories retain selected intervals and boundary markers
+without filling gaps or changing the times of simultaneous events.
 }
+
+\section{State selection and gaps}{
+
+In discrete trajectories, only overlapping states allowed from the last
+selected state compete. \code{"First"} chooses the earliest start.
+\code{"Overlap"} chooses the state covering the most distinct days in the
+cycle, combining repeated records without counting a day twice.
+\code{"Priority"} follows the supplied order. Ties use that order.
+Missing priority entries raise an error for all three discrete methods.
+
+If no state qualifies, \code{oocFix} applies. Carry-forward needs an allowed
+self-transition, and a named fallback must be an allowed destination.
+Otherwise the cycle is \code{"OUT OF COHORT"}. This label means no state was
+selected, not that observation ended. It preserves the last selected state
+for checking later transitions.
+
+\code{"None"} and \code{"Last present state"} always select gap behaviour,
+even if a clinical state has that label. Fallbacks cannot be \code{"0"},
+\code{"START"} or \code{"EXIT"}. Use the exact spelling of an existing
+state. A new fallback must not differ only in case from an existing state.
+For a merged state, use its display label, not its internal \code{state_key}.
+Text resembling a key can be a separate literal state if declared in
+\code{stateCohortLabels}.
+
+Continuous \code{"Priority"} selection resolves overlaps among allowed
+states at each interval boundary. Every state within the bounds must appear
+in the priority order. An ongoing interval does not need a self-transition
+just because another record starts or ends. A selected absorbing interval
+keeps its bounded recorded endpoint even if a higher-priority record arrives
+later. Models requiring unique timestamps must resolve simultaneous events.
+}
+
+\section{Transitions and absorbing states}{
+
+Source names use exact state labels. Destination matching ignores case using
+R's locale-aware conversion. Output preserves the clinical labels.
+In an unmerged study with a nonempty rule list, an entry is required only
+when a state is used as a transition source. Rules apply separately to each
+patient and use the last retained clinical state.
+
+A prohibited absorbing record does not end follow-up. Discrete generation
+ends after the selected absorbing cycle. Continuous generation ends at the
+retained absorbing interval's endpoint. Generation does not check outgoing
+transitions after a retained absorbing state.
+}
+
+\section{Combining overlapping states}{
+
+With \code{mergeStates = TRUE}, exact overlaps form combined states before
+discretisation. Membership is stored explicitly. Labels are never split to
+infer membership. A nonempty original-state rule list must include every
+original state. Use an empty list for unrestricted transitions.
+
+Allowed destinations are inherited from the union of the source members'
+destinations. Each member newly added at the destination must be allowed by
+at least one source member. For a self-transition or a transition that only
+removes members, every retained destination member needs that permission.
+
+A combination is absorbing if any member is absorbing. Its highest-priority
+member determines its priority. At equal priority, larger combinations come
+first, followed by state key order. Without a supplied priority order,
+original states are ordered deterministically.
+Explicit \code{mergedState()} properties replace the inherited properties.
+Absorbing status takes precedence over outgoing transitions.
+
+The study environment's \code{stateDictionary} and the generated
+\code{Data/stateDictionary.rds} record the resolved states and their rules.
+See \code{mergedState()} for individual exceptions.
+}
+
+\section{Saving and sharing a study}{
+
+A completed import and generation saves the analysis settings in
+\code{Settings/analysisSettings.rds}. Only version 4 is accepted.
+Reconfigure and rerun older studies to create a current snapshot.
+CDM snapshots contain the exact cohort JSON definitions captured at import.
+Saved runs use those definitions and fresh patient data, leaving working
+JSON files unchanged.
+
+Copy the completed study's \code{Settings} folder to the new location.
+Do not share \code{Data}, which contains patient records. Supply the new
+connection to import and generation, or configure fresh local input with
+\code{useCDM = FALSE}. Import must succeed before generation.
+To change definitions or analysis rules, configure a fresh study.
+Conflicting saved mandatory-state requirements also require a fresh run.
+
+Local definition names may contain relative subpaths, such as
+\code{states/A} for \code{JSON/states/A.json}. Saved paths cannot be absolute
+or contain parent traversal.
+}
+
+\section{Patient identifiers}{
+
+IDs may be numeric whole numbers, character or integer64 values.
+Missing or blank identifiers are rejected. Temporary internal IDs are
+replaced by the original identifiers before output. For in-memory IDs at or
+above \code{2^53}, use character or integer64 input to avoid rounded doubles.
+}
+
 \examples{
-\dontrun{cohort2TrajectoryConfiguration(cdm = cdm,
-studyName = "TestCohort2Trajectory",
-baseUrl = NULL,
-pathToStudy = getwd(),
-atlasTargetCohort = 0,
-atlasStateCohorts = c(1, 2),
-stateCohortLabels = c("test_label1", "test_label2"),
-)}
+\dontrun{
+study <- cohort2TrajectoryConfiguration(
+  studyName = "ExampleStudy",
+  pathToStudy = getwd(),
+  useCDM = FALSE,
+  trajectoryDataObject = cohorts,
+  stateCohortLabels = c("A", "B"),
+  stateCohortPriorityOrder = c("A", "B"),
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7
+)
+}
+}
+\seealso{
+\code{\link{getDataForStudy}}, \code{\link{createTrajectories}},
+  \code{\link{mergedState}}
 }

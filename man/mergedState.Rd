@@ -7,26 +7,74 @@
 mergedState(members, allowedTransitions, absorbing, label = NULL)
 }
 \arguments{
-\item{members}{Character vector of original state labels. Order is immaterial.}
+\item{members}{Character vector containing at least two distinct original
+state labels. Use exact labels, not merged display labels or state keys.
+Order does not matter. Labels must not be blank or missing.}
 
-\item{allowedTransitions}{Optional replacement destinations. A character vector
-names individual states. A list can also specify composite destinations,
-for example list("C", c("C", "D")). character(0) permits no destinations.
-Omit this argument to inherit transitions.}
+\item{allowedTransitions}{Optional replacement destinations. A character
+vector names individual states. A list specifies sets of original members,
+so \code{list("C", c("C", "D"))} permits both C alone and the combination
+of C and D. \code{character(0)} or \code{list()} permits no destinations.
+Omit the argument to inherit transitions. \code{NULL} is not accepted.}
 
-\item{absorbing}{Optional TRUE or FALSE replacing inherited absorbing status.}
+\item{absorbing}{Optional \code{TRUE} or \code{FALSE} replacing inherited
+absorbing status. Omit it to inherit. \code{FALSE} lets the trajectory
+continue even when an original member is absorbing.}
 
-\item{label}{Optional display label. It is never parsed to determine membership.
-Reserved boundary/gap labels ("0", "START", "EXIT", "OUT OF COHORT") are
-not permitted, including case variants.}
+\item{label}{Optional display label. Supply one nonempty, non-missing string.
+It must not conflict with an original or another explicit display label,
+even when ignoring case. \code{"0"}, \code{"START"}, \code{"EXIT"} and
+\code{"OUT OF COHORT"} are reserved, including case variants.}
 }
 \value{
-A definition for mergedStateOverrides in the study configuration.
+A definition of class \code{c2t_merged_state} for the study's
+  \code{mergedStateOverrides} list.
 }
 \description{
-Override the behaviour of one merged state
+Define an exception to the rules inherited by a combination of states.
+Add the result to \code{mergedStateOverrides} in a study configured with
+\code{mergeStates = TRUE}. This definition does not create patient intervals.
 }
+\section{Membership and labels}{
+
+The analyst's original state definitions determine membership.
+Each source or destination member must refer to an original state.
+Supply at most one override for each membership set.
+By default, display labels join the member labels with \code{" + "}.
+Generated label collisions are disambiguated. Labels are never parsed to
+recover membership, so an original label containing a plus sign remains
+a single original state.
+}
+
+\section{Inherited rules}{
+
+Without an explicit destination list, allowed destinations come from the
+union of the original source members' permissions. Every member newly added
+at a destination must be permitted by at least one source member.
+For a self-transition or a transition that only removes members, permission
+is required for every retained destination member.
+An empty original \code{allowedStatesList} permits all original members.
+
+A combination is absorbing if any member is absorbing, unless
+\code{absorbing} overrides that rule. Absorbing status ends follow-up even
+when outgoing destinations are listed. An explicit destination list replaces
+the inherited list without changing absorbing status.
+
+The highest-priority member determines a combination's priority.
+Larger combinations come first when that priority is equal, followed by
+state key order. This helper does not override priority.
+
+The resolved membership, label and rules are available in
+\code{studyEnv$stateDictionary} and \code{Data/stateDictionary.rds} after
+generation. Completed study settings retain the original rules and these
+overrides for a fresh saved-study import.
+}
+
 \examples{
 mergedState(c("A", "B"), allowedTransitions = "C", absorbing = FALSE)
 mergedState(c("A", "B"), absorbing = FALSE)
+mergedState(c("A", "B"), allowedTransitions = list("C", c("C", "D")))
+}
+\seealso{
+\code{\link{cohort2TrajectoryConfiguration}}
 }

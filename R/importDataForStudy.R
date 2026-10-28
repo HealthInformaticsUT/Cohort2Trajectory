@@ -1,72 +1,106 @@
-#' Import the data from CDM for the study
+#' Import and clean cohort intervals for a study
 #'
-#' 
-#' @param cdm object created with CDMConnector 
-#' @param baseUrl the base URL for the WebApi instance
-#' @param atlasTargetCohort the id of the target cohort defined in OHDSI tool ATLAS
-#' @param atlasStateCohorts the ids of the state cohorts defined in OHDSI tool ATLAS
-#' @param stateCohortLabels Character vector of clinical state labels, unique
-#'   even when ignoring case. Labels must not be blank or missing. The labels
-#'   "0", "START", "EXIT" and "OUT OF COHORT" are reserved (case-insensitively).
-#'   CSV cohort_definition_id values are read as text, including leading zeros
-#'   and the literal label "NA". Empty CSV labels are invalid.
-#' @param stateCohortPriorityOrder vector of the customized labels of the state cohorts in priority order
-#' @param stateCohortMandatory Vector of state labels patients must all have
+#' Retrieve cohort data from an OMOP CDM or read local cohort intervals, then
+#' apply observation bounds, mandatory-state requirements and optional state
+#' merging. The analyst defines the target and clinical state cohorts.
+#'
+#' @param cdm A CDM reference created with CDMConnector.
+#' @param studyEnv Study environment returned by cohort2TrajectoryConfiguration.
+#' @param useCDM Whether to retrieve cohorts from the CDM. Use FALSE for a
+#'   local data frame or CSV file.
+#' @param baseUrl OHDSI WebAPI base URL for downloading ATLAS definitions.
+#'   Use NULL to read local JSON definitions.
+#' @param atlasTargetCohort ATLAS target cohort ID, or local definition name
+#'   without the .json extension when baseUrl is NULL.
+#' @param atlasStateCohorts ATLAS state cohort IDs, or local definition names
+#'   without the .json extension when baseUrl is NULL.
+#' @param stateCohortLabels Nonblank, non-missing clinical state labels, unique
+#'   ignoring case. The labels "0", "START", "EXIT" and "OUT OF COHORT" are
+#'   reserved, also ignoring case.
+#' @param stateCohortPriorityOrder State labels ordered from highest to lowest
+#'   priority, also used to resolve inherited priorities for merged states.
+#' @param stateCohortMandatory States that every included patient must have
 #'   within the retained observation bounds. NULL or character(0) imposes no
-#'   requirements. All labels are literal, including "No mandatory state".
-#'   Rerun this import to add or remove requirements before creating trajectories.
-#' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
-#' @param runSavedStudy Use the analysis rules restored by a saved-study
-#'   configuration and import fresh data from the supplied connection or input.
-#' @param useCDM The package can also be run without the OMOP CDM
-#' @param trajectoryDataObject Data frame for a non-CDM import. An explicitly
+#'   requirements. Rerun import to change these requirements before generation.
+#' @param stateCohortAbsorbing Labels of absorbing states, also used to derive
+#'   absorbing status for merged states.
+#' @param allowedStatesList Named list of allowed destinations by source state.
+#'   Each source name must be unique, nonempty and non-missing.
+#' @param outOfCohortAllowed Whether to retain state records beyond the target
+#'   interval's end. The target start remains the lower boundary.
+#' @param mergeStates Whether to compose overlapping state intervals into
+#'   states with structured membership.
+#' @param mergedStateOverrides List of mergedState() definitions that replace
+#'   selected inherited properties of merged states.
+#' @param trajectoryDataObject Data frame for a local import. An explicitly
 #'   supplied non-NULL object overrides the configured CSV path. Supply NULL
-#'   to use the CSV path. Local source overrides apply to this import only.
-#' @param mergeStates Boolean, if you want to merge states when they overlap
-#' @param mergedStateOverrides List of mergedState() definitions.
-#' @param ... Compatibility only: legacy named mergeThreshold warns and is ignored.
-#' @param pathToData CSV path for a non-CDM import. An explicitly supplied
+#'   to use the CSV path. Overrides apply to this import only.
+#' @param pathToData CSV path for a local import. An explicitly supplied
 #'   non-NULL path overrides the configured data object. Do not explicitly
-#'   supply both non-NULL local sources. With neither supplied, the configured
-#'   object is used when present, otherwise the configured CSV path is used.
-#'   The same precedence applies to saved local studies. CDM imports ignore
-#'   both local input arguments.
-#' @param allowedStatesList Named list of allowed transitions between states.
-#'   Each entry must have a unique, nonempty, non-missing source-state name.
-#' @param stateCohortAbsorbing Vector of absorbing states
-#' @param studyEnv environment created with cohort2TrajectoryConfiguration 
+#'   supply both non-NULL local sources.
+#' @param runSavedStudy Whether to import fresh data using the analysis rules
+#'   restored by a saved-study configuration.
 #'
-#' @details A nonempty target cohort remains valid when no state events survive
-#'   cleaning, provided no mandatory-state requirement excludes those patients.
-#'   Their target intervals still define follow-up. Discrete trajectories use
-#'   the configured gap rule, and continuous trajectories retain boundaries
-#'   without inventing clinical states. An empty eligible cohort is not treated
-#'   as a successful import. It leaves the previous cleaned data, merged-state
-#'   artifacts and settings unchanged. Trajectory generation remains blocked
-#'   until a later import succeeds.
-#'   CDM imports stage cohort definitions and their manifest in a temporary
-#'   JSON folder. Downloaded definitions and the manifest are published only
-#'   after data retrieval, cleaning and saving succeed. Failed downloads,
-#'   queries or empty eligible cohorts leave the previous JSON files unchanged.
-#'   Existing local definitions and unrelated JSON files are not rewritten.
-#'   Successful CDM source overrides are retained for subsequent imports, so
-#'   target and state cohort selectors and the ATLAS URL remain aligned with
-#'   the clinical labels. Failed attempts retain the previous source settings.
-#'   State labels are preserved as supplied for CDM, data-frame and CSV input.
-#'   Spaces and punctuation are not converted
-#'   into filename-safe substitutes. Use the same labels in state definitions,
-#'   mandatory states, priorities and transition rules.
-#'   Downloaded ATLAS definitions use 0.json for the target and atlas_<id>.json
-#'   for states. Repeated state IDs share a definition file without changing
-#'   their clinical labels. Completed settings retain this filename mapping and
-#'   the definition contents captured by the successful import. Saved CDM runs
-#'   materialise these contents in a private folder and leave working JSON and
-#'   its manifest unchanged. A later import cannot change an earlier snapshot.
+#' @details
+#' The target cohort defines observation bounds. Clinical state intervals,
+#' including history states and finite episodes, must be defined by the
+#' analyst before import. State labels are preserved for CDM, data-frame and
+#' CSV input. Spaces and punctuation are not replaced to make filenames.
+#' Use the same labels in mandatory states, priorities and transition rules.
+#' CSV cohort_definition_id values are read as text, preserving leading zeros
+#' and the literal label "NA". Empty labels are invalid. All mandatory-state
+#' labels are literal, including "No mandatory state".
 #'
-#' @return log info
+#' A nonempty target cohort remains valid when no clinical state records
+#' survive cleaning, provided mandatory-state requirements do not exclude its
+#' patients. The target intervals still define follow-up. Discrete trajectories
+#' use the configured gap rule. Continuous trajectories retain boundaries
+#' without inventing clinical states.
+#'
+#' An empty eligible cohort is not a successful import. Previous cleaned data,
+#' merged-state artifacts and saved settings remain unchanged. An unsuccessful
+#' import blocks trajectory generation until a later import succeeds.
+#'
+#' @section Local input:
+#' With neither local source explicitly supplied, the configured data object
+#' is used when present, otherwise the configured CSV path is used. An explicit
+#' non-NULL source overrides the opposite configured source for this call only.
+#' Supplying trajectoryDataObject = NULL selects the CSV path. The same rules
+#' apply to saved local studies. CDM imports ignore both local source arguments.
+#'
+#' @section Cohort definitions and saved studies:
+#' Fresh CDM imports stage definitions and their manifest in a temporary
+#' folder. Downloaded definitions and the manifest are published after data
+#' retrieval, cleaning and saving succeed. Failed downloads, queries or empty
+#' eligible cohorts leave the previous working JSON files unchanged. Existing
+#' local definitions and unrelated JSON files are not rewritten.
+#'
+#' Successful CDM source overrides are retained for subsequent imports, keeping
+#' target and state selectors and the ATLAS URL aligned with clinical labels.
+#' Failed attempts retain the previous source settings. Downloaded definitions
+#' use 0.json for the target and atlas_<id>.json for states. Repeated state IDs
+#' share a file without changing their clinical labels.
+#'
+#' Successful import captures the selected definition filenames and contents.
+#' After fresh trajectory generation completes, these are saved with the
+#' analysis settings in Settings/analysisSettings.rds. Only version 4 snapshots
+#' are accepted. The snapshot contains no patient data.
+#'
+#' Saved CDM runs write the embedded definitions to a new private folder and
+#' use them to query fresh data. They do not read or replace working JSON files
+#' or their manifest. A later fresh import cannot change the definitions in an
+#' earlier completed snapshot. Saved local runs require fresh local input.
+#' Neither saved mode accepts overrides to its restored analysis rules.
+#'
+#' @return Invisibly returns NULL after a successful import. Cleaned data are
+#'   saved in the study's Data directory and studyEnv is updated for generation.
+#' @seealso \code{vignette("a02_import", package = "Cohort2Trajectory")},
+#'   \code{vignette("a05_output", package = "Cohort2Trajectory")}
 #' @export
 #' @examples
-#' \dontrun{getDataForStudy(cdm = cdm,studyEnv = studyEnv)}
+#' \dontrun{
+#' getDataForStudy(cdm = cdm, studyEnv = studyEnv)
+#' }
 getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             useCDM = studyEnv$useCDM,
                             trajectoryDataObject = studyEnv$trajectoryDataObject,
@@ -84,14 +118,12 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             allowedStatesList = studyEnv$allowedStatesList,
                             stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
                             pathToData = studyEnv$pathToData,
-                            mergedStateOverrides = studyEnv$mergedStateOverrides,
-                            ...)  {
+                            mergedStateOverrides = studyEnv$mergedStateOverrides) {
   
   # Variables from global studyEnv (can't be altered)
   studyName = studyEnv$studyName
   pathToStudy = studyEnv$pathToStudy
   studyEnv$.dataReady <- FALSE
-  .legacyMergeArguments(list(...))
   if (isTRUE(runSavedStudy)) {
     .checkSavedOverrides(match.call(), c(.studyImportFields(),
       "atlasTargetCohort", "atlasStateCohorts", "baseUrl"))

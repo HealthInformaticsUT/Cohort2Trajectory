@@ -1,199 +1,169 @@
 ---
-title: "Configuration"
+title: "Configure a study"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{a01_configuration}
+  %\VignetteIndexEntry{Configure a study}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-## Initiating database connection
+## Define the study
 
-We use the **CDMConnector** package to establish the database connection. You can configure the connection either by reading credentials from a `.Renviron` file or explicitly writing them in your script.
+`cohort2TrajectoryConfiguration()` creates a study environment and its folders.
+Pass that environment to both `getDataForStudy()` and `createTrajectories()`.
+Configuration alone does not retrieve patient data or generate trajectories.
 
-```{r, echo=TRUE, eval=FALSE}
-################################################################################
-#
-# Initiate the database connection
-#
-#################################################################################
+The analyst defines the target and state cohorts. The target cohort supplies
+the observation interval. State cohorts supply the clinical facts to represent
+within that interval. Cohort2Trajectory does not infer the meaning of a state
+from its label.
 
-user <- Sys.getenv("DB_USERNAME")
-pw <- Sys.getenv("DB_PASSWORD")
-server <- stringr::str_c(Sys.getenv("DB_HOST"), "/", Sys.getenv("DB_NAME"))
-port <- Sys.getenv("DB_PORT")
+This example uses cohort definitions from an ATLAS WebAPI. Replace the URL and
+cohort IDs with your own. Each state ID has one label in the same position.
 
-cdmSchema <-
-  Sys.getenv("OHDSI_CDM") # Schema which contains the OHDSI Common Data Model
-cdmVocabSchema <-
-  Sys.getenv("OHDSI_VOCAB") # Schema which contains the OHDSI Common Data Model vocabulary tables.
-cdmResultsSchema <-
-  Sys.getenv("OHDSI_RESULTS") # Schema which contains "cohort" table (is not mandatory)
-writeSchema <-
-  Sys.getenv("OHDSI_WRITE") # Schema for temporary tables, will be deleted
-writePrefix <- "c2t_"
-
-db = DBI::dbConnect(
-  RPostgres::Postgres(),
-  dbname = Sys.getenv("DB_NAME"),
-  host = Sys.getenv("DB_HOST"),
-  user = Sys.getenv("DB_USERNAME"),
-  password = Sys.getenv("DB_PASSWORD"),
-  port  = port
-)
-
-cdm <- CDMConnector::cdmFromCon(
-  con = db,
-  cdmSchema = cdmSchema,
-  achillesSchema = cdmResultsSchema,
-  writeSchema = c(schema = writeSchema, prefix = writePrefix)
-)
-```
-
-## Configuration
-
-To enhance the user experience, an R environment named `studyEnv` is created, which consolidates the necessary parameters required for running the study. This environment simplifies managing inputs and ensures consistency across functions. Input description available [here](../reference/cohort2TrajectoryConfiguration.html). Below is an example configuration with default values: 
-
-```{r, echo=TRUE, eval=FALSE}
-################################################################################
-#
-# Configure study settings
-#
-################################################################################
+```{r, eval = FALSE}
+library(Cohort2Trajectory)
 
 studyEnv <- cohort2TrajectoryConfiguration(
-  cdm = cdm,
-  studyName = "Cohort2Trajectory",
-  baseUrl = "http://localhost:8080/WebAPI",
+  studyName = "example",
   pathToStudy = getwd(),
-  atlasTargetCohort = NULL,
-  atlasStateCohorts = NULL,
-  stateCohortLabels = NULL,
-  stateCohortPriorityOrder = NULL,
-  stateCohortMandatory = NULL,
-  stateCohortAbsorbing = NULL,
-  stateSelectionType = NULL,
-  oocFix = "None",
-  trajectoryType = "Discrete",
-  lengthOfStay = NULL,
-  outOfCohortAllowed = FALSE,
-  runSavedStudy = FALSE,
   useCDM = TRUE,
-  trajectoryDataObject = NULL,
-  pathToData = './Cohort2Trajectory/Data/importedData.csv',
-  mergeStates = FALSE,
-  batchSize = 1000
-) 
+  baseUrl = "http://localhost:8080/WebAPI",
+  atlasTargetCohort = 101,
+  atlasStateCohorts = c(202, 203),
+  stateCohortLabels = c("A", "B"),
+  stateCohortPriorityOrder = c("B", "A"),
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7
+)
 ```
 
-<br>
+Use `"Discrete"` or `"Continuous"` for `trajectoryType` and `"First"`,
+`"Overlap"` or `"Priority"` for `stateSelectionType`. These options accept
+names, not numeric codes. Discrete trajectories also need a positive whole
+number of days for `lengthOfStay`. The
+[trajectory article](a03_trajectories.html) explains selection and gap handling.
 
-### Configuration with ATLAS generated cohorts
+Labels must be nonempty and unique even when ignoring case. `"0"`, `"START"`,
+`"EXIT"` and `"OUT OF COHORT"` are reserved. Keep the same spelling in labels,
+priorities and rule-source names. Labels are not filenames.
 
-```{r, echo = TRUE, eval = FALSE}
+## Choose only the rules you need
 
-studyEnv <- cohort2TrajectoryConfiguration(
-    baseUrl = "http://localhost:8080/WebAPI",     #<--- URL for API
-    useCDM = TRUE,                                #<--- set use CDM TRUE
-    studyName = "nameForStudy",
-    pathToStudy = getwd(),
-    atlasTargetCohort = 1,                 #<--- existing cohort's id
-    atlasStateCohorts = c(2, 3),           #<--- existing cohorts' ids
-    stateCohortLabels = c("label_for_cohort1", "label_for_cohort2"),
-    stateCohortMandatory = c("label_for_cohort2"),
-    stateCohortAbsorbing = c("label_for_cohort2"),
-    outOfCohortAllowed = FALSE,
-    trajectoryType = "Discrete",
-    lengthOfStay = 30,
-    stateSelectionType = "Priority",
-    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
-    runSavedStudy = FALSE,
-    batchSize = 10
+`stateCohortMandatory = NULL` and `stateCohortAbsorbing = NULL` mean no mandatory
+or absorbing states. `character(0)` also means none. Do not add a placeholder
+state to express the absence of a rule.
+
+A mandatory state must occur somewhere in the patient's retained interval.
+It does not mean that the patient must be in that state on Day 7 or at another
+specified time. Define time-specific eligibility in the target cohort when
+that is part of the study design. Mandatory requirements are applied during
+import, so changing them requires another import.
+
+An absorbing state ends a trajectory when it is retained by the selection and
+transition rules. Use the exact state label in `stateCohortAbsorbing`.
+
+By default, `allowedStatesList` permits transitions between the configured
+states. Supply a named list to restrict them. An empty list imposes no
+restrictions. The [function reference](../reference/cohort2TrajectoryConfiguration.html)
+describes the full rule syntax.
+
+## Merge overlapping states when needed
+
+Set `mergeStates = TRUE` to represent exact overlaps as states with explicit
+membership. For example, an overlap between `"A"` and `"B"` has both as members.
+The package does not split a display label to recover those members.
+
+Merged states inherit rules from their members. To replace selected properties,
+build an override and pass it as `mergedStateOverrides` when configuring the study.
+Omitted properties keep their inherited values.
+
+The default rules are:
+
+- If A can enter C, A+B can enter C even when B cannot.
+- To enter C+D, both newly added members must be permitted by at least one
+  source member. Permission for C alone is not enough.
+- Staying in A+B, or moving from A+B to A, requires permission for every
+  member retained at the destination. An empty destination list does not
+  automatically allow a self-transition.
+- If any member is absorbing, the combination is absorbing. Its priority is
+  the highest priority of its members. Larger combinations come first when
+  that priority is equal.
+
+Merging uses the original dates before cycles are constructed. A on days 1 to
+10 and B on days 5 to 7 produce A, then A+B, then A again. Two non-overlapping
+events within the same week are not combined merely because they share a cycle.
+
+```{r, eval = FALSE}
+overrides <- list(
+  mergedState(
+    members = c("A", "B"),
+    label = "A and B",
+    allowedTransitions = "B",
+    absorbing = FALSE
   )
-
+)
 ```
 
-<br>
+This override requires `mergeStates = TRUE`. Its destinations and absorbing
+status replace the inherited values. See the
+[merged-state reference](../reference/mergedState.html) for further examples
+and [output files](a05_output.html) for the state dictionary.
 
-### Configuration with saved study 
+## Supply a CDM connection when running the study
 
-Copy the completed study's Settings folder to the new location.
-`Settings/analysisSettings.rds` contains the analysis settings and the cohort
-definitions used during import. Saved runs do not read edited working JSON
-files. Supply a connection to the new database for import and trajectory generation.
-Older CDM snapshots without embedded definitions must first be regenerated
-by rerunning the original configured import and trajectory generation.
-Omit analytical settings such as
-state labels, transition rules and cycle length: they are restored from the saved
-study. Import fresh data before generating trajectories.
+Create a CDM reference with CDMConnector using your site's database connection
+and a writable schema. For example, with an existing DBI connection named
+`connection`:
 
-```{r, echo = TRUE, eval = FALSE}
+```{r, eval = FALSE}
+cdm <- CDMConnector::cdmFromCon(
+  con = connection,
+  cdmSchema = "cdm",
+  writeSchema = c(schema = "results", prefix = "c2t_")
+)
 
-studyEnv <- cohort2TrajectoryConfiguration(
-    studyName = "nameForStudy",                   # Name of the copied study folder
-    pathToStudy = getwd(),
-    runSavedStudy = TRUE,                           #<--- set run saved study to true
-    batchSize = 10
-  )
-
-getDataForStudy(cdm = newCdm, studyEnv = studyEnv)
-trajectories <- createTrajectories(cdm = newCdm, studyEnv = studyEnv)
-
+getDataForStudy(cdm = cdm, studyEnv = studyEnv)
+trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
 ```
 
-<br>
+The connection is supplied to these calls, not stored for reuse in saved study
+settings. For a data frame or CSV instead of a CDM, set `useCDM = FALSE` and
+follow the [local input example](a02_import.html#local-data).
 
-### Configuration with data as input
+## Repeat a saved study
 
-```{r, echo = TRUE, eval = FALSE}
+After successful import and trajectory generation, the study contains
+`Settings/analysisSettings.rds`. The current snapshot format is version 4.
+It stores the analysis settings and, for a CDM study, the cohort JSON definitions
+used during import. It does not contain patient data or a database connection.
 
-studyEnv <- cohort2TrajectoryConfiguration(
-    baseUrl = NULL,   
-    useCDM = FALSE,                       
-    trajectoryDataObject = rawData,               #<--- eg output of read.csv
-    studyName = "nameForStudy",
-    pathToStudy = getwd(),
-    stateCohortMandatory = c("label_for_cohort2"),
-    stateCohortAbsorbing = c("label_for_cohort2"),
-    outOfCohortAllowed = FALSE,
-    trajectoryType = "Discrete",
-    lengthOfStay = 30,
-    stateSelectionType = "Priority",
-    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
-    runSavedStudy = FALSE,
-    batchSize = 10
-  )
+Copy the completed study's `Settings` folder to
+`new-study-location/example/Settings`. JSON and Data folders are not needed for
+a saved CDM run. Connect to the new database and restore the study:
 
+```{r, eval = FALSE}
+savedStudy <- cohort2TrajectoryConfiguration(
+  studyName = "example",
+  pathToStudy = "new-study-location",
+  runSavedStudy = TRUE
+)
+
+getDataForStudy(cdm = newCdm, studyEnv = savedStudy)
+trajectories <- createTrajectories(cdm = newCdm, studyEnv = savedStudy)
 ```
 
-<br>
+Do not repeat labels, rules or cycle settings in these calls. They are restored
+from the snapshot. Saved runs import fresh patients using the embedded
+definitions, not edited files in the working JSON folder. To change analysis
+rules or cohort definitions, configure a fresh study and complete both steps.
+Older snapshot formats must also be rerun before they can be shared this way.
 
-### Configuration with path to data as input
-
-```{r, echo = TRUE, eval = FALSE}
-
-studyEnv <- cohort2TrajectoryConfiguration(
-    baseUrl = NULL,   
-    useCDM = FALSE,                       
-    pathToData = file.path(getwd(), "path", "to", "data", "data.csv"),
-    studyName = "nameForStudy",
-    pathToStudy = getwd(),
-    stateCohortMandatory = c("label_for_cohort2"),
-    stateCohortAbsorbing = c("label_for_cohort2"),
-    outOfCohortAllowed = FALSE,
-    trajectoryType = "Discrete",
-    lengthOfStay = 30,
-    stateSelectionType = "Priority",
-    stateCohortPriorityOrder = c("label_for_cohort1", "label_for_cohort2"),
-    runSavedStudy = FALSE,
-    batchSize = 10
-  )
-
-```
+A saved local-data study restores its rules in the same way. Set `useCDM = FALSE`
+and supply a new data frame or CSV, as described in the
+[import article](a02_import.html#saved-studies).

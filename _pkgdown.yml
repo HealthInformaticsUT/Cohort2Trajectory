@@ -1,4 +1,14 @@
 url: https://healthinformaticsut.github.io/Cohort2Trajectory/
+articles:
+  - title: "Using Cohort2Trajectory"
+    navbar: ~
+    contents:
+      - a00_introduction
+      - a01_configuration
+      - a02_import
+      - a03_trajectories
+      - a04_example
+      - a05_output
 template:
   assets:
     - man/figures

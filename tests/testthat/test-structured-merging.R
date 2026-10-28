@@ -74,7 +74,6 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
     expect_equal(createTrajectories(studyEnv = study, batchSize = 1), together)
     saved <- readRDS(file.path(root, type, "Settings", "analysisSettings.rds"))
     expect_identical(saved$version, 4L)
-    expect_false("mergeThreshold" %in% names(saved$import))
     expect_identical(saved$generation$allowedStatesList, study$allowedStatesList)
     restored <- cohort2TrajectoryConfiguration(
       pathToStudy = root, studyName = type, useCDM = FALSE, runSavedStudy = TRUE,
@@ -91,28 +90,35 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
   }
 })
 
-test_that("obsolete threshold settings warn and ambiguous legacy merging is rejected", {
-  root <- tempfile("c2t-threshold-")
+test_that("removed merging arguments are rejected", {
+  expect_error(cohort2TrajectoryConfiguration(mergeThreshold = 0.9),
+                 "unused argument.*mergeThreshold")
+  expect_error(getDataForStudy(mergeThreshold = 0.9),
+                 "unused argument.*mergeThreshold")
+  expect_error(createTrajectories(updateAutomaticallyForMergedStates = FALSE),
+                 "unused argument.*updateAutomaticallyForMergedStates")
+})
+
+test_that("older snapshot formats are rejected without modifying their files", {
+  root <- tempfile("c2t-snapshot-version-")
   dir.create(root)
   on.exit(unlink(root, recursive = TRUE))
-  expect_warning(study <- cohort2TrajectoryConfiguration(
-    pathToStudy = root, useCDM = FALSE, mergeThreshold = 0.9,
+  study <- cohort2TrajectoryConfiguration(
+    pathToStudy = root, useCDM = FALSE,
     stateCohortLabels = "A", stateSelectionType = "Priority", lengthOfStay = 7
-  ), "mergeThreshold has been removed")
-  expect_false("mergeThreshold" %in% names(study))
-  import <- mget(.studyImportFields(), envir = study)
-  import$mergeThreshold <- 0.9
-  import$mergedStateOverrides <- NULL
-  generation <- mget(setdiff(.studyGenerationFields(), "mergedStateOverrides"), envir = study)
-  generation$updateAutomaticallyForMergedStates <- FALSE
-  legacy <- list(version = 2L, import = import, generation = generation)
+  )
+  snapshot <- list(import = mget(.studyImportFields(), envir = study),
+                   generation = mget(.studyGenerationFields(), envir = study))
   file <- file.path(root, study$studyName, "Settings", "analysisSettings.rds")
-  saveRDS(legacy, file)
-  expect_warning(loaded <- .readStudySnapshot(root, study$studyName), "Removed obsolete mergeThreshold")
-  expect_identical(loaded$version, 3L)
-  legacy$import$mergeStates <- TRUE
-  saveRDS(legacy, file)
-  expect_error(.readStudySnapshot(root, study$studyName), "Legacy merged-study settings")
+  for (version in 1:3) {
+    snapshot$version <- version
+    saveRDS(snapshot, file)
+    before <- tools::md5sum(file)
+    expect_error(cohort2TrajectoryConfiguration(
+      pathToStudy = root, studyName = study$studyName, useCDM = FALSE, runSavedStudy = TRUE
+    ), "Only version 4 is supported")
+    expect_identical(tools::md5sum(file), before)
+  }
 })
 
 test_that("merged labels do not override gap controls or named fallbacks", {
