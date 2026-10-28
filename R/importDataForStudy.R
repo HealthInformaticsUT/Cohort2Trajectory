@@ -42,6 +42,9 @@
 #'   after data retrieval, cleaning and saving succeed. Failed downloads,
 #'   queries or empty eligible cohorts leave the previous JSON files unchanged.
 #'   Existing local definitions and unrelated JSON files are not rewritten.
+#'   Successful CDM source overrides are retained for subsequent imports, so
+#'   target and state cohort selectors and the ATLAS URL remain aligned with
+#'   the clinical labels. Failed attempts retain the previous source settings.
 #'   State labels are preserved as supplied for CDM, data-frame and CSV input.
 #'   Spaces and punctuation are not converted
 #'   into filename-safe substitutes. Use the same labels in state definitions,
@@ -246,6 +249,12 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   studyEnv$.importSettings <- importSettings
   studyEnv$.cohortDefinitions <- definitions
   studyEnv$atlasTargetCohort <- atlasTargetCohort
+  # Keep source selectors aligned with the imported target and clinical labels.
+  # Saved imports already use their restored cohort-definition mapping.
+  if (useCDM && !runSavedStudy) {
+    studyEnv$atlasStateCohorts <- atlasStateCohorts
+    studyEnv$baseUrl <- baseUrl
+  }
   studyEnv$useCDM <- useCDM
   list2env(mget(.studyImportFields(), envir = environment(), inherits = FALSE),
            envir = studyEnv)
