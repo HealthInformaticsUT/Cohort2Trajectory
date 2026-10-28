@@ -6,6 +6,7 @@
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html</loc></url>
+<url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/articles/index.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/authors.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/index.html</loc></url>
@@ -30,9 +31,8 @@
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/is.nan.data.frame.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/is_overlap.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/loadRenderTranslateSql.html</loc></url>
-<url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/loadSettings.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/merge_overlaps.html</loc></url>
-<url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/ordered_combinations.html</loc></url>
+<url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/removeListVectorEl.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/sanitize_filenames.html</loc></url>
 <url><loc>https://healthinformaticsut.github.io/Cohort2Trajectory/reference/sanitize_single.html</loc></url>

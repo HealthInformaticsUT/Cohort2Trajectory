@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Import data • Cohort2Trajectory</title>
+<title>Import cohort data • Cohort2Trajectory</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.2.1/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.2.1/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Import data">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Import cohort data">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -34,10 +34,11 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/a00_introduction.html">Getting started</a></li>
-    <li><a class="dropdown-item" href="../articles/a01_configuration.html">Configuration</a></li>
-    <li><a class="dropdown-item" href="../articles/a02_import.html">Import data</a></li>
+    <li><a class="dropdown-item" href="../articles/a01_configuration.html">Configure a study</a></li>
+    <li><a class="dropdown-item" href="../articles/a02_import.html">Import cohort data</a></li>
     <li><a class="dropdown-item" href="../articles/a03_trajectories.html">Create trajectories</a></li>
-    <li><a class="dropdown-item" href="../articles/a04_example.html">Example</a></li>
+    <li><a class="dropdown-item" href="../articles/a04_example.html">A weekly worked example</a></li>
+    <li><a class="dropdown-item" href="../articles/a05_output.html">Read the output</a></li>
   </ul>
 </li>
       </ul>
@@ -66,7 +67,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Import data</h1>
+      <h1>Import cohort data</h1>
             
       
 
@@ -76,130 +77,201 @@
     
     
 <div class="section level2">
-<h2 id="importing-data-for-study">Importing data for study<a class="anchor" aria-label="anchor" href="#importing-data-for-study"></a>
+<h2 id="import-the-configured-study">Import the configured study<a class="anchor" aria-label="anchor" href="#import-the-configured-study"></a>
 </h2>
-<p>This section provides a detailed explanation of how to use
-<code>getDataForStudy</code> function. For a general overview, refer to
-the <a href="a00_introduction.html#study-configuration">Getting
-Started</a> section. Regarding data sources, there are three options:
-providing existing data, running a saved study, or using the CDM as a
-data source.</p>
+<p><code><a href="../reference/getDataForStudy.html">getDataForStudy()</a></code> retrieves the cohort records, cleans
+their intervals and saves the input for trajectory generation. It needs
+the study environment returned by
+<code><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration()</a></code>. See <a href="a01_configuration.html">configuration</a> if you have not created
+one.</p>
+</div>
+<div class="section level2">
+<h2 id="cdm-data">CDM data<a class="anchor" aria-label="anchor" href="#cdm-data"></a>
+</h2>
+<p>For a study configured with <code>useCDM = TRUE</code>, pass the
+connected CDM reference:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">cdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
-<p>If the user opts out of using the previous configuration, the
-necessary inputs must be provided manually. Below is a sample with
-default values:</p>
+<p>With a non-NULL <code>baseUrl</code>, the package downloads the
+selected cohort definitions from the ATLAS WebAPI. CDMConnector then
+generates those cohorts on the supplied database and retrieves their
+records. ATLAS supplies definitions, not patient data.
+<code>atlasTargetCohort</code> and <code>atlasStateCohorts</code> refer
+to definition IDs, not rows in a previously generated cohort table.</p>
+<p>The target definition is stored as <code>JSON/0.json</code>. State
+definitions use <code>JSON/atlas_&lt;id&gt;.json</code>. The package
+creates <code>CohortsToCreate.csv</code> to map files to generated
+cohorts. Clinical labels are kept separate from these filenames.</p>
+<div class="section level3">
+<h3 id="use-local-cohort-json-instead-of-atlas">Use local cohort JSON instead of ATLAS<a class="anchor" aria-label="anchor" href="#use-local-cohort-json-instead-of-atlas"></a>
+</h3>
+<p>Set <code>baseUrl = NULL</code> and supply filenames without
+<code>.json</code>. Paths are relative to the study’s JSON folder. For
+this example, place <code>target.json</code>, <code>states/A.json</code>
+and <code>states/B.json</code> under <code>local-json/JSON</code> after
+configuration. They must contain the cohort expressions used to generate
+the cohorts.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span></span>
-<span>  runSavedStudy <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">runSavedStudy</span>,</span>
-<span>  useCDM <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">useCDM</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cdm <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  studyEnv <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  atlasStateCohorts <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasStateCohorts</span>,</span>
-<span>  atlasTargetCohort <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasTargetCohort</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortLabels</span>,</span>
-<span>  baseUrl <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">baseUrl</span>,</span>
-<span>  outOfCohortAllowed <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">outOfCohortAllowed</span>,</span>
-<span>  stateCohortMandatory <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortMandatory</span>,</span>
-<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortPriorityOrder</span>,</span>
-<span>  mergeStates <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeStates</span>,</span>
-<span>  mergeThreshold <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeThreshold</span>,</span>
-<span>  pathToData <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><br></p>
-<div class="section level3">
-<h3 id="use-cdm">Use CDM<a class="anchor" aria-label="anchor" href="#use-cdm"></a>
-</h3>
-<p>To use the CDM as a data source, set the <code>useCDM</code> variable
-to <code>TRUE</code>. The cohorts specified in
-<code>atlasStateCohorts</code> and <code>atlasTargetCohort</code> will
-be used. It is recommended to set <code>trajectoryDataObject</code>,
-<code>pathToData</code>, and <code>runSavedStudy</code> to
-<code>NULL</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span></span>
-<span>  runSavedStudy <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  useCDM <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">useCDM</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cdm <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  studyEnv <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  atlasStateCohorts <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasStateCohorts</span>,</span>
-<span>  atlasTargetCohort <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasTargetCohort</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortLabels</span>,</span>
-<span>  baseUrl <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">baseUrl</span>,</span>
-<span>  outOfCohortAllowed <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">outOfCohortAllowed</span>,</span>
-<span>  stateCohortMandatory <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortMandatory</span>,</span>
-<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortPriorityOrder</span>,</span>
-<span>  mergeStates <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeStates</span>,</span>
-<span>  mergeThreshold <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeThreshold</span>,</span>
-<span>  pathToData <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><br></p>
-<div class="section level4">
-<h4 id="without-atlas-support">Without atlas support<a class="anchor" aria-label="anchor" href="#without-atlas-support"></a>
-</h4>
-<p>To use the CDM without ATLAS support, ensure the required JSON files
-are located under <code>studyName/JSON</code>. In this case, set the
-<code>baseUrl</code> variable to <code>NULL</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span></span>
-<span>  runSavedStudy <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  useCDM <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">useCDM</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cdm <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  studyEnv <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  atlasStateCohorts <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasStateCohorts</span>,</span>
-<span>  atlasTargetCohort <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasTargetCohort</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortLabels</span>,</span>
+<code class="sourceCode R"><span><span class="va">studyEnv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"local-json"</span>,</span>
+<span>  pathToStudy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  useCDM <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  baseUrl <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  outOfCohortAllowed <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">outOfCohortAllowed</span>,</span>
-<span>  stateCohortMandatory <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortMandatory</span>,</span>
-<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortPriorityOrder</span>,</span>
-<span>  mergeStates <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeStates</span>,</span>
-<span>  mergeThreshold <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeThreshold</span>,</span>
-<span>  pathToData <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><br></p>
+<span>  atlasTargetCohort <span class="op">=</span> <span class="st">"target"</span>,</span>
+<span>  atlasStateCohorts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"states/A"</span>, <span class="st">"states/B"</span><span class="op">)</span>,</span>
+<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
+<span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
+<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Place the JSON files in the study folder before this call.</span></span>
+<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">cdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
+<p>The package still generates cohorts on the CDM. Only the source of
+their definitions has changed. Relative subfolders are supported. Do not
+use absolute paths or parent traversal in definitions intended for saved
+replay.</p>
+<p>CDM imports work in a temporary JSON folder. Downloads and the new
+manifest are published only after a successful import. Failed downloads,
+queries and empty eligible cohorts leave the previous working
+definitions unchanged. Unrelated JSON files are not replaced.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="local-data">Local data<a class="anchor" aria-label="anchor" href="#local-data"></a>
+</h2>
+<p>Set <code>useCDM = FALSE</code> to import a data frame or CSV without
+a database. Use these four column names exactly:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr class="header">
+<th>Column</th>
+<th>Content</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>subject_id</code></td>
+<td>Patient identifier. Use character values for leading zeros or large
+IDs.</td>
+</tr>
+<tr class="even">
+<td><code>cohort_definition_id</code></td>
+<td>Character label. <code>"0"</code> identifies a target interval.
+Other values are state labels.</td>
+</tr>
+<tr class="odd">
+<td><code>cohort_start_date</code></td>
+<td>Interval start, as an R <code>Date</code> in a data frame.</td>
+</tr>
+<tr class="even">
+<td><code>cohort_end_date</code></td>
+<td>Interval end, as an R <code>Date</code> in a data frame.</td>
+</tr>
+</tbody>
+</table>
+<p>For CSV input, write dates as <code>YYYY-MM-DD</code>. Dates must be
+present and the end must not precede the start. Intervals include both
+endpoints. Patient IDs must not be missing or blank. Numeric
+whole-number and <code>integer64</code> IDs are also accepted, but use
+character or <code>integer64</code> before creating values at or above
+<code>2^53</code> to avoid rounding in R doubles.</p>
+<p>The target label is the text <code>"0"</code>, regardless of the
+clinical labels. This example includes a second patient with a target
+interval and no state records:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rawData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  subject_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"001"</span>, <span class="st">"001"</span>, <span class="st">"001"</span>, <span class="st">"002"</span><span class="op">)</span>,</span>
+<span>  cohort_definition_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"0"</span><span class="op">)</span>,</span>
+<span>  cohort_start_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"2020-01-01"</span>, <span class="st">"2020-01-01"</span>, <span class="st">"2020-01-08"</span>, <span class="st">"2020-01-01"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span>,</span>
+<span>  cohort_end_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"2020-01-21"</span>, <span class="st">"2020-01-07"</span>, <span class="st">"2020-01-14"</span>, <span class="st">"2020-01-21"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">studyEnv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"local-data"</span>,</span>
+<span>  pathToStudy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  useCDM <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  trajectoryDataObject <span class="op">=</span> <span class="va">rawData</span>,</span>
+<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
+<span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
+<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
+<p>To configure a CSV source instead, omit
+<code>trajectoryDataObject</code> and supply
+<code>pathToData = "path/to/input.csv"</code>. The package reads patient
+IDs and state labels as text, preserving leading zeros and the literal
+label <code>"NA"</code>.</p>
 <div class="section level3">
-<h3 id="run-saved-study">Run saved study<a class="anchor" aria-label="anchor" href="#run-saved-study"></a>
+<h3 id="replace-the-input-for-one-import">Replace the input for one import<a class="anchor" aria-label="anchor" href="#replace-the-input-for-one-import"></a>
 </h3>
-<p>If a saved study configuration is used, the previously set options
-are overridden by the saved settings. It is recommended to set
-<code>trajectoryDataObject</code>, <code>pathToData</code>, and
-<code>useCDM</code> to <code>NULL</code>.</p>
+<p>An explicit local source takes precedence over the configured
+alternative:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Use this CSV even if the configuration contains a data frame.</span></span>
+<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">studyEnv</span>, pathToData <span class="op">=</span> <span class="st">"path/to/new-input.csv"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Use this data frame even if the configuration contains a CSV path.</span></span>
+<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">studyEnv</span>, trajectoryDataObject <span class="op">=</span> <span class="va">newData</span><span class="op">)</span></span></code></pre></div>
+<p>Do not supply both non-NULL sources in one call. With neither
+supplied, the configured data frame is used when present, otherwise the
+configured CSV is used. Set <code>trajectoryDataObject = NULL</code> in
+an import call to use the configured CSV instead. These overrides apply
+to that import only. CDM imports ignore both local source arguments.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="what-cleaning-does">What cleaning does<a class="anchor" aria-label="anchor" href="#what-cleaning-does"></a>
+</h2>
+<p>Only patients with a target row are retained. If a patient has
+several target intervals, the first interval by start date supplies the
+bounds. State records before its start are removed or clipped. By
+default, records after its end are also removed or clipped.
+<code>outOfCohortAllowed = TRUE</code> allows retained state records to
+extend beyond the target end, without moving the target start.</p>
+<p>Overlapping records for the same patient and state are combined.
+Every label in <code>stateCohortMandatory</code> must occur within the
+retained interval. This checks presence anywhere in that interval, not
+eligibility on Day 7. Use <code>NULL</code> or <code>character(0)</code>
+when no state is mandatory. Patients with only a target interval remain
+eligible when no mandatory rule excludes them.</p>
+<p>When <code>mergeStates = TRUE</code>, overlaps between different
+states are then represented by their structured membership. Import does
+not infer diagnoses, prior history or clinical meaning from the state
+labels.</p>
+<p>If no eligible patients remain, import does not succeed. Previous
+cleaned files are kept, and trajectory generation is blocked until a
+later import succeeds. Changing mandatory-state requirements also
+requires another import.</p>
+</div>
+<div class="section level2">
+<h2 id="saved-studies">Saved studies<a class="anchor" aria-label="anchor" href="#saved-studies"></a>
+</h2>
+<p>Restore a version 4 snapshot with <code>runSavedStudy = TRUE</code>,
+then import fresh data. See <a href="a01_configuration.html#repeat-a-saved-study">saved-study
+configuration</a> for the Settings-only sharing workflow. A saved CDM
+study uses the definitions embedded in the RDS file, without an ATLAS
+connection or working JSON files:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span></span>
-<span>  runSavedStudy <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">runSavedStudy</span>,</span>
-<span>  useCDM <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cdm <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  studyEnv <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  atlasStateCohorts <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasStateCohorts</span>,</span>
-<span>  atlasTargetCohort <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">atlasTargetCohort</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortLabels</span>,</span>
-<span>  baseUrl <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">baseUrl</span>,</span>
-<span>  outOfCohortAllowed <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">outOfCohortAllowed</span>,</span>
-<span>  stateCohortMandatory <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortMandatory</span>,</span>
-<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">stateCohortPriorityOrder</span>,</span>
-<span>  mergeStates <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeStates</span>,</span>
-<span>  mergeThreshold <span class="op">=</span> <span class="va">studyEnv</span><span class="op">$</span><span class="va">mergeThreshold</span>,</span>
-<span>  pathToData <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><br></p>
-</div>
-<div class="section level3">
-<h3 id="add-data-object-or-path-to-data">Add data object or path to data<a class="anchor" aria-label="anchor" href="#add-data-object-or-path-to-data"></a>
-</h3>
-<p>To add data manually, provide either the
-<code>trajectoryDataObject</code> or the <code>pathToData</code> as
-input. It is suggested to set both <code>useCDM</code> and
-<code>runSavedStudy</code> to <code>NULL</code>.</p>
-<p>For appending personal data to existing datasets, refer to the <a href="a03_trajectories.html#adding-personal-data-to-self-inserted-data">create
-trajectories</a> section.</p>
-</div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">savedStudy</span><span class="op">)</span></span></code></pre></div>
+<p>For a saved local-data study, configure <code>useCDM = FALSE</code>
+and supply a new local source. The same per-call source precedence
+applies. Saved runs restore their analysis settings, so do not pass
+replacement labels, mandatory states, transition rules or merging
+options.</p>
+<p>After import, continue to <a href="a03_trajectories.html">trajectory
+generation</a>. The <a href="a05_output.html">output article</a>
+describes cleaned data, trajectories and the saved settings file.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -212,7 +284,7 @@ trajectories</a> section.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

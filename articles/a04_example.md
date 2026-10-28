@@ -1,0 +1,220 @@
+# A weekly worked example
+
+This synthetic example builds weekly trajectories with four
+analyst-defined states: alive without recorded pneumonia, alive with
+pneumonia history, death without that history, and death with it. The
+two death states are mutually exclusive. They describe recorded history,
+not the cause of death.
+
+The package does not construct these clinical definitions. Here we
+supply their intervals directly. In a database study, the analyst would
+define equivalent state cohorts. The target interval ends at death or
+the end of observation in this example.
+
+## Five patient histories
+
+All patients enter on January 1, 2020. The examples cover:
+
+- `001`: three weeks without pneumonia.
+- `002`: pneumonia recorded on January 9, with history retained to
+  observation end.
+- `003`: pneumonia on January 10 and death on January 12, in the same
+  weekly cycle.
+- `004`: death without pneumonia history on January 4.
+- `005`: observation ending on January 10, partway through the second
+  cycle.
+
+``` r
+
+states <- c(
+  "Alive, no recorded pneumonia",
+  "Alive, pneumonia history",
+  "Death, no pneumonia history",
+  "Death, pneumonia history"
+)
+
+interval <- function(id, state, start, end) {
+  data.frame(
+    subject_id = id,
+    cohort_definition_id = state,
+    cohort_start_date = as.Date(start),
+    cohort_end_date = as.Date(end)
+  )
+}
+
+input <- do.call(rbind, list(
+  interval("001", "0", "2020-01-01", "2020-01-21"),
+  interval("001", states[1], "2020-01-01", "2020-01-21"),
+  interval("002", "0", "2020-01-01", "2020-01-21"),
+  interval("002", states[1], "2020-01-01", "2020-01-08"),
+  interval("002", states[2], "2020-01-09", "2020-01-15"),
+  interval("002", states[2], "2020-01-12", "2020-01-21"),
+  interval("003", "0", "2020-01-01", "2020-01-12"),
+  interval("003", states[1], "2020-01-01", "2020-01-09"),
+  interval("003", states[2], "2020-01-10", "2020-01-11"),
+  interval("003", states[4], "2020-01-12", "2020-01-12"),
+  interval("004", "0", "2020-01-01", "2020-01-04"),
+  interval("004", states[1], "2020-01-01", "2020-01-03"),
+  interval("004", states[3], "2020-01-04", "2020-01-04"),
+  interval("005", "0", "2020-01-01", "2020-01-10"),
+  interval("005", states[1], "2020-01-01", "2020-01-10")
+))
+```
+
+The two overlapping history records for `002` describe the same state.
+Import combines their coverage without counting the overlapping days
+twice.
+
+## Choose the weekly rules
+
+Death takes priority over either living state. Pneumonia history takes
+priority over the state without pneumonia. Both death states are
+absorbing, so no further cycles are generated after a selected death
+cycle.
+
+``` r
+
+studyPath <- tempfile("c2t-weekly-example-")
+dir.create(studyPath)
+
+allowed <- stats::setNames(list(
+  states,
+  states[c(2, 4)],
+  character(0),
+  character(0)
+), states)
+
+study <- cohort2TrajectoryConfiguration(
+  studyName = "WeeklyExample",
+  pathToStudy = studyPath,
+  useCDM = FALSE,
+  trajectoryDataObject = input,
+  stateCohortLabels = states,
+  stateCohortPriorityOrder = states[c(4, 3, 2, 1)],
+  stateCohortAbsorbing = states[c(3, 4)],
+  allowedStatesList = allowed,
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7
+)
+```
+
+``` r
+
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+```
+
+## Inspect the weekly histories
+
+``` r
+
+clinical <- subset(trajectories, !state_label %in% c("START", "EXIT"))
+knitr::kable(clinical[c(
+  "subject_id", "state_label", "state_start_date", "state_end_date"
+)], row.names = FALSE)
+```
+
+| subject_id | state_label                  | state_start_date | state_end_date |
+|:-----------|:-----------------------------|:-----------------|:---------------|
+| 001        | Alive, no recorded pneumonia | 2020-01-01       | 2020-01-07     |
+| 001        | Alive, no recorded pneumonia | 2020-01-08       | 2020-01-14     |
+| 001        | Alive, no recorded pneumonia | 2020-01-15       | 2020-01-21     |
+| 002        | Alive, no recorded pneumonia | 2020-01-01       | 2020-01-07     |
+| 002        | Alive, pneumonia history     | 2020-01-08       | 2020-01-14     |
+| 002        | Alive, pneumonia history     | 2020-01-15       | 2020-01-21     |
+| 003        | Alive, no recorded pneumonia | 2020-01-01       | 2020-01-07     |
+| 003        | Death, pneumonia history     | 2020-01-08       | 2020-01-12     |
+| 004        | Death, no pneumonia history  | 2020-01-01       | 2020-01-04     |
+| 005        | Alive, no recorded pneumonia | 2020-01-01       | 2020-01-07     |
+| 005        | Alive, no recorded pneumonia | 2020-01-08       | 2020-01-10     |
+
+For `003`, the second cycle is labelled `Death, pneumonia history`. The
+label preserves the history classification even though that cycle also
+contained living days before and after pneumonia. It does not retain the
+January 10 onset date as a separate weekly row.
+
+For `004`, the first cycle is already a death cycle. This does not imply
+that the patient died on January 1. Weekly dates describe the cycle, not
+the exact onset of its selected state. Both patients’ final cycles end
+on their death dates here because their target intervals end on those
+dates. If the target interval extended further, selecting an absorbing
+state would stop after its cycle rather than shorten that cycle to the
+event day.
+
+For `005`, the second cycle covers only January 8 to 10. Its `EXIT`
+marker is January 11. An analysis must not interpret that marker as a
+death or count it as an additional day of follow-up.
+
+These checks run when this article is built:
+
+``` r
+
+expected <- list(
+  "001" = rep(states[1], 3),
+  "002" = states[c(1, 2, 2)],
+  "003" = states[c(1, 4)],
+  "004" = states[3],
+  "005" = rep(states[1], 2)
+)
+for (id in names(expected)) {
+  stopifnot(identical(
+    clinical$state_label[clinical$subject_id == id], expected[[id]]
+  ))
+}
+stopifnot(
+  tail(clinical$state_end_date[clinical$subject_id == "005"], 1) ==
+    as.Date("2020-01-10"),
+  trajectories$state_start_date[
+    trajectories$subject_id == "005" & trajectories$state_label == "EXIT"
+  ] == as.Date("2020-01-11")
+)
+```
+
+## Rerun from the saved settings
+
+Copy just the settings into a new location and provide fresh input. We
+reuse the synthetic data to check that moving the study does not change
+its result. On the server, the new input would come from that site’s
+database.
+
+``` r
+
+newPath <- tempfile("c2t-weekly-replay-")
+newSettings <- file.path(newPath, "WeeklyExample", "Settings")
+dir.create(newSettings, recursive = TRUE)
+copied <- file.copy(
+  file.path(studyPath, "WeeklyExample", "Settings", "analysisSettings.rds"),
+  newSettings
+)
+stopifnot(copied)
+
+restored <- cohort2TrajectoryConfiguration(
+  studyName = "WeeklyExample",
+  pathToStudy = newPath,
+  useCDM = FALSE,
+  trajectoryDataObject = input,
+  runSavedStudy = TRUE
+)
+getDataForStudy(studyEnv = restored)
+replayed <- createTrajectories(studyEnv = restored)
+stopifnot(isTRUE(all.equal(trajectories, replayed)))
+```
+
+No state definitions or selection rules were re-entered. Only the
+location and fresh data were supplied.
+
+## Before fitting a model
+
+The four labels can be used as four model states. If an analysis instead
+treats pneumonia onset and mortality as two steps within a week, it
+needs an explicit rule for the transition from alive without pneumonia
+to death with pneumonia history. A general transition estimator cannot
+infer that rule from the label.
+
+Likewise, a requirement that pneumonia precede death by at least one
+calendar day belongs in the analyst’s cohort definitions. Do not infer
+that separation from two weekly labels. Use the underlying state
+intervals for analyses that need exact dates. See [Read the
+output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
+for their locations.

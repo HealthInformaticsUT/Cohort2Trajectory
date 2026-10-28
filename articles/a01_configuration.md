@@ -1,0 +1,182 @@
+# Configure a study
+
+## Define the study
+
+[`cohort2TrajectoryConfiguration()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+creates a study environment and its folders. Pass that environment to
+both
+[`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+and
+[`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
+Configuration alone does not retrieve patient data or generate
+trajectories.
+
+The analyst defines the target and state cohorts. The target cohort
+supplies the observation interval. State cohorts supply the clinical
+facts to represent within that interval. Cohort2Trajectory does not
+infer the meaning of a state from its label.
+
+This example uses cohort definitions from an ATLAS WebAPI. Replace the
+URL and cohort IDs with your own. Each state ID has one label in the
+same position.
+
+``` r
+
+library(Cohort2Trajectory)
+
+studyEnv <- cohort2TrajectoryConfiguration(
+  studyName = "example",
+  pathToStudy = getwd(),
+  useCDM = TRUE,
+  baseUrl = "http://localhost:8080/WebAPI",
+  atlasTargetCohort = 101,
+  atlasStateCohorts = c(202, 203),
+  stateCohortLabels = c("A", "B"),
+  stateCohortPriorityOrder = c("B", "A"),
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  lengthOfStay = 7
+)
+```
+
+Use `"Discrete"` or `"Continuous"` for `trajectoryType` and `"First"`,
+`"Overlap"` or `"Priority"` for `stateSelectionType`. These options
+accept names, not numeric codes. Discrete trajectories also need a
+positive whole number of days for `lengthOfStay`. The [trajectory
+article](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.md)
+explains selection and gap handling.
+
+Labels must be nonempty and unique even when ignoring case. `"0"`,
+`"START"`, `"EXIT"` and `"OUT OF COHORT"` are reserved. Keep the same
+spelling in labels, priorities and rule-source names. Labels are not
+filenames.
+
+## Choose only the rules you need
+
+`stateCohortMandatory = NULL` and `stateCohortAbsorbing = NULL` mean no
+mandatory or absorbing states. `character(0)` also means none. Do not
+add a placeholder state to express the absence of a rule.
+
+A mandatory state must occur somewhere in the patient’s retained
+interval. It does not mean that the patient must be in that state on Day
+7 or at another specified time. Define time-specific eligibility in the
+target cohort when that is part of the study design. Mandatory
+requirements are applied during import, so changing them requires
+another import.
+
+An absorbing state ends a trajectory when it is retained by the
+selection and transition rules. Use the exact state label in
+`stateCohortAbsorbing`.
+
+By default, `allowedStatesList` permits transitions between the
+configured states. Supply a named list to restrict them. An empty list
+imposes no restrictions. The [function
+reference](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+describes the full rule syntax.
+
+## Merge overlapping states when needed
+
+Set `mergeStates = TRUE` to represent exact overlaps as states with
+explicit membership. For example, an overlap between `"A"` and `"B"` has
+both as members. The package does not split a display label to recover
+those members.
+
+Merged states inherit rules from their members. To replace selected
+properties, build an override and pass it as `mergedStateOverrides` when
+configuring the study. Omitted properties keep their inherited values.
+
+The default rules are:
+
+- If A can enter C, A+B can enter C even when B cannot.
+- To enter C+D, both newly added members must be permitted by at least
+  one source member. Permission for C alone is not enough.
+- Staying in A+B, or moving from A+B to A, requires permission for every
+  member retained at the destination. An empty destination list does not
+  automatically allow a self-transition.
+- If any member is absorbing, the combination is absorbing. Its priority
+  is the highest priority of its members. Larger combinations come first
+  when that priority is equal.
+
+Merging uses the original dates before cycles are constructed. A on days
+1 to 10 and B on days 5 to 7 produce A, then A+B, then A again. Two
+non-overlapping events within the same week are not combined merely
+because they share a cycle.
+
+``` r
+
+overrides <- list(
+  mergedState(
+    members = c("A", "B"),
+    label = "A and B",
+    allowedTransitions = "B",
+    absorbing = FALSE
+  )
+)
+```
+
+This override requires `mergeStates = TRUE`. Its destinations and
+absorbing status replace the inherited values. See the [merged-state
+reference](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+for further examples and [output
+files](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
+for the state dictionary.
+
+## Supply a CDM connection when running the study
+
+Create a CDM reference with CDMConnector using your site’s database
+connection and a writable schema. For example, with an existing DBI
+connection named `connection`:
+
+``` r
+
+cdm <- CDMConnector::cdmFromCon(
+  con = connection,
+  cdmSchema = "cdm",
+  writeSchema = c(schema = "results", prefix = "c2t_")
+)
+
+getDataForStudy(cdm = cdm, studyEnv = studyEnv)
+trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
+```
+
+The connection is supplied to these calls, not stored for reuse in saved
+study settings. For a data frame or CSV instead of a CDM, set
+`useCDM = FALSE` and follow the [local input
+example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html#local-data).
+
+## Repeat a saved study
+
+After successful import and trajectory generation, the study contains
+`Settings/analysisSettings.rds`. The current snapshot format is version
+4. It stores the analysis settings and, for a CDM study, the cohort JSON
+definitions used during import. It does not contain patient data or a
+database connection.
+
+Copy the completed study’s `Settings` folder to
+`new-study-location/example/Settings`. JSON and Data folders are not
+needed for a saved CDM run. Connect to the new database and restore the
+study:
+
+``` r
+
+savedStudy <- cohort2TrajectoryConfiguration(
+  studyName = "example",
+  pathToStudy = "new-study-location",
+  runSavedStudy = TRUE
+)
+
+getDataForStudy(cdm = newCdm, studyEnv = savedStudy)
+trajectories <- createTrajectories(cdm = newCdm, studyEnv = savedStudy)
+```
+
+Do not repeat labels, rules or cycle settings in these calls. They are
+restored from the snapshot. Saved runs import fresh patients using the
+embedded definitions, not edited files in the working JSON folder. To
+change analysis rules or cohort definitions, configure a fresh study and
+complete both steps. Older snapshot formats must also be rerun before
+they can be shared this way.
+
+A saved local-data study restores its rules in the same way. Set
+`useCDM = FALSE` and supply a new data frame or CSV, as described in the
+[import
+article](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html#saved-studies).

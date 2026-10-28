@@ -8,8 +8,8 @@
 <title>Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS • Cohort2Trajectory</title>
 <script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.2.1/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.2.1/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS">
 <meta name="description" content="Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time. Package can be run with GUI or CLI.">
 <meta property="og:description" content="Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time. Package can be run with GUI or CLI.">
@@ -36,10 +36,11 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/a00_introduction.html">Getting started</a></li>
-    <li><a class="dropdown-item" href="articles/a01_configuration.html">Configuration</a></li>
-    <li><a class="dropdown-item" href="articles/a02_import.html">Import data</a></li>
+    <li><a class="dropdown-item" href="articles/a01_configuration.html">Configure a study</a></li>
+    <li><a class="dropdown-item" href="articles/a02_import.html">Import cohort data</a></li>
     <li><a class="dropdown-item" href="articles/a03_trajectories.html">Create trajectories</a></li>
-    <li><a class="dropdown-item" href="articles/a04_example.html">Example</a></li>
+    <li><a class="dropdown-item" href="articles/a04_example.html">A weekly worked example</a></li>
+    <li><a class="dropdown-item" href="articles/a05_output.html">Read the output</a></li>
   </ul>
 </li>
       </ul>
@@ -65,64 +66,95 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="cohort2trajectory">Cohort2Trajectory<a class="anchor" aria-label="anchor" href="#cohort2trajectory"></a>
 </h1></div>
-<p>NOTE: After refactoring to CDMConnector the package execution code has significantly changed. You can find the old release v1.1.8 <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.8" class="external-link">here</a>. (January 2025)</p>
+<p>Cohort2Trajectory turns cohort intervals into patient trajectories. The target cohort defines each patient’s observation period. State cohorts describe what happened during that period. The analyst defines those cohorts and decides which state takes priority when records overlap.</p>
+<p>The package accepts cohorts generated in an OMOP Common Data Model database, an R data frame or a CSV file. It produces either fixed-length cycles or continuous intervals. It does not infer diagnoses, recovery or a history state from the names of the supplied cohorts.</p>
+<div class="section level2">
+<h2 id="start-here">Start here<a class="anchor" aria-label="anchor" href="#start-here"></a>
+</h2>
+<p>The <a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">documentation site</a> contains the function reference and these articles:</p>
+<ul>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html">Getting started</a>: a small example that needs no database.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html">Configure a study</a>: observation bounds, selection rules and overlapping states.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html">Import cohort data</a>: local data, ATLAS definitions and saved studies.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html">Create trajectories</a>: discrete and continuous output.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html">A weekly worked example</a>: pneumonia history, two death states and a saved-study rerun.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html">Read the output</a>: columns, dates, saved files and downstream use.</li>
+</ul>
+<p>The usual workflow has three steps:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"MyStudy"</span>,</span>
+<span>  pathToStudy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  useCDM <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  trajectoryDataObject <span class="op">=</span> <span class="va">input</span>,</span>
+<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
+<span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
+<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
+<span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span></code></pre></div>
+<p>Here <code>input</code> is your cohort table. It needs <code>subject_id</code>, <code>cohort_definition_id</code>, <code>cohort_start_date</code> and <code>cohort_end_date</code>. Use <code>"0"</code> for target-cohort rows and the clinical labels for state rows. Supply dates as <code>Date</code> values in R or <code>YYYY-MM-DD</code> in CSV. The getting-started article supplies a complete input table.</p>
+<p>Use names such as <code>"Discrete"</code> and <code>"Priority"</code> for the public options. They ignore case and surrounding spaces. Numeric option codes are not accepted.</p>
 </div>
-<div class="section level1">
-<h1 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h1>
-<p>Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients’ treatment through time.</p>
-<p>For instructions and documentation please see the package’s <a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">wiki</a> page.</p>
+<div class="section level2">
+<h2 id="what-the-trajectory-means">What the trajectory means<a class="anchor" aria-label="anchor" href="#what-the-trajectory-means"></a>
+</h2>
+<p>A discrete trajectory assigns one state to each cycle. A seven-day cycle has seven days, including both endpoints. The final cycle can be shorter. Its selected state does not mean that the patient spent every day in that state. For example, a death recorded within the week can determine the week’s label.</p>
+<p>A continuous trajectory keeps selected interval dates. It does not fill gaps or move simultaneous records onto different dates. In either format, <code>START</code> and <code>EXIT</code> mark boundaries, not clinical states. <code>OUT OF COHORT</code> means that no state was selected for a discrete cycle. It does not mean observation ended.</p>
+<p>Overlapping states can be combined with <code>mergeStates = TRUE</code>. Membership is stored explicitly. A label containing <code>+</code> is never split to guess its members. Use <code><a href="reference/mergedState.html">mergedState()</a></code> when a particular combination needs different allowed destinations, absorbing status or a display label. The configuration article explains the inheritance rules and their limits.</p>
 </div>
-<div class="section level1">
-<h1 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
-</h1>
-<p><strong>Sharing the study</strong>: For sharing the trajectory generation parameters and cohorts just share the study folder and settings file with your counterpart.</p>
+<div class="section level2">
+<h2 id="rerun-a-saved-study">Rerun a saved study<a class="anchor" aria-label="anchor" href="#rerun-a-saved-study"></a>
+</h2>
+<p>A successful import and trajectory run saves its rules in <code>Settings/analysisSettings.rds</code>. For CDM studies, this file also contains the cohort JSON definitions used during import.</p>
+<p>Copy the completed study’s <code>Settings</code> folder to the new study folder. Do not copy <code>Data</code> when sharing a study because it contains patient-level records. For a CDM rerun, supply a connection to the new database:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"MyStudy"</span>,</span>
+<span>  pathToStudy <span class="op">=</span> <span class="st">"/new/location"</span>,</span>
+<span>  runSavedStudy <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
+<span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span></code></pre></div>
+<p>There is no need to re-enter the analytical settings or connect to ATLAS. For local data, also set <code>useCDM = FALSE</code> and supply fresh input through <code>trajectoryDataObject</code> or <code>pathToData</code>. To change the analysis rules, configure a new run instead of overriding a saved study.</p>
+<p>Only the current RDS format, version 4, is supported. Older studies must be reconfigured and rerun. Settings CSV files and the removed arguments <code>mergeThreshold</code> and <code>updateAutomaticallyForMergedStates</code> are not supported.</p>
 </div>
-<div class="section level1">
-<h1 id="technology">Technology<a class="anchor" aria-label="anchor" href="#technology"></a>
-</h1>
-<p>Cohort2Trajectory is an R package, with some functions implemented in C++.</p>
-<p>For running the package with OMOP CDM, the user must have:</p>
-<ol style="list-style-type: decimal">
-<li><p>Permissions to select on ohdsi cdm data schema.</p></li>
-<li><p>Permissions to select on ohdsi cdm results schema.</p></li>
-<li><p>Permissions to select, create and insert on ohdsi temp/scratch schema.</p></li>
-</ol>
+<div class="section level2">
+<h2 id="database-access">Database access<a class="anchor" aria-label="anchor" href="#database-access"></a>
+</h2>
+<p>CDM studies use a CDMConnector connection. The database account needs read access to the required CDM and vocabulary tables, and permission to create and populate tables in the configured write schema. Start with a small cohort when checking a new server connection.</p>
 </div>
-<div class="section level1">
-<h1 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
-</h1>
-<p>Cohort2Trajectory is licensed under Apache License 2.0</p>
+<div class="section level2">
+<h2 id="related-packages">Related packages<a class="anchor" aria-label="anchor" href="#related-packages"></a>
+</h2>
+<ul>
+<li><a href="https://github.com/HealthInformaticsUT/CohortContrast" class="external-link">CohortContrast</a></li>
+<li><a href="https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis" class="external-link">TrajectoryMarkovAnalysis</a></li>
+<li><a href="https://github.com/HealthInformaticsUT/TrajectoryViz" class="external-link">TrajectoryViz</a></li>
+</ul>
+<p>These packages have separate interfaces. Do not assume that an older analysis package can read the current trajectory output without checking its expected column names and handling of boundary rows.</p>
 </div>
-<div class="section level1">
-<h1 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a>
-</h1>
-<p>Cohort2Trajectory is being developed in R Studio.</p>
-<p>Feel free to contact the maintainer with questions: <a href="mailto:markus.haug@ut.ee" class="email">markus.haug@ut.ee</a></p>
+<div class="section level2">
+<h2 id="publication-and-citation">Publication and citation<a class="anchor" aria-label="anchor" href="#publication-and-citation"></a>
+</h2>
+<p>Haug M, Oja M, Pajusalu M, et al. <em>Markov modeling for cost-effectiveness using federated health data network</em>. Journal of the American Medical Informatics Association, 2024. <a href="https://doi.org/10.1093/jamia/ocae044" class="external-link">doi:10.1093/jamia/ocae044</a>.</p>
+<p>When reporting an analysis, also record the package version or Git commit and retain the settings used for the run.</p>
 </div>
-<div class="section level1">
-<h1 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a>
-</h1>
-<p><a href="https://github.com/HealthInformaticsUT/CohortContrast" class="external-link">HealthInformaticsUT/CohortContrast</a></p>
-<p><a href="https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis" class="external-link">HealthInformaticsUT/TrajectoryMarkovAnalysis</a></p>
-<p><a href="https://github.com/HealthInformaticsUT/TrajectoryViz" class="external-link">HealthInformaticsUT/TrajectoryViz</a></p>
+<div class="section level2">
+<h2 id="license-and-contact">License and contact<a class="anchor" aria-label="anchor" href="#license-and-contact"></a>
+</h2>
+<p>Apache License 2.0. Developed by the University of Tartu Health Informatics research group. Contact <a href="mailto:markus.haug@ut.ee">Markus Haug</a>.</p>
 </div>
-<div class="section level1">
-<h1 id="publications">Publications<a class="anchor" aria-label="anchor" href="#publications"></a>
-</h1>
-<p>Markus Haug, Marek Oja, Maarja Pajusalu, Kerli Mooses, Sulev Reisberg, Jaak Vilo, Antonio Fernández Giménez, Thomas Falconer, Ana Danilović, Filip Maljkovic, Dalia Dawoud, Raivo Kolde, Markov modeling for cost-effectiveness using federated health data network, Journal of the American Medical Informatics Association, 2024;, ocae044, <a href="https://doi.org/10.1093/jamia/ocae044" class="external-link uri">https://doi.org/10.1093/jamia/ocae044</a></p>
 </div>
-<div class="section level1">
-<h1 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
-</h1>
-<p>Haug, M. (2023, May). Cohort2Trajectory, v1.1.3. GitHub. <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.8" class="external-link uri">https://github.com/HealthInformaticsUT/Cohort2Trajectory/releases/tag/v1.1.8</a></p>
-</div>
-<div class="section level1">
-<h1 id="acknowledgements">Acknowledgements<a class="anchor" aria-label="anchor" href="#acknowledgements"></a>
-</h1>
-<p>Research group of Health-Informatics in University of Tartu <a href="https://health-informatics.cs.ut.ee/" class="external-link uri">https://health-informatics.cs.ut.ee/</a></p>
-</div>
-
   </main><aside class="col-md-3"><div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
@@ -142,9 +174,9 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Markus Haug <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-0935-3307" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Greete Kelli Aava <br><small class="roles"> Maintainer, contributor </small>  </li>
-<li>Raivo Kolde <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-2886-6298" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Markus Haug <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-0935-3307" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Greete Kelli Aava <br><small class="roles"> Maintainer, contributor </small>   </li>
+<li>Raivo Kolde <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-2886-6298" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -159,7 +191,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
