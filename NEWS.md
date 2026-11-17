@@ -16,4 +16,4 @@
 * Native patient loops can be interrupted and do not change R's random-number
   state. Tests and examples use synthetic data and temporary folders.
 * Updated package metadata, offline articles and source-package contents for
-  CRAN checks. The package remains licensed under Apache License 2.0.
+  package checks. The package remains licensed under Apache License 2.0.

@@ -8,10 +8,7 @@
 ^renv\.lock$
 ^tmp$
 ^LICENSE$
-^cran-comments\.md$
-^CRAN-SUBMISSION$
 ^tools$
 ^.*\.Rcheck$
 ^.*\.(tar\.gz|zip)$
 (^|/)\.DS_Store$
-^SUBMISSION-CHECKLIST\.md$
