@@ -7,3 +7,10 @@ inst/doc
 .Rhistory
 *.rds
 *.RDS
+.Rproj.user
+.DS_Store
+*.Rcheck/
+*.tar.gz
+src/*.o
+src/*.so
+src/*.dll

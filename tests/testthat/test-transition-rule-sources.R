@@ -36,7 +36,7 @@ test_that("duplicate source overrides and saved rules cannot silently change tra
                     c("START", "A", "EXIT"))
   # A partial list is valid: no outgoing entry is needed after absorbing B.
   expect_identical(createTrajectories(studyEnv = study)$state_label, c("START", "A", "B", "EXIT"))
-  files <- file.path(path, "rules", c("Data/importedDataCleaned_.csv",
+  files <- file.path(path, "rules", c("Data/importedDataCleaned.csv",
                                       "Data/patientDataContinuous.csv", "Settings/analysisSettings.rds"))
   before <- tools::md5sum(files)
   duplicate <- list(A = "B", A = "C", B = "C", C = "C")

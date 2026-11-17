@@ -7,8 +7,14 @@
 createStateList(stateVector)
 }
 \arguments{
-\item{stateVector}{Vector with the defines state labels}
+\item{stateVector}{Character vector of state labels.}
+}
+\value{
+A named list allowing every state to transition to every state.
 }
 \description{
 Create a list of all states (as elements) for each state (as index)
+}
+\examples{
+createStateList(c("Stable", "Complication", "Death"))
 }

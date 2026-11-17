@@ -12,7 +12,8 @@ getCohortData(
   baseUrl = "http://localhost:8080/WebAPI",
   pathToStudy = studyEnv$pathToStudy,
   studyName = studyEnv$studyName,
-  stateCohortLabels = NULL
+  stateCohortLabels = NULL,
+  webApiHeaders = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ getCohortData(
 \item{studyName}{name chosen for study, is used as a folder name}
 
 \item{stateCohortLabels}{Vector of the customized labels of the state cohorts}
+
+\item{webApiHeaders}{Optional named HTTP headers, used only during download.}
 }
 \value{
 A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date

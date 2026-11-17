@@ -164,35 +164,57 @@ is_overlap <- function(start1, end1, start2, end2) {
 
 #' Function which converts text formatted JSON to digestible JSON
 #'
-#' @param input Text formatted JSON which needs conversion to digestible JSON
+#' @param input An R object containing a cohort expression.
+#' @param pretty Whether to indent the JSON output.
 #' @keywords internal
 .toJSON <- function(input, pretty = FALSE) {
-  return(RJSONIO::toJSON(
-    x = input,
-    digits = 23,
-    pretty = pretty
-  ))
+  as.character(jsonlite::toJSON(input, auto_unbox = TRUE, null = "null",
+                                digits = NA, pretty = pretty))
 }
 
 #' Create the mandatory study subdirectories
 #'
-#' @param pathToStudy Path to the package 
+#' @param pathToStudy Parent folder for the study.
+#' @param studyName Name of the study folder.
 #' @keywords internal
 createMandatorySubDirs <- function(pathToStudy, studyName) {
-  
-  dir.create(file.path(pathToStudy, studyName), showWarnings = FALSE)
-  dir.create(file.path(paste(pathToStudy, '/', studyName, sep = ""), 'JSON'), showWarnings = FALSE)
-  dir.create(file.path(paste(pathToStudy, '/', studyName, sep = ""), 'Data'), showWarnings = FALSE)
-  dir.create(file.path(paste(pathToStudy, '/', studyName, sep = ""), 'Settings'), showWarnings = FALSE)
-  
+  .validateStudyPath(pathToStudy, studyName)
+  paths <- file.path(pathToStudy, studyName, c("", "JSON", "Data", "Settings"))
+  for (path in paths) {
+    if (!dir.exists(path) && !dir.create(path, recursive = TRUE, showWarnings = FALSE)) {
+      stop("Could not create study directory: ", path, call. = FALSE)
+    }
+  }
+  invisible(NULL)
 }
 
+.validateStudyPath <- function(pathToStudy, studyName) {
+  if (!is.character(pathToStudy) || length(pathToStudy) != 1L ||
+      is.na(pathToStudy) || !nzchar(trimws(pathToStudy))) {
+    stop("pathToStudy must be one nonempty folder path.", call. = FALSE)
+  }
+  if (!is.character(studyName) || length(studyName) != 1L || is.na(studyName) ||
+      !nzchar(trimws(studyName)) || studyName %in% c(".", "..") ||
+      grepl("[/\\\\]", studyName)) {
+    stop("studyName must be one folder name without path separators.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+# Local definitions can have nested paths. The cleaned-data artifact has one
+# stable filename within its study and never inherits a definition path.
+.cleanedDataPath <- function(pathToStudy, studyName) {
+  file.path(pathToStudy, studyName, "Data", "importedDataCleaned.csv")
+}
 
 
 #' Create a list of all states (as elements) for each state (as index)
 #'
-#' @param stateVector Vector with the defines state labels
+#' @param stateVector Character vector of state labels.
+#' @return A named list allowing every state to transition to every state.
 #' @export
+#' @examples
+#' createStateList(c("Stable", "Complication", "Death"))
 createStateList <- function(stateVector) {
   stateList = replicate(n = length(stateVector),
                         expr = stateVector,
@@ -215,6 +237,9 @@ createStateList <- function(stateVector) {
 #'   list is not modified in place.
 #' @return The updated transition list.
 #' @export
+#' @examples
+#' rules <- createStateList(c("Stable", "Complication", "Death"))
+#' removeListVectorEl(rules, "Complication", "Stable")
 removeListVectorEl <-
   function(stateList,
            transitionHead,
@@ -238,6 +263,9 @@ removeListVectorEl <-
 #'   in place.
 #' @return The updated transition list.
 #' @export
+#' @examples
+#' rules <- list(Stable = "Stable", Complication = "Complication")
+#' addListVectorEl(rules, "Stable", "Complication")
 addListVectorEl <-
   function(stateList,
            transitionHead,

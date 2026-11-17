@@ -122,7 +122,7 @@ studies do not produce this dictionary.
 |:--|:--|
 | `Settings/analysisSettings.rds` | Completed import and generation rules. For CDM studies it also contains the cohort JSON definitions used during import. |
 | `Data/patientDataDiscrete.csv` or `Data/patientDataContinuous.csv` | Patient trajectories. |
-| `Data/importedDataCleaned_*.csv` | Intervals used as input to trajectory generation. The filename suffix identifies the target definition. |
+| `Data/importedDataCleaned.csv` | Intervals used as input to trajectory generation. The filename is independent of the cohort-definition path. |
 | `Data/sourceIntervals.rds` | Merged studies only. Cleaned intervals before overlapping states were combined. |
 | `Data/stateDictionary.rds` | Merged studies only. Membership and resolved state rules. |
 

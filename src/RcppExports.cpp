@@ -15,7 +15,6 @@ DataFrame getDiscreteStates(int stateSelection, Rcpp::CharacterVector oocFix, in
 RcppExport SEXP _Cohort2Trajectory_getDiscreteStates(SEXP stateSelectionSEXP, SEXP oocFixSEXP, SEXP stateDurationSEXP, SEXP patientIDsSEXP, SEXP patientDataSEXP, SEXP statePriorityVectorSEXP, SEXP allowedStatesListSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< int >::type stateSelection(stateSelectionSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type oocFix(oocFixSEXP);
     Rcpp::traits::input_parameter< int >::type stateDuration(stateDurationSEXP);
@@ -33,7 +32,6 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData, std::vecto
 RcppExport SEXP _Cohort2Trajectory_removeAfterAbsorbingStatesContinuous(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type absorbingStates(absorbingStatesSEXP);
@@ -46,7 +44,6 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData, std::vector<
 RcppExport SEXP _Cohort2Trajectory_removeAfterAbsorbingStatesDiscrete(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type absorbingStates(absorbingStatesSEXP);
@@ -59,7 +56,6 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData, std::vect
 RcppExport SEXP _Cohort2Trajectory_removeProhibitedTransitionsContinuous(SEXP patientDataSEXP, SEXP patientIDsSEXP, SEXP allowedStatesListSEXP, SEXP absorbingStatesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type patientData(patientDataSEXP);
     Rcpp::traits::input_parameter< std::vector<int> >::type patientIDs(patientIDsSEXP);
     Rcpp::traits::input_parameter< List >::type allowedStatesList(allowedStatesListSEXP);

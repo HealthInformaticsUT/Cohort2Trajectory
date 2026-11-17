@@ -6,21 +6,6 @@
 ################################################################################
 
 
-#' Get all generated cohort IDs
-#'
-#' This function queries all generated cohorts in Atlas
-#'
-#' @param cdm common data model reference object
-#'
-#' @return A sorted vector of generated cohorts
-#' @keywords internal
-getCohorts <- function(cdm) {
-  allCohorts <- cdm$cohort %>% dplyr::distinct(.data$cohort_definition_id) %>% dplyr::pull(1)
-  
-  allCohorts <- sort(allCohorts)
-  return(allCohorts)
-}
-
 #' Get selected generated cohorts patient data
 #'
 #' This function queries all patient ID's in selected cohorts
@@ -33,6 +18,7 @@ getCohorts <- function(cdm) {
 #' @param selectedStates Vector of included cohort ID's
 #' @param studyEnv environment created with cohort2TrajectoryConfiguration  
 #' @param stateCohortLabels Vector of the customized labels of the state cohorts
+#' @param webApiHeaders Optional named HTTP headers, used only during download.
 #'
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 #' @keywords internal
@@ -43,7 +29,8 @@ getCohortData <- function(cdm,
                           baseUrl = "http://localhost:8080/WebAPI",
                           pathToStudy = studyEnv$pathToStudy,
                           studyName = studyEnv$studyName,
-                          stateCohortLabels = NULL) {
+                          stateCohortLabels = NULL,
+                          webApiHeaders = NULL) {
   ##############################################################################
   #
   # Save selected cohorts as JSON
@@ -59,7 +46,7 @@ getCohortData <- function(cdm,
     for (i in seq_along(selectedCohorts)) {
       cohortId = as.integer(selectedCohorts[i])
       object <-
-        ROhdsiWebApi::getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl)
+        .getCohortDefinition(cohortId = cohortId, baseUrl = baseUrl, headers = webApiHeaders)
       json <- .toJSON(object$expression, pretty = TRUE)
       fileConn <- file(file.path(pathToStudy, studyName, "JSON",
                                  paste0(definitionFiles[i], ".json")))
@@ -77,15 +64,7 @@ getCohortData <- function(cdm,
   
   cohortSet <- CDMConnector::readCohortSet(paste(pathToStudy, "/", studyName, "/JSON/", sep = ""))
   
-  cdm <- CDMConnector::generateCohortSet(cdm, cohortSet, name = "cohort")
-  
-  data <- cdm$cohort %>%
-    dplyr::filter(.data$cohort_definition_id %in% selectedCohortIds) %>%
-    dplyr::arrange(.data$subject_id,
-                   .data$cohort_start_date,
-                   .data$cohort_end_date) %>%
-    dplyr::mutate(subject_id = as.character(.data$subject_id)) %>%
-    dplyr::collect()
+  data <- .collectGeneratedCohorts(cdm, cohortSet, selectedCohortIds)
   data$subject_id <- .simplifySubjectKeys(data$subject_id)
   
   # Match generated IDs, not connector-normalised names, to the original labels.

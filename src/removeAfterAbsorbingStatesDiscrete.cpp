@@ -5,7 +5,7 @@
 using namespace Rcpp;
 using namespace std;
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
                                 std::vector<int> patientIDs,
                                 std::vector<std::string> absorbingStates){
@@ -25,6 +25,7 @@ DataFrame removeAfterAbsorbingStatesDiscrete(DataFrame patientData,
   std::vector<double> timeCohort = patientData["time_in_cohort"];
   
   for (int p=0; p < (int) patientIDs.size(); p++){
+    Rcpp::checkUserInterrupt();
     
     // Getting patient id
     int patientID = patientIDs[p];

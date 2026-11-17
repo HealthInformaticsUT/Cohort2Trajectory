@@ -26,7 +26,7 @@ test_that("explicit local inputs override configured sources in ordinary and sav
   for (study in list(original, restored)) {
     importedIds <- function(...) {
       getDataForStudy(studyEnv = study, ...)
-      unique(read.csv(file.path(path, "inputs", "Data", "importedDataCleaned_0.csv"))$subject_id)
+      unique(read.csv(file.path(path, "inputs", "Data", "importedDataCleaned.csv"))$subject_id)
     }
     expect_identical(importedIds(), "configured_object")
     expect_identical(importedIds(pathToData = overrideCsv), "override_csv")

@@ -144,11 +144,7 @@
 #' @seealso \code{vignette("a03_trajectories", package = "Cohort2Trajectory")},
 #'   \code{vignette("a05_output", package = "Cohort2Trajectory")}
 #' @export
-#' @examples
-#' \dontrun{
-#' getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-#' trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
-#' }
+#' @inherit cohort2TrajectoryConfiguration examples
 createTrajectories <- function(cdm = NULL,
                                studyEnv = NULL,
                                trajectoryType = studyEnv$trajectoryType,
@@ -216,20 +212,12 @@ createTrajectories <- function(cdm = NULL,
   pathToStudy = studyEnv$pathToStudy
   atlasTarget = studyEnv$atlasTargetCohort
   
-  data <- .readPatientCsv(
-    paste0(
-      pathToData,
-      "/",
-      "importedDataCleaned_",
-      atlasTarget,
-      ".csv"
-    )
-  )
-  
+  data <- .readPatientCsv(.cleanedDataPath(pathToStudy, studyName))
+
   data$time_in_cohort = as.integer(data$time_in_cohort)
   data$cohort_start_date = as.Date(data$cohort_start_date)
   data$cohort_end_date = as.Date(data$cohort_end_date)
-  data <- data %>% dplyr::arrange(subject_id, cohort_start_date, cohort_end_date)
+  data <- data %>% dplyr::arrange(.data$subject_id, .data$cohort_start_date, .data$cohort_end_date)
   
   .validateObservedStateLabels(data$cohort_definition_id,
     if (!isTRUE(studyEnv$mergeStates)) stateCohortLabels else NULL)
@@ -392,15 +380,6 @@ createTrajectories <- function(cdm = NULL,
   cli::cli_alert_info(paste0("Saved trajectory dataframe: ",
                             file.path(pathToData, paste0("patientData", trajectoryType, ".csv"))))
   cli::cli_progress_done()
-  
-  # Saving trajectories
-  if (useCDM) {
-    cli::cli_alert_info("Saving trajectories to the specified temp schema ...")
-    
-    cdm <- omopgenerics::insertTable(cdm, "test", result, temporary = T)
-    cli::cli_alert_info("Trajectories saved to the specified temp schema!")
-
-  }
   
   if (!runSavedStudy) {
     .saveStudySnapshot(studyEnv, generationSettings)

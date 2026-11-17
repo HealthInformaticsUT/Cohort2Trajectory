@@ -17,13 +17,11 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
     oocFix = "Last present state", allowedStatesList = list(second = c("second", "first"), first = "first")
   )
   dir.create(file.path(sourcePath, "portable", "JSON", "states"))
-  file.copy(file.path("testStudyMain", "JSON", c("test1.json", "test3.json", "test4.json")),
-            file.path(sourcePath, "portable", "JSON", c("0.json", "first.json", "states/second.json")))
-  dbPaths <- file.path(root, c("source.duckdb", "destination.duckdb"))
-  for (path in dbPaths) file.copy(CDMConnector::eunomiaDir("GiBleed"), path)
-  con1 <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPaths[1])
+  writeFixtureDefinitions(file.path(sourcePath, "portable", "JSON",
+    c("0.json", "first.json", "states/second.json")))
+  con1 <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
   on.exit(DBI::dbDisconnect(con1, shutdown = TRUE), add = TRUE)
-  cdm1 <- CDMConnector::cdmFromCon(con1, cdmName = "source", cdmSchema = "main", writeSchema = "main")
+  cdm1 <- fixtureCdm(con1, "source")
   getDataForStudy(cdm = cdm1, studyEnv = study)
   expected <- createTrajectories(cdm = cdm1, studyEnv = study)
 
@@ -40,7 +38,8 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, lengthOfStay = 7
   ), "Do not also supply: lengthOfStay")
 
-  con2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPaths[2])
+  con2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
+  cdm2 <- fixtureCdm(con2, "destination")
   on.exit(DBI::dbDisconnect(con2, shutdown = TRUE), add = TRUE)
   # A site-specific difference verifies that output is actually read afresh.
   DBI::dbExecute(con2, "UPDATE person SET gender_concept_id = 8507")
@@ -70,16 +69,14 @@ test_that("downloaded definitions remain portable independently of clinical labe
   destinationPath <- file.path(root, "destination")
   dir.create(sourcePath)
   dir.create(destinationPath)
-  expressions <- lapply(file.path("testStudyMain", "JSON",
-                                  c("test1.json", "test3.json", "test4.json")),
-                         RJSONIO::fromJSON, simplify = FALSE)
+  expressions <- lapply(c(1001L, 2001L, 3001L), fixtureExpression)
   names(expressions) <- c("101", "202", "0")
   allowDownloads <- TRUE
   local_mocked_bindings(
-    getCohortDefinition = function(cohortId, baseUrl) {
+    .getCohortDefinition = function(cohortId, baseUrl, headers = NULL) {
       if (!allowDownloads) stop("A restored study must not contact ATLAS.")
       list(expression = expressions[[as.character(cohortId)]])
-    }, .package = "ROhdsiWebApi"
+    }, .package = "Cohort2Trajectory"
   )
   labels <- c("Swallowing / feeding", "Related care", "Airway support")
   study <- cohort2TrajectoryConfiguration(
@@ -88,15 +85,13 @@ test_that("downloaded definitions remain portable independently of clinical labe
     stateCohortLabels = labels, stateCohortPriorityOrder = labels,
     stateCohortMandatory = labels[1], stateSelectionType = "Priority", lengthOfStay = 7
   )
-  dbPath <- file.path(root, "test.duckdb")
-  file.copy(CDMConnector::eunomiaDir("GiBleed"), dbPath)
-  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbPath)
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
-  cdm <- CDMConnector::cdmFromCon(con, cdmName = "test", cdmSchema = "main", writeSchema = "main")
+  cdm <- fixtureCdm(con)
   getDataForStudy(cdm = cdm, studyEnv = study)
   expected <- createTrajectories(cdm = cdm, studyEnv = study)
   jsonPath <- file.path(sourcePath, "atlas", "JSON")
-  expect_equal(RJSONIO::fromJSON(file.path(jsonPath, "0.json"), simplify = FALSE), expressions[["101"]])
+  expect_equal(jsonlite::fromJSON(file.path(jsonPath, "0.json"), simplifyVector = FALSE), expressions[["101"]])
   manifest <- read.csv(file.path(jsonPath, "CohortsToCreate.csv"))
   expect_true(all(file.exists(file.path(jsonPath, manifest$jsonPath))))
   snapshot <- readRDS(file.path(sourcePath, "atlas", "Settings", "analysisSettings.rds"))

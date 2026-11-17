@@ -7,7 +7,9 @@
 .toJSON(input, pretty = FALSE)
 }
 \arguments{
-\item{input}{Text formatted JSON which needs conversion to digestible JSON}
+\item{input}{An R object containing a cohort expression.}
+
+\item{pretty}{Whether to indent the JSON output.}
 }
 \description{
 Function which converts text formatted JSON to digestible JSON

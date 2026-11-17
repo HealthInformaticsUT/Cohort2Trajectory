@@ -26,3 +26,7 @@ Destinations are deduplicated case-insensitively using R's
   Source names still require exact spelling. The input list is not modified
   in place.
 }
+\examples{
+rules <- list(Stable = "Stable", Complication = "Complication")
+addListVectorEl(rules, "Stable", "Complication")
+}

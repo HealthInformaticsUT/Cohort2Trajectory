@@ -5,21 +5,22 @@ test_that("failed CDM imports preserve the definitions used by saved studies", {
   failure <- NULL
   seenTarget <- NULL
   local_mocked_bindings(
-    getCohortDefinition = function(cohortId, baseUrl) {
+    .getCohortDefinition = function(cohortId, baseUrl, headers = NULL) {
       if (identical(failure, "download") && cohortId == 404) stop("Download failed")
       list(expression = list(definition = as.character(cohortId)))
-    }, .package = "ROhdsiWebApi"
+    }, .package = "Cohort2Trajectory"
   )
   local_mocked_bindings(
     readCohortSet = function(path) {
-      seenTarget <<- RJSONIO::fromJSON(file.path(path, "0.json"), simplify = FALSE)$definition
+      seenTarget <<- jsonlite::fromJSON(file.path(path, "0.json"), simplifyVector = FALSE)$definition
       list()
     },
-    generateCohortSet = function(cdm, cohortSet, name) {
-      if (identical(failure, "query")) stop("Query failed")
-      cdm
-    }, .package = "CDMConnector"
+    .package = "CDMConnector"
   )
+  local_mocked_bindings(.collectGeneratedCohorts = function(cdm, cohortSet, selectedIds) {
+    if (identical(failure, "query")) stop("Query failed")
+    cdm$cohort
+  })
   raw <- data.frame(
     cohort_definition_id = c(1L, 2L), subject_id = "old_patient",
     cohort_start_date = as.Date("2020-01-01"), cohort_end_date = as.Date("2020-01-07")
@@ -57,7 +58,7 @@ test_that("failed CDM imports preserve the definitions used by saved studies", {
   raw$subject_id <- "new_patient"
   getDataForStudy(cdm = list(cohort = raw), studyEnv = study,
                   atlasTargetCohort = 303, atlasStateCohorts = 404)
-  expect_identical(RJSONIO::fromJSON(file.path(json, "0.json"), simplify = FALSE)$definition, "303")
+  expect_identical(jsonlite::fromJSON(file.path(json, "0.json"), simplifyVector = FALSE)$definition, "303")
   expect_true(file.exists(file.path(json, "atlas_404.json")))
   expect_identical(readLines(file.path(json, "unrelated.json")), "Unrelated local definition")
   # A successful new import must not change the definitions of the last
@@ -71,7 +72,7 @@ test_that("failed CDM imports preserve the definitions used by saved studies", {
   expect_identical(unique(createTrajectories(studyEnv = study, useCDM = FALSE)$subject_id), "new_patient")
   settingsFile <- file.path(root, "replay", "Settings", "analysisSettings.rds")
   snapshot <- readRDS(settingsFile)
-  expect_identical(RJSONIO::fromJSON(snapshot$definitionContents[["0"]], simplify = FALSE)$definition, "303")
+  expect_identical(jsonlite::fromJSON(snapshot$definitionContents[["0"]], simplifyVector = FALSE)$definition, "303")
   # A failed publication cannot truncate or replace the completed snapshot.
   before <- tools::md5sum(settingsFile)
   local_mocked_bindings(file.rename = function(...) FALSE, .package = "base")
