@@ -6,7 +6,7 @@
 using namespace Rcpp;
 using namespace std;
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
                                                 std::vector<int> patientIDs,
                                                 List allowedStatesList,
@@ -39,6 +39,7 @@ DataFrame removeProhibitedTransitionsContinuous(DataFrame patientData,
   
   
   for (int p=0; p < (int) patientIDs.size(); p++){
+    Rcpp::checkUserInterrupt();
     
     // Getting patient id
     int patientID = patientIDs[p];

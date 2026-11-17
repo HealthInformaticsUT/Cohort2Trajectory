@@ -21,7 +21,7 @@ test_that("original text IDs survive public import, merging, batching and CSV ou
     )
     getDataForStudy(studyEnv = study, runSavedStudy = FALSE,
                     pathToData = inputFile, mergeStates = TRUE)
-    cleaned <- read.csv(file.path(path, type, "Data", "importedDataCleaned_0.csv"),
+    cleaned <- read.csv(file.path(path, type, "Data", "importedDataCleaned.csv"),
                         colClasses = c(subject_id = "character"))
     expect_equal(cleaned$subject_id[cleaned$cohort_definition_id == .stateKey(c("A", "B"))], ids[1])
     together <- createTrajectories(studyEnv = study, batchSize = 4)

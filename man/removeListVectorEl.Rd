@@ -27,3 +27,7 @@ Removing an absent transition leaves the list unchanged. Removing
   entries are removed. Source names still require exact spelling. The input
   list is not modified in place.
 }
+\examples{
+rules <- createStateList(c("Stable", "Complication", "Death"))
+removeListVectorEl(rules, "Complication", "Stable")
+}

@@ -7,7 +7,9 @@
 createMandatorySubDirs(pathToStudy, studyName)
 }
 \arguments{
-\item{pathToStudy}{Path to the package}
+\item{pathToStudy}{Parent folder for the study.}
+
+\item{studyName}{Name of the study folder.}
 }
 \description{
 Create the mandatory study subdirectories

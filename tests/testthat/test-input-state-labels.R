@@ -111,7 +111,7 @@ test_that("import and generation reject case collisions across patients", {
     pathToStudy = path, studyName = "labels", runSavedStudy = TRUE, useCDM = FALSE
   ), "reserved")
 
-  cleanedPath <- file.path(path, "labels", "Data", "importedDataCleaned_0.csv")
+  cleanedPath <- file.path(path, "labels", "Data", "importedDataCleaned.csv")
   cleaned <- read.csv(cleanedPath)
   cleaned$cohort_definition_id[cleaned$subject_id == 2 & cleaned$cohort_definition_id == "A"] <- "a"
   write.csv(cleaned, cleanedPath, row.names = FALSE)

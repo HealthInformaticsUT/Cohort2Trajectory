@@ -1,0 +1,14 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.gitignore$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^renv$
+^renv\.lock$
+^tmp$
+^LICENSE$
+^tools$
+^.*\.Rcheck$
+^.*\.(tar\.gz|zip)$
+(^|/)\.DS_Store$

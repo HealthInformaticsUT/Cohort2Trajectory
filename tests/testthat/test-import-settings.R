@@ -5,17 +5,17 @@ test_that("successful CDM source overrides remain coherent on the next import", 
   requested <- integer()
   endpoints <- character()
   local_mocked_bindings(
-    getCohortDefinition = function(cohortId, baseUrl) {
+    .getCohortDefinition = function(cohortId, baseUrl, headers = NULL) {
       requested <<- c(requested, cohortId)
       endpoints <<- c(endpoints, baseUrl)
       list(expression = list(definition = as.character(cohortId)))
-    }, .package = "ROhdsiWebApi"
+    }, .package = "Cohort2Trajectory"
   )
   local_mocked_bindings(
     readCohortSet = function(path) list(),
-    generateCohortSet = function(cdm, cohortSet, name) cdm,
     .package = "CDMConnector"
   )
+  local_mocked_bindings(.collectGeneratedCohorts = function(cdm, cohortSet, selectedIds) cdm$cohort)
   raw <- data.frame(
     cohort_definition_id = c(1L, 2L), subject_id = "patient",
     cohort_start_date = as.Date("2020-01-01"), cohort_end_date = as.Date("2020-01-07")

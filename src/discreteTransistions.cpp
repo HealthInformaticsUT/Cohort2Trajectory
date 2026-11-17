@@ -40,7 +40,7 @@ NumericVector replaceOnTreshold(NumericVector referenceVector, int treshold, int
   return referenceVector;
 }
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 DataFrame getDiscreteStates(int stateSelection,
                   Rcpp::CharacterVector oocFix,
                   int stateDuration,
@@ -102,6 +102,7 @@ DataFrame getDiscreteStates(int stateSelection,
   }
   
   for (int p=0; p < (int) patientIDs.size(); p++){
+    Rcpp::checkUserInterrupt();
 
   // Initiating patient input data, we'll get it from input vectors
   std::vector<Date> controlStart;
@@ -140,6 +141,7 @@ DataFrame getDiscreteStates(int stateSelection,
   // OUT OF COHORT cycle does not erase the transition constraints.
   std::string lastState;
   for (int iteration = 1; iteration <= totalStateDurations; iteration++) {
+    if (iteration % 1024 == 0) Rcpp::checkUserInterrupt();
     double time = (iteration - 1) * stateDuration / 365.25;
     Date startDate = cohortstartDate + (iteration - 1) * stateDuration;
     Date endDate = std::min(startDate + (stateDuration - 1), cohortendDate);

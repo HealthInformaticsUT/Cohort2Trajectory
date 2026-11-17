@@ -185,19 +185,24 @@
 #'   \code{\link{mergedState}}
 #' @export
 #' @examples
-#' \dontrun{
-#' study <- cohort2TrajectoryConfiguration(
-#'   studyName = "ExampleStudy",
-#'   pathToStudy = getwd(),
-#'   useCDM = FALSE,
-#'   trajectoryDataObject = cohorts,
-#'   stateCohortLabels = c("A", "B"),
-#'   stateCohortPriorityOrder = c("A", "B"),
-#'   stateSelectionType = "Priority",
-#'   trajectoryType = "Discrete",
-#'   lengthOfStay = 7
+#' cohorts <- data.frame(
+#'   subject_id = rep("001", 3),
+#'   cohort_definition_id = c("0", "Stable", "Complication"),
+#'   cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+#'   cohort_end_date = as.Date("2020-01-21")
 #' )
-#' }
+#' folder <- tempfile("c2t-example-")
+#' study <- cohort2TrajectoryConfiguration(
+#'   studyName = "example", pathToStudy = folder,
+#'   useCDM = FALSE, trajectoryDataObject = cohorts,
+#'   stateCohortLabels = c("Stable", "Complication"),
+#'   stateCohortPriorityOrder = c("Complication", "Stable"),
+#'   stateSelectionType = "Priority", lengthOfStay = 7
+#' )
+#' getDataForStudy(studyEnv = study)
+#' trajectories <- createTrajectories(studyEnv = study)
+#' trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+#' unlink(folder, recursive = TRUE)
 cohort2TrajectoryConfiguration <- function(cdm = NULL,
                                            
                                            studyName = "Cohort2Trajectory",
@@ -227,6 +232,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
                                            mergeStates = FALSE,
                                            batchSize = 1000,
                                            mergedStateOverrides = list()) {
+  .validateStudyPath(pathToStudy, studyName)
   if (isTRUE(runSavedStudy)) {
     .checkSavedOverrides(match.call(), c(.studyImportFields(),
       .studyGenerationFields(), "atlasTargetCohort", "atlasStateCohorts", "baseUrl"))

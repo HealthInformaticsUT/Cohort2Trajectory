@@ -36,6 +36,25 @@ The target definition is stored as `JSON/0.json`. State definitions use
 `JSON/atlas_<id>.json`. The package creates `CohortsToCreate.csv` to map files
 to generated cohorts. Clinical labels are kept separate from these filenames.
 
+The database account must be able to create and drop tables in its write schema.
+Generated cohorts use a unique package-owned name and are removed after their
+records have been collected. Existing tables, including `cohort` and `test`,
+are not replaced. The package leaves your database connection open.
+
+For an authenticated WebAPI, pass the required HTTP headers in the import call:
+
+```{r, eval = FALSE}
+getDataForStudy(
+  cdm = cdm, studyEnv = studyEnv,
+  webApiHeaders = c(Authorization = paste("Bearer", Sys.getenv("ATLAS_TOKEN")))
+)
+```
+
+The package does not open a browser or start a login session. Headers are used
+only for the download and are not saved in study settings. Your WebAPI may use
+a different header or authentication scheme. Local cohort JSON is an alternative
+when direct WebAPI access is unavailable.
+
 ### Use local cohort JSON instead of ATLAS
 
 Set `baseUrl = NULL` and supply filenames without `.json`. Paths are relative

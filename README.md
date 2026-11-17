@@ -101,8 +101,15 @@ reconfigured and rerun. Settings CSV files and the removed arguments
 
 CDM studies use a CDMConnector connection. The database account needs read
 access to the required CDM and vocabulary tables, and permission to create
-and populate tables in the configured write schema. Start with a small cohort
+and drop tables in the configured write schema. Generated cohorts use unique
+names and are removed after collection. Existing tables are left in place, and
+the connection remains open. Start with a small cohort
 when checking a new server connection.
+
+ATLAS downloads use the configured WebAPI URL. If authentication is required,
+pass `webApiHeaders` to `getDataForStudy()`. Headers are never saved in the RDS
+settings and no browser login is started. You can also use exported cohort
+JSON with `baseUrl = NULL`.
 
 ## Related packages
 

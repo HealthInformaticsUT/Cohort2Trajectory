@@ -16,7 +16,7 @@ test_that("failed imports cannot reuse old patients and a successful retry recov
     )
     getDataForStudy(studyEnv = study)
     createTrajectories(studyEnv = study)
-    files <- file.path(path, type, c("Data/importedDataCleaned_.csv",
+    files <- file.path(path, type, c("Data/importedDataCleaned.csv",
                                     paste0("Data/patientData", type, ".csv"),
                                     "Settings/analysisSettings.rds"))
     before <- tools::md5sum(files)
@@ -56,7 +56,7 @@ test_that("an empty eligible cohort does not replace successful import artifacts
     getDataForStudy(studyEnv = study)
     createTrajectories(studyEnv = study)
     files <- file.path(path, name, c(
-      "Data/importedDataCleaned_.csv", "Data/patientDataDiscrete.csv",
+      "Data/importedDataCleaned.csv", "Data/patientDataDiscrete.csv",
       "Settings/analysisSettings.rds",
       if (merged) c("Data/sourceIntervals.rds", "Data/stateDictionary.rds")
     ))

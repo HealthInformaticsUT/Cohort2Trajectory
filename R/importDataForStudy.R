@@ -10,6 +10,10 @@
 #'   local data frame or CSV file.
 #' @param baseUrl OHDSI WebAPI base URL for downloading ATLAS definitions.
 #'   Use NULL to read local JSON definitions.
+#' @param webApiHeaders Optional named character vector of HTTP headers for this
+#'   download only, for example an Authorization header. These values are never
+#'   stored in the study settings. Supply them again for each fresh download.
+#'   Saved studies use their embedded definitions and need no authentication.
 #' @param atlasTargetCohort ATLAS target cohort ID, or local definition name
 #'   without the .json extension when baseUrl is NULL.
 #' @param atlasStateCohorts ATLAS state cohort IDs, or local definition names
@@ -97,10 +101,7 @@
 #' @seealso \code{vignette("a02_import", package = "Cohort2Trajectory")},
 #'   \code{vignette("a05_output", package = "Cohort2Trajectory")}
 #' @export
-#' @examples
-#' \dontrun{
-#' getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-#' }
+#' @inherit cohort2TrajectoryConfiguration examples
 getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             useCDM = studyEnv$useCDM,
                             trajectoryDataObject = studyEnv$trajectoryDataObject,
@@ -118,7 +119,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             allowedStatesList = studyEnv$allowedStatesList,
                             stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
                             pathToData = studyEnv$pathToData,
-                            mergedStateOverrides = studyEnv$mergedStateOverrides) {
+                            mergedStateOverrides = studyEnv$mergedStateOverrides,
+                            webApiHeaders = NULL) {
   
   # Variables from global studyEnv (can't be altered)
   studyName = studyEnv$studyName
@@ -168,7 +170,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       baseUrl = NULL,
       pathToStudy = definitionStage,
       studyName = "study",
-      stateCohortLabels = stateCohortLabels
+      stateCohortLabels = stateCohortLabels,
+      webApiHeaders = webApiHeaders
     )
   } else if (useCDM) {
     # get data from cdm using atlas for json file source
@@ -180,7 +183,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
       baseUrl = baseUrl,
       pathToStudy = definitionStage,
       studyName = "study",
-      stateCohortLabels = stateCohortLabels
+      stateCohortLabels = stateCohortLabels,
+      webApiHeaders = webApiHeaders
     )
 
     # Preserve both the final clinical labels and the filenames used by the
@@ -262,30 +266,9 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   studyEnv$stateDictionary <- registry
   cli::cli_alert_success("Data cleaning completed!")
   
-  save_object(
-    path =  paste(
-      pathToStudy,
-      "/",
-      studyName,
-      "/Data/",
-      "importedDataCleaned_",
-      atlasTargetCohort,
-      ".csv",
-      sep = ""
-    ),
-    object = data
-  )
-
-  cli::cli_alert_info(paste0(
-    "Saved cleaned data ",
-    pathToStudy,
-    "/",
-    studyName,
-    "/Data/",
-    "importedDataCleaned_",
-    atlasTargetCohort,
-    ".csv"
-  ))
+  cleanedPath <- .cleanedDataPath(pathToStudy, studyName)
+  save_object(path = cleanedPath, object = data)
+  cli::cli_alert_info(paste0("Saved cleaned data ", cleanedPath))
 
   if (useCDM && !runSavedStudy) {
     publish <- "CohortsToCreate.csv"

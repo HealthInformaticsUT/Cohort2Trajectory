@@ -249,19 +249,24 @@ above \code{2^53}, use character or integer64 input to avoid rounded doubles.
 }
 
 \examples{
-\dontrun{
-study <- cohort2TrajectoryConfiguration(
-  studyName = "ExampleStudy",
-  pathToStudy = getwd(),
-  useCDM = FALSE,
-  trajectoryDataObject = cohorts,
-  stateCohortLabels = c("A", "B"),
-  stateCohortPriorityOrder = c("A", "B"),
-  stateSelectionType = "Priority",
-  trajectoryType = "Discrete",
-  lengthOfStay = 7
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
 )
-}
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", lengthOfStay = 7
+)
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+unlink(folder, recursive = TRUE)
 }
 \seealso{
 \code{\link{getDataForStudy}}, \code{\link{createTrajectories}},

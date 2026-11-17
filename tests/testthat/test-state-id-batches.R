@@ -28,7 +28,7 @@ run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "U
     allowedStatesList = rules,
     runSavedStudy = FALSE
   )
-  utils::write.csv(data, file.path(study_path, "ids", "Data", "importedDataCleaned_0.csv"),
+  utils::write.csv(data, file.path(study_path, "ids", "Data", "importedDataCleaned.csv"),
                    row.names = FALSE)
   result <- createTrajectories(studyEnv = study)
   filename <- if (type == "Discrete") "patientDataDiscrete.csv" else "patientDataContinuous.csv"

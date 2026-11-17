@@ -5,7 +5,7 @@
 using namespace Rcpp;
 using namespace std;
 
-// [[Rcpp::export]]
+// [[Rcpp::export(rng = false)]]
 DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
                                 std::vector<int> patientIDs,
                                 std::vector<std::string> absorbingStates){
@@ -30,6 +30,7 @@ DataFrame removeAfterAbsorbingStatesContinuous(DataFrame patientData,
   
   
   for (int p=0; p < (int) patientIDs.size(); p++){
+    Rcpp::checkUserInterrupt();
     
     // Getting patient id
     int patientID = patientIDs[p];

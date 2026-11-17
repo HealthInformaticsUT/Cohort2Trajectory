@@ -21,7 +21,8 @@ getDataForStudy(
   allowedStatesList = studyEnv$allowedStatesList,
   stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
   pathToData = studyEnv$pathToData,
-  mergedStateOverrides = studyEnv$mergedStateOverrides
+  mergedStateOverrides = studyEnv$mergedStateOverrides,
+  webApiHeaders = NULL
 )
 }
 \arguments{
@@ -77,6 +78,11 @@ supply both non-NULL local sources.}
 
 \item{mergedStateOverrides}{List of mergedState() definitions that replace
 selected inherited properties of merged states.}
+
+\item{webApiHeaders}{Optional named character vector of HTTP headers for this
+download only, for example an Authorization header. These values are never
+stored in the study settings. Supply them again for each fresh download.
+Saved studies use their embedded definitions and need no authentication.}
 }
 \value{
 Invisibly returns NULL after a successful import. Cleaned data are
@@ -143,9 +149,24 @@ Neither saved mode accepts overrides to its restored analysis rules.
 }
 
 \examples{
-\dontrun{
-getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-}
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
+)
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", lengthOfStay = 7
+)
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+unlink(folder, recursive = TRUE)
 }
 \seealso{
 \code{vignette("a02_import", package = "Cohort2Trajectory")},

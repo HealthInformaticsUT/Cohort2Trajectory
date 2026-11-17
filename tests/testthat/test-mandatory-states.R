@@ -15,7 +15,7 @@ test_that("mandatory labels are literal and all requirements are applied", {
   )
   retained <- function(required) {
     getDataForStudy(studyEnv = study, stateCohortMandatory = required)
-    cleaned <- .readPatientCsv(file.path(path, "mandatory", "Data", "importedDataCleaned_0.csv"))
+    cleaned <- .readPatientCsv(file.path(path, "mandatory", "Data", "importedDataCleaned.csv"))
     sort(unique(cleaned$subject_id))
   }
   expect_equal(retained(c("A", "No mandatory state")), 1)

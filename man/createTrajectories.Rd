@@ -190,10 +190,24 @@ or case. Configuration and saved settings retain the supplied labels.
 }
 
 \examples{
-\dontrun{
-getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
-}
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
+)
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", lengthOfStay = 7
+)
+getDataForStudy(studyEnv = study)
+trajectories <- createTrajectories(studyEnv = study)
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+unlink(folder, recursive = TRUE)
 }
 \seealso{
 \code{vignette("a03_trajectories", package = "Cohort2Trajectory")},
