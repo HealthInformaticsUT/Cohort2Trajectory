@@ -17,4 +17,4 @@ This is a new submission.
 
 The package archive contains source code, documentation and synthetic fixtures. It contains no patient records, database binaries or credentials.
 
-The repository also configures Windows and R-devel checks. Those checks have not yet run and are not claimed here as completed. The final source archives were built and checked on current R release.
+The repository also runs Windows and R-devel checks. Review the current GitHub Actions results before submission. The completed checks listed above refer to the locally prepared source archives, built and checked on current R release.

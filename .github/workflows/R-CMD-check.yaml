@@ -2,7 +2,7 @@
 name: R CMD check
 'on':
   push:
-    branches: [main, master, 'codex/**']
+    branches: [main, master]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -42,5 +42,5 @@ jobs:
         with:
           args: 'c("--as-cran", "--no-manual")'
           build_args: 'c("--no-manual")'
-          error-on: 'warning'
+          error-on: '"warning"'
           upload-snapshots: true
