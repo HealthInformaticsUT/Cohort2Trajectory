@@ -28,7 +28,7 @@ test_that("failed CDM imports preserve the definitions used by saved studies", {
   study <- cohort2TrajectoryConfiguration(
     pathToStudy = root, studyName = "replay", atlasTargetCohort = 101,
     atlasStateCohorts = 202, stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-    stateSelectionType = "Priority", lengthOfStay = 7
+    stateSelectionType = "Priority", cycleLength = 7
   )
   getDataForStudy(cdm = list(cohort = raw), studyEnv = study)
   createTrajectories(studyEnv = study, useCDM = FALSE)

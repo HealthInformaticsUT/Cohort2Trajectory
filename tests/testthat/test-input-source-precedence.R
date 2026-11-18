@@ -15,7 +15,7 @@ test_that("explicit local inputs override configured sources in ordinary and sav
   original <- cohort2TrajectoryConfiguration(
     pathToStudy = path, studyName = "inputs", useCDM = FALSE,
     atlasTargetCohort = "0", trajectoryDataObject = configured,
-    pathToData = configuredCsv, stateSelectionType = "Priority", lengthOfStay = 7
+    pathToData = configuredCsv, stateSelectionType = "Priority", cycleLength = 7
   )
   getDataForStudy(studyEnv = original)
   createTrajectories(studyEnv = original)

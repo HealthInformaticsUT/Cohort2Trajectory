@@ -11,6 +11,19 @@ vignette: >
 `Data/patientDataDiscrete.csv` or `Data/patientDataContinuous.csv` in the study
 folder. Use column names rather than their positions when reading the result.
 
+Printing the result shows patient and state counts followed by a short preview.
+The object remains a data frame with every original column. Use:
+
+```{r inspect-output, eval=FALSE}
+trajectories                         # Compact preview
+print(trajectories, n = 10)          # Show more rows
+View(trajectories)                  # Browse all columns
+as.data.frame(trajectories)         # Ordinary data-frame display
+```
+
+The preview distinguishes clinical states from boundary and unresolved rows.
+It does not alter the trajectory data or the saved CSV.
+
 ## Columns
 
 | Column | Meaning |
@@ -72,7 +85,7 @@ Choose how an analysis handles these gaps before estimating transitions.
 
 ## Discrete dates are cycle dates
 
-With `lengthOfStay = 7`, a cycle beginning January 1 ends January 7. The next
+With `cycleLength = 7`, a cycle beginning January 1 ends January 7. The next
 begins January 8. If observation ends January 10, that final cycle contains
 three observed days. For non-marker rows, duration is
 `as.integer(state_end_date - state_start_date) + 1`.
@@ -132,10 +145,11 @@ state have been combined. They are not a copy of every original database row.
 In merged studies, use `sourceIntervals.rds` to inspect the original state
 labels before composition.
 
-The version-4 settings file stores `import` and `generation` separately because
+The version-5 settings file stores `import` and `generation` separately because
 some choices can be supplied at generation time. For example, the cycle length
-is under `settings$generation$lengthOfStay`. Clinical rules remain the analyst's
-responsibility even though their execution settings are saved.
+is under `settings$generation$cycleLength`. Version 4 settings still load, with
+the old `lengthOfStay` field translated to `cycleLength`. Clinical rules remain
+the analyst's responsibility even though their execution settings are saved.
 
 When sharing a study, copy `Settings`, not `Data`. The settings file contains no
 patient records or database connection. It does include study-specific cohort
@@ -143,10 +157,29 @@ definitions, which should be reviewed before sharing.
 
 ## Handing the result to an analysis package
 
-Pass the trajectory together with the settings and, for merged studies, the
-state dictionary. An analysis needs to know the cycle length, boundary-marker
-meaning, absorbing states and state membership. Do not infer these from label
-spelling or from the order of numeric IDs.
+The returned data frame has a `trajectory_definition` attribute with its
+format version, trajectory type, cycle length, ordered clinical labels and
+absorbing labels. It records the rules actually used for generation, including
+merged-state overrides and configured states absent from this dataset. It
+contains no copy of the patient rows or study environment.
+
+TMA reads these definitions when you pass the output directly:
+
+```{r, eval = FALSE}
+histories <- TrajectoryMarkovAnalysis::prepareTrajectories(trajectories)
+transitions <- TrajectoryMarkovAnalysis::estimateTransitions(histories)
+```
+
+RDS saves and ordinary data-frame row subsets retain the definitions. A CSV
+contains only the rows. After reading a CSV, supply the cycle length, state
+labels and absorbing states to TMA explicitly. Do not infer them from label
+spelling or numeric IDs. A transformation that changes the state meanings or
+cycle lengths also needs a new definition. TMA rejects settings that conflict
+with the attached definition.
+
+For merged-state membership, keep the separate state dictionary. The compact
+handoff supplies resolved labels and absorbing status, not the full selection
+or transition rules.
 
 Cohort2Trajectory constructs histories. It does not estimate transition
 probabilities, survival effects, costs or cost-effectiveness. Check that the

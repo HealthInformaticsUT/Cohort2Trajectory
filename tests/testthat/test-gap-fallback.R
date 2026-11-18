@@ -21,7 +21,7 @@ test_that("invalid gap fallbacks fail before creating or overwriting study files
   study <- cohort2TrajectoryConfiguration(
     pathToStudy = path, studyName = "valid", useCDM = FALSE,
     trajectoryDataObject = input, stateCohortLabels = "A",
-    stateCohortPriorityOrder = "A", stateSelectionType = "Priority", lengthOfStay = 7
+    stateCohortPriorityOrder = "A", stateSelectionType = "Priority", cycleLength = 7
   )
   getDataForStudy(studyEnv = study)
   gaps <- createTrajectories(studyEnv = study)
@@ -58,7 +58,7 @@ test_that("gap fallbacks cannot create case variants of observed or merged label
     study <- cohort2TrajectoryConfiguration(
       pathToStudy = path, studyName = paste0("merged_", merge), useCDM = FALSE,
       trajectoryDataObject = input, stateCohortPriorityOrder = c("A", "B"),
-      stateSelectionType = "Priority", lengthOfStay = 7, mergeStates = merge,
+      stateSelectionType = "Priority", cycleLength = 7, mergeStates = merge,
       allowedStatesList = list()
     )
     getDataForStudy(studyEnv = study)

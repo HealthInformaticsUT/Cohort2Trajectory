@@ -17,6 +17,19 @@
   invisible(NULL)
 }
 
+# A named cohort vector is a shorter way to supply the same labels and IDs.
+# Keep the existing internal and saved representation after resolving names.
+.stateLabelsFromCohorts <- function(cohorts, labels) {
+  cohortLabels <- names(cohorts)
+  if (is.null(cohortLabels)) return(labels)
+  .validateStateLabels(cohortLabels, "Names of atlasStateCohorts")
+  if (!is.null(labels) && !identical(unname(labels), cohortLabels)) {
+    stop("stateCohortLabels must match the names of atlasStateCohorts in order.",
+         call. = FALSE)
+  }
+  cohortLabels
+}
+
 .validateObservedStateLabels <- function(labels, configured = NULL) {
   labels <- as.character(labels)
   # Repeated clinical records are valid. Zero is the target cohort, not a state.

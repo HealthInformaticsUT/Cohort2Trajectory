@@ -99,7 +99,7 @@ study <- cohort2TrajectoryConfiguration(
   allowedStatesList = allowed,
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 ```
 

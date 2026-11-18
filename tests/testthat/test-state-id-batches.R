@@ -24,7 +24,7 @@ run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "U
     atlasTargetCohort = "0", stateCohortLabels = labels,
     stateCohortPriorityOrder = c("B", "A", "Unused"),
     stateSelectionType = "Priority", trajectoryType = type,
-    lengthOfStay = 7, batchSize = batch_size, oocFix = gap,
+    cycleLength = 7, batchSize = batch_size, oocFix = gap,
     allowedStatesList = rules,
     runSavedStudy = FALSE
   )

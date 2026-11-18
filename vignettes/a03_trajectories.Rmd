@@ -38,8 +38,7 @@ used as a substitute for that failed import.
 ## Discrete trajectories
 
 Discrete trajectories assign one state to each fixed-length cycle. Set
-`lengthOfStay` to the number of calendar days per cycle. Despite its name, this
-argument is a cycle length, not a hospital length of stay. For example, use seven
+`cycleLength` to the number of calendar days per cycle. For example, use seven
 days for weekly trajectories:
 
 ```{r, eval = FALSE}
@@ -48,7 +47,7 @@ trajectories <- createTrajectories(
   studyEnv = studyEnv,
   trajectoryType = "Discrete",
   stateSelectionType = "Priority",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 ```
 
@@ -81,7 +80,7 @@ accepted by the public functions.
 ## Continuous trajectories
 
 Continuous trajectories use calendar intervals rather than fixed cycles.
-`lengthOfStay` does not determine their timing.
+`cycleLength` does not determine their timing.
 
 ```{r, eval = FALSE}
 trajectories <- createTrajectories(
@@ -196,10 +195,11 @@ them, rerun `getDataForStudy()` with the intended requirements before generating
 trajectories.
 
 A completed fresh run saves `Settings/analysisSettings.rds` in the current
-version 4 format. It contains the analysis settings and, for CDM studies, the
+version 5 format. It contains the analysis settings and, for CDM studies, the
 cohort definition contents used by the successful import. It does not contain
-patient data. Only version 4 snapshots are accepted. Older snapshots must be
-recreated by completing import and generation with the current package.
+patient data. Version 4 snapshots are also accepted; their stored `lengthOfStay`
+setting is read as `cycleLength` without rewriting the file. Earlier snapshots
+must be recreated by completing import and generation with the current package.
 
 After configuring a study with `runSavedStudy = TRUE`, import fresh data and use
 the restored analysis settings without overrides:

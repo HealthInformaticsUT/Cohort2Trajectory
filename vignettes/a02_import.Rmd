@@ -69,12 +69,11 @@ studyEnv <- cohort2TrajectoryConfiguration(
   useCDM = TRUE,
   baseUrl = NULL,
   atlasTargetCohort = "target",
-  atlasStateCohorts = c("states/A", "states/B"),
-  stateCohortLabels = c("A", "B"),
+  atlasStateCohorts = c(A = "states/A", B = "states/B"),
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 
 # Place the JSON files in the study folder before this call.
@@ -132,7 +131,7 @@ studyEnv <- cohort2TrajectoryConfiguration(
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 
 getDataForStudy(studyEnv = studyEnv)
@@ -184,7 +183,8 @@ Changing mandatory-state requirements also requires another import.
 
 ## Saved studies
 
-Restore a version 4 snapshot with `runSavedStudy = TRUE`, then import fresh data.
+Restore a version 5 or version 4 snapshot with `runSavedStudy = TRUE`, then
+import fresh data.
 See [saved-study configuration](a01_configuration.html#repeat-a-saved-study)
 for the Settings-only sharing workflow. A saved CDM study uses the definitions
 embedded in the RDS file, without an ATLAS connection or working JSON files:

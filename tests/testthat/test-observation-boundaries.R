@@ -96,7 +96,7 @@ test_that("fresh and saved workflows import target-only histories", {
     study <- cohort2TrajectoryConfiguration(
       pathToStudy = path, studyName = type, useCDM = FALSE,
       atlasTargetCohort = "0", stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
+      stateSelectionType = "Priority", trajectoryType = type, cycleLength = 7,
       trajectoryDataObject = data
     )
     expect_warning(getDataForStudy(studyEnv = study), NA)

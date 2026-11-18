@@ -12,7 +12,7 @@ test_that("non-CDM trajectories leave demographics missing in output and CSV", {
       pathToStudy = path, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = "A",
       stateCohortPriorityOrder = "A", stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 7
+      trajectoryType = type, cycleLength = 7
     )
     getDataForStudy(studyEnv = study)
     result <- createTrajectories(studyEnv = study)

@@ -12,7 +12,7 @@ test_that("invalid batch sizes fail before creating files or reading patient dat
   for (type in c("Discrete", "Continuous")) {
     for (size in list(c(1, NA), NA_real_, 0, -1, 1.5, Inf, NULL)) {
       expect_error(createTrajectories(
-        trajectoryType = type, lengthOfStay = 7, batchSize = size
+        trajectoryType = type, cycleLength = 7, batchSize = size
       ), "batchSize must be a single positive whole number")
     }
   }

@@ -12,7 +12,7 @@ test_that("failed imports cannot reuse old patients and a successful retry recov
       pathToStudy = path, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = "A",
       stateCohortPriorityOrder = "A", stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 7
+      trajectoryType = type, cycleLength = 7
     )
     getDataForStudy(studyEnv = study)
     createTrajectories(studyEnv = study)
@@ -51,7 +51,7 @@ test_that("an empty eligible cohort does not replace successful import artifacts
       pathToStudy = path, studyName = name, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = c("A", "B", "C"),
       stateCohortPriorityOrder = c("A", "B", "C"), stateSelectionType = "Priority",
-      lengthOfStay = 7, mergeStates = merged
+      cycleLength = 7, mergeStates = merged
     )
     getDataForStudy(studyEnv = study)
     createTrajectories(studyEnv = study)

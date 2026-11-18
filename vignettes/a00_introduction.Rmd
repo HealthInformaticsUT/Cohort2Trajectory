@@ -60,7 +60,7 @@ study <- cohort2TrajectoryConfiguration(
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 getDataForStudy(studyEnv = study)
 trajectories <- createTrajectories(studyEnv = study)

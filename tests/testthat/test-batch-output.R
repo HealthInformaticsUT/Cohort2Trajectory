@@ -11,7 +11,7 @@ test_that("a later batch failure does not publish partial trajectories", {
       pathToStudy = path, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = c("A", "B"),
       stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 7, batchSize = 1
+      trajectoryType = type, cycleLength = 7, batchSize = 1
     )
     getDataForStudy(studyEnv = study)
     expected <- createTrajectories(studyEnv = study)

@@ -23,7 +23,7 @@ within that interval. Cohort2Trajectory does not infer the meaning of a state
 from its label.
 
 This example uses cohort definitions from an ATLAS WebAPI. Replace the URL and
-cohort IDs with your own. Each state ID has one label in the same position.
+cohort IDs with your own. Name each state ID with its clinical label.
 
 ```{r, eval = FALSE}
 library(Cohort2Trajectory)
@@ -34,20 +34,24 @@ studyEnv <- cohort2TrajectoryConfiguration(
   useCDM = TRUE,
   baseUrl = "http://localhost:8080/WebAPI",
   atlasTargetCohort = 101,
-  atlasStateCohorts = c(202, 203),
-  stateCohortLabels = c("A", "B"),
+  atlasStateCohorts = c(A = 202, B = 203),
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 ```
 
 Use `"Discrete"` or `"Continuous"` for `trajectoryType` and `"First"`,
 `"Overlap"` or `"Priority"` for `stateSelectionType`. These options accept
 names, not numeric codes. Discrete trajectories also need a positive whole
-number of days for `lengthOfStay`. The
+number of days for `cycleLength`. The
 [trajectory article](a03_trajectories.html) explains selection and gap handling.
+
+With a named `atlasStateCohorts` vector, there is no need to repeat
+`stateCohortLabels`. An unnamed vector with a separate label vector still
+works. If both are supplied, labels must match the names in order. The mapping
+does not set priorities or absorbing states. Supply those choices separately.
 
 Labels must be nonempty and unique even when ignoring case. `"0"`, `"START"`,
 `"EXIT"` and `"OUT OF COHORT"` are reserved. Keep the same spelling in labels,
@@ -139,7 +143,9 @@ follow the [local input example](a02_import.html#local-data).
 ## Repeat a saved study
 
 After successful import and trajectory generation, the study contains
-`Settings/analysisSettings.rds`. The current snapshot format is version 4.
+`Settings/analysisSettings.rds`. The current snapshot format is version 5.
+Version 4 snapshots are also accepted; their stored `lengthOfStay` setting is
+read as `cycleLength` without rewriting the file.
 It stores the analysis settings and, for a CDM study, the cohort JSON definitions
 used during import. It does not contain patient data or a database connection.
 

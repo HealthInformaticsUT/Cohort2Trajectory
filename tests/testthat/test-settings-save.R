@@ -5,7 +5,7 @@ test_that("optional state lists survive saving, updating and reloading settings"
   study <- cohort2TrajectoryConfiguration(
     studyName = "settings", pathToStudy = path, useCDM = FALSE,
     atlasTargetCohort = "0", stateCohortLabels = c("A", "B"),
-    stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority", lengthOfStay = 7
+    stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority", cycleLength = 7
   )
   expect_length(list.files(file.path(path, "settings", "Settings")), 0)
   data <- data.frame(subject_id = c(1L, 1L, 1L), cohort_definition_id = c("0", "A", "B"),

@@ -13,7 +13,7 @@ test_that("absorbing references are checked before either public format is saved
       pathToStudy = root, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = labels,
       stateCohortPriorityOrder = labels, stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 7, stateCohortAbsorbing = "Death",
+      trajectoryType = type, cycleLength = 7, stateCohortAbsorbing = "Death",
       allowedStatesList = list()
     )
     getDataForStudy(studyEnv = study)

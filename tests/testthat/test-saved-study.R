@@ -8,12 +8,12 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
   dir.create(destinationPath)
   study <- cohort2TrajectoryConfiguration(
     studyName = "portable", pathToStudy = sourcePath, baseUrl = NULL,
-    atlasTargetCohort = "0", atlasStateCohorts = c("first", "states/second"),
-    # One clinical label intentionally matches the opposite definition filename.
-    # They must be assigned once, identically in fresh and restored imports.
-    stateCohortLabels = c("second", "first"), stateCohortPriorityOrder = c("first", "second"),
+    atlasTargetCohort = "0",
+    # Clinical names differ from filenames and stay the same after restoring.
+    atlasStateCohorts = c(second = "first", first = "states/second"),
+    stateCohortPriorityOrder = c("first", "second"),
     stateCohortMandatory = "first", stateCohortAbsorbing = "first",
-    stateSelectionType = "Priority", lengthOfStay = 14,
+    stateSelectionType = "Priority", cycleLength = 14,
     oocFix = "Last present state", allowedStatesList = list(second = c("second", "first"), first = "first")
   )
   dir.create(file.path(sourcePath, "portable", "JSON", "states"))
@@ -32,11 +32,11 @@ test_that("a moved study preserves nested definitions and clinical labels on a d
     studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, batchSize = 5
   )
   expect_equal(restored$allowedStatesList, study$allowedStatesList)
-  expect_equal(restored$lengthOfStay, 14)
+  expect_equal(restored$cycleLength, 14)
   expect_error(createTrajectories(studyEnv = restored), "getDataForStudy successfully first")
   expect_error(cohort2TrajectoryConfiguration(
-    studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, lengthOfStay = 7
-  ), "Do not also supply: lengthOfStay")
+    studyName = "portable", pathToStudy = destinationPath, runSavedStudy = TRUE, cycleLength = 7
+  ), "Do not also supply: cycleLength")
 
   con2 <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
   cdm2 <- fixtureCdm(con2, "destination")
@@ -81,9 +81,10 @@ test_that("downloaded definitions remain portable independently of clinical labe
   labels <- c("Swallowing / feeding", "Related care", "Airway support")
   study <- cohort2TrajectoryConfiguration(
     studyName = "atlas", pathToStudy = sourcePath, baseUrl = "https://atlas.example/WebAPI",
-    atlasTargetCohort = 101, atlasStateCohorts = c("0202", "202", "0"),
-    stateCohortLabels = labels, stateCohortPriorityOrder = labels,
-    stateCohortMandatory = labels[1], stateSelectionType = "Priority", lengthOfStay = 7
+    atlasTargetCohort = 101,
+    atlasStateCohorts = setNames(c("0202", "202", "0"), labels),
+    stateCohortPriorityOrder = labels,
+    stateCohortMandatory = labels[1], stateSelectionType = "Priority", cycleLength = 7
   )
   con <- DBI::dbConnect(duckdb::duckdb(), dbdir = ":memory:")
   on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
@@ -122,7 +123,7 @@ test_that("saved local studies preserve merging and optional rules in both forma
     study <- cohort2TrajectoryConfiguration(
       studyName = type, pathToStudy = root, useCDM = FALSE, trajectoryDataObject = input,
       stateCohortLabels = c("A", "B"), stateCohortPriorityOrder = c("A", "B"),
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
+      stateSelectionType = "Priority", trajectoryType = type, cycleLength = 7,
       allowedStatesList = list(), stateCohortAbsorbing = NULL,
       mergeStates = TRUE
     )
@@ -141,4 +142,57 @@ test_that("saved local studies preserve merging and optional rules in both forma
     expect_length(restored$allowedStatesList, 0)
     expect_length(restored$stateCohortAbsorbing, 0)
   }
+})
+
+
+test_that("version 4 cycle settings migrate in memory without changing portable settings", {
+  root <- tempfile("c2t-version-four-")
+  dir.create(root)
+  on.exit(unlink(root, recursive = TRUE))
+  study <- cohort2TrajectoryConfiguration(
+    studyName = "old", pathToStudy = root, useCDM = FALSE,
+    stateCohortLabels = c("A", "B"), stateCohortPriorityOrder = c("A", "B"),
+    stateSelectionType = "Priority", cycleLength = 7,
+    allowedStatesList = list(A = c("A", "B"), B = character(0))
+  )
+  generation <- mget(.studyGenerationFields(), envir = study)
+  legacy <- generation
+  names(legacy)[names(legacy) == "cycleLength"] <- "lengthOfStay"
+  snapshot <- list(version = 4L, import = mget(.studyImportFields(), envir = study),
+                   generation = legacy, definitions = NULL, definitionContents = NULL,
+                   stateDictionary = NULL)
+  file <- file.path(root, "old", "Settings", "analysisSettings.rds")
+  saveRDS(snapshot, file)
+  before <- tools::md5sum(file)
+  restored <- cohort2TrajectoryConfiguration(
+    studyName = "old", pathToStudy = root, useCDM = FALSE, runSavedStudy = TRUE
+  )
+  expect_equal(restored$cycleLength, 7)
+  expect_false(exists("lengthOfStay", envir = restored, inherits = FALSE))
+  expected <- snapshot
+  expected$version <- 5L
+  expected$generation <- generation
+  expect_identical(restored$.savedSettings, expected)
+  expect_identical(tools::md5sum(file), before)
+
+  # Old snapshots cannot combine, duplicate or omit the cycle setting.
+  malformed <- list(
+    c(legacy, list(cycleLength = 7)),
+    c(legacy, list(lengthOfStay = 7)),
+    legacy[names(legacy) != "lengthOfStay"]
+  )
+  for (fields in malformed) {
+    invalid <- snapshot
+    invalid$generation <- fields
+    saveRDS(invalid, file)
+    expect_error(.readStudySnapshot(root, "old"), "saved-study")
+  }
+  snapshot$generation$lengthOfStay <- 0
+  saveRDS(snapshot, file)
+  expect_error(.readStudySnapshot(root, "old"), "cycleLength must be a single positive whole number")
+
+  # Version 5 accepts only the current field name.
+  expected$generation$lengthOfStay <- 7
+  saveRDS(expected, file)
+  expect_error(.readStudySnapshot(root, "old"), "Unsupported or incomplete saved-study")
 })

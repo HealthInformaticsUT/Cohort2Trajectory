@@ -35,7 +35,7 @@ test_that("generation cannot silently change mandatory-state eligibility", {
   study <- cohort2TrajectoryConfiguration(
     pathToStudy = path, studyName = "mandatory", useCDM = FALSE,
     trajectoryDataObject = input, stateCohortLabels = c("A", "B"),
-    stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority", lengthOfStay = 7
+    stateCohortPriorityOrder = c("A", "B"), stateSelectionType = "Priority", cycleLength = 7
   )
   expect_error(createTrajectories(studyEnv = study, stateCohortMandatory = "A"),
                 "requires a successful getDataForStudy")
@@ -60,7 +60,7 @@ test_that("generation cannot silently change mandatory-state eligibility", {
   expect_equal(unique(createTrajectories(studyEnv = study)$subject_id), c(1, 2))
 
   snapshot <- readRDS(files[2])
-  expect_identical(snapshot$version, 4L)
+  expect_identical(snapshot$version, 5L)
   snapshot$generation$stateCohortMandatory <- "A"
   saveRDS(snapshot, files[2])
   before <- tools::md5sum(files[2])

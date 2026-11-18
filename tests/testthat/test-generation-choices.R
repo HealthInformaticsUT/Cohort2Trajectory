@@ -8,7 +8,7 @@ test_that("generation accepts named choices and rejects invalid overrides withou
   study <- cohort2TrajectoryConfiguration(
     studyName = "choices", pathToStudy = path, useCDM = FALSE,
     trajectoryDataObject = input, stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-    stateSelectionType = "Priority", lengthOfStay = 7
+    stateSelectionType = "Priority", cycleLength = 7
   )
   getDataForStudy(studyEnv = study)
   for (case in list(c(" discrete ", "first", "Discrete", "First"),
@@ -25,7 +25,7 @@ test_that("generation accepts named choices and rejects invalid overrides withou
   settingsFile <- file.path(path, "choices", "Settings", "analysisSettings.rds")
   snapshot <- readRDS(settingsFile)
   saved <- snapshot$generation
-  expect_identical(snapshot$version, 4L)
+  expect_identical(snapshot$version, 5L)
   expect_identical(c(saved$trajectoryType, saved$stateSelectionType), c("Continuous", "Priority"))
   files <- c(settingsFile, file.path(path, "choices", "Data",
                                       c("patientDataDiscrete.csv", "patientDataContinuous.csv")))

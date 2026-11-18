@@ -12,7 +12,7 @@
 #'   Names are case-insensitive. Numeric choice codes are not accepted.
 #' @param stateSelectionType Selection method, either "First", "Overlap" or
 #'   "Priority". Names are case-insensitive. A method must be specified.
-#' @param lengthOfStay Positive whole-number cycle length in days for discrete
+#' @param cycleLength Positive whole-number cycle length in days for discrete
 #'   trajectories. Use 7 for weekly cycles. Continuous output does not use it.
 #' @param stateCohortLabels Nonblank, non-missing clinical state labels, unique
 #'   ignoring case. The labels "0", "START", "EXIT" and "OUT OF COHORT" are
@@ -44,8 +44,16 @@
 #' @param mergedStateOverrides List of mergedState() definitions that replace
 #'   selected inherited properties of merged states.
 #'
-#' @return A data frame of trajectory rows, also saved as a CSV in the study's
-#'   Data directory. See the output vignette for the complete schema.
+#' @return A data frame of class \code{c2t_trajectories}, also saved as a CSV in
+#'   the study's Data directory. Printing shows counts and a short preview;
+#'   all columns and rows remain available. Use \code{as.data.frame(result)}
+#'   for the ordinary data-frame display. See the output vignette for the
+#'   complete schema and \code{\link{print.c2t_study}} for printing options.
+#'   The \code{trajectory_definition} attribute records the effective trajectory
+#'   type, cycle length, ordered clinical labels and absorbing labels. TMA reads
+#'   these settings directly. Configured but unobserved states and resolved
+#'   merged-state overrides are included. \code{saveRDS()} preserves this
+#'   attribute; CSV output contains only rows and columns.
 #'
 #' @details
 #' In discrete mode, First selects the earliest-starting eligible interval in
@@ -114,12 +122,13 @@
 #' is written only after all patient batches finish, so a batch error does not
 #' replace a previous complete file with a partial result.
 #'
-#' A completed fresh run saves Settings/analysisSettings.rds in version 4
+#' A completed fresh run saves Settings/analysisSettings.rds in version 5
 #' format. This preserves analysis settings and any imported CDM definition
 #' contents, not patient data. NULL, character(0) and nested lists retain their
-#' R types. Only version 4 snapshots are accepted. Saved runs restore their
-#' analysis rules and require fresh input. Configure a new study to change
-#' those rules.
+#' R types. Version 4 snapshots are also accepted; their stored lengthOfStay
+#' setting is read as cycleLength without rewriting the file. Saved runs
+#' restore their analysis rules and require fresh input. Configure a new
+#' study to change those rules.
 #'
 #' @section Labels and identifiers:
 #' State IDs are assigned once per study. In unmerged studies, START has ID 1,
@@ -151,7 +160,7 @@ createTrajectories <- function(cdm = NULL,
                                runSavedStudy = studyEnv$runSavedStudy,
                                oocFix = studyEnv$oocFix,
                                outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-                               lengthOfStay = studyEnv$lengthOfStay,
+                               cycleLength = studyEnv$cycleLength,
                                stateCohortLabels = studyEnv$stateCohortLabels,
                                stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
                                stateSelectionType = studyEnv$stateSelectionType,
@@ -179,7 +188,7 @@ createTrajectories <- function(cdm = NULL,
     allowNull = FALSE
   )
   if (trajectoryType == "Discrete") {
-    .validatePositiveInteger(lengthOfStay, "lengthOfStay", "days")
+    .validatePositiveInteger(cycleLength, "cycleLength", "days")
   }
   .validatePositiveInteger(batchSize, "batchSize", "patients")
   stateSelectionType <- .configurationChoice(
@@ -315,7 +324,7 @@ createTrajectories <- function(cdm = NULL,
         getTrajectoriesDiscrete(
           cohortData = batch_data,
           cdm = cdm,
-          stateDuration = lengthOfStay,
+          stateDuration = cycleLength,
           oocFix = oocFix,
           stateSelection = selectionCode,
           statePriorityVector = stateCohortPriorityOrder,
@@ -391,5 +400,10 @@ createTrajectories <- function(cdm = NULL,
   
   cli::cli_alert_success("Trajectories generated!")
   
+  # Attach the in-memory handoff only after writing unchanged output files.
+  attr(result, "trajectory_definition") <- .trajectoryDefinition(
+    trajectoryType, cycleLength, stateLevels, stateCohortAbsorbing, registry
+  )
+  class(result) <- c("c2t_trajectories", class(result))
   return(result)
 }

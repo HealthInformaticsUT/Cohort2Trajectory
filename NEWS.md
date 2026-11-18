@@ -1,3 +1,17 @@
+# Cohort2Trajectory 1.3.0.9000
+
+* Named `atlasStateCohorts` supplies state labels alongside ATLAS IDs or local
+  JSON filenames, without a separate `stateCohortLabels` vector.
+
+* Use `cycleLength` instead of `lengthOfStay` in configuration and generation.
+  New settings snapshots use version 5. Version 4 snapshots still load without
+  rewriting the saved file.
+* Returned trajectories carry their cycle length, state labels and absorbing
+  states for direct use in TMA. The definition includes unobserved configured
+  states and resolved merged labels. RDS preserves it; CSV contains rows only.
+* Study and trajectory objects print compact summaries while retaining all
+  settings and data.
+
 # Cohort2Trajectory 1.3.0
 
 * The public workflow uses readable option names, structured merged-state

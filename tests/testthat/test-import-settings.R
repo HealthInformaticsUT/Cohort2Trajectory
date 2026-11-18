@@ -24,7 +24,7 @@ test_that("successful CDM source overrides remain coherent on the next import", 
     pathToStudy = root, studyName = "sources", baseUrl = "https://old.example/WebAPI",
     atlasTargetCohort = 101, atlasStateCohorts = 202,
     stateCohortLabels = "A", stateCohortPriorityOrder = "A",
-    stateSelectionType = "Priority", lengthOfStay = 7
+    stateSelectionType = "Priority", cycleLength = 7
   )
   newUrl <- "https://new.example/WebAPI"
   getDataForStudy(cdm = list(cohort = raw), studyEnv = study, baseUrl = newUrl,

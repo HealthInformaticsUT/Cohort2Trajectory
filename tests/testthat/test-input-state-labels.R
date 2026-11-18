@@ -15,7 +15,7 @@ test_that("data-frame and CSV imports preserve identical clinical state labels",
       pathToStudy = path, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = labels,
       stateCohortPriorityOrder = labels, stateCohortMandatory = labels[1],
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7
+      stateSelectionType = "Priority", trajectoryType = type, cycleLength = 7
     )
     expect_warning(getDataForStudy(studyEnv = study), NA)
     fromObject <- createTrajectories(studyEnv = study)
@@ -55,7 +55,7 @@ test_that("CSV round trips preserve numeric-looking labels and literal NA", {
         pathToStudy = path, studyName = paste0(type, labels[1]), useCDM = FALSE,
         trajectoryDataObject = input, stateCohortLabels = labels,
         stateCohortPriorityOrder = labels, stateSelectionType = "Priority",
-        trajectoryType = type, lengthOfStay = 7
+        trajectoryType = type, cycleLength = 7
       )
       getDataForStudy(studyEnv = study)
       fromObject <- createTrajectories(studyEnv = study)
@@ -98,7 +98,7 @@ test_that("import and generation reject case collisions across patients", {
     pathToStudy = path, studyName = "labels", useCDM = FALSE, atlasTargetCohort = "0",
     trajectoryDataObject = input, stateCohortLabels = "A",
     stateCohortPriorityOrder = "A", stateSelectionType = "Priority",
-    trajectoryType = "Discrete", lengthOfStay = 7, batchSize = 1
+    trajectoryType = "Discrete", cycleLength = 7, batchSize = 1
   )
   getDataForStudy(studyEnv = study)
   expect_silent(Cohort2Trajectory:::.validateObservedStateLabels(c("0", "A", "A")))
@@ -136,7 +136,7 @@ test_that("mixed label encodings preserve transition rules and absorbing cutoffs
       pathToStudy = path, studyName = type, useCDM = FALSE,
       trajectoryDataObject = input, stateCohortLabels = supplied,
       stateCohortPriorityOrder = supplied, stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 7, stateCohortAbsorbing = supplied[2],
+      trajectoryType = type, cycleLength = 7, stateCohortAbsorbing = supplied[2],
       allowedStatesList = setNames(list(supplied[2]), supplied[1])
     )
     getDataForStudy(studyEnv = study)

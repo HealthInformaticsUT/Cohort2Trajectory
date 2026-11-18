@@ -17,7 +17,9 @@
 #' @param atlasTargetCohort ATLAS target cohort ID, or local definition name
 #'   without the .json extension when baseUrl is NULL.
 #' @param atlasStateCohorts ATLAS state cohort IDs, or local definition names
-#'   without the .json extension when baseUrl is NULL.
+#'   without the .json extension when baseUrl is NULL. A named vector supplies
+#'   the labels when stateCohortLabels is NULL. Otherwise its names must match
+#'   the configured or explicitly supplied labels in order.
 #' @param stateCohortLabels Nonblank, non-missing clinical state labels, unique
 #'   ignoring case. The labels "0", "START", "EXIT" and "OUT OF COHORT" are
 #'   reserved, also ignoring case.
@@ -87,8 +89,8 @@
 #'
 #' Successful import captures the selected definition filenames and contents.
 #' After fresh trajectory generation completes, these are saved with the
-#' analysis settings in Settings/analysisSettings.rds. Only version 4 snapshots
-#' are accepted. The snapshot contains no patient data.
+#' analysis settings in Settings/analysisSettings.rds using version 5 format.
+#' Version 4 snapshots are also accepted. The snapshot contains no patient data.
 #'
 #' Saved CDM runs write the embedded definitions to a new private folder and
 #' use them to query fresh data. They do not read or replace working JSON files
@@ -137,6 +139,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
     if (useCDM) .checkSavedDefinitions(saved, pathToStudy, studyName)
     atlasTargetCohort <- "0"
   }
+  stateCohortLabels <- .stateLabelsFromCohorts(atlasStateCohorts, stateCohortLabels)
+  atlasStateCohorts <- unname(atlasStateCohorts)
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   .validateAllowedStateSources(allowedStatesList)

@@ -9,7 +9,7 @@ test_that("CDM import preserves labels, caller tables and nested definitions", {
     studyName = "names", pathToStudy = root, baseUrl = NULL,
     atlasTargetCohort = "targets/stroke", atlasStateCohorts = definitions,
     stateCohortLabels = labels, stateCohortPriorityOrder = labels,
-    stateSelectionType = "Priority", lengthOfStay = 7
+    stateSelectionType = "Priority", cycleLength = 7
   )
   writeFixtureDefinitions(file.path(root, "names", "JSON",
     c("targets/stroke.json", "clinical.json")), c(1001L, 2001L))

@@ -18,7 +18,7 @@ cohort2TrajectoryConfiguration(
   stateSelectionType = NULL,
   oocFix = "None",
   trajectoryType = "Discrete",
-  lengthOfStay = NULL,
+  cycleLength = NULL,
   outOfCohortAllowed = FALSE,
   runSavedStudy = FALSE,
   useCDM = TRUE,
@@ -46,12 +46,15 @@ to read local definitions from the study's \code{JSON} folder during import.}
 \code{baseUrl = NULL}, supply its local JSON filename without the extension.
 The first target interval defines each patient's observation period.}
 
-\item{atlasStateCohorts}{ATLAS IDs of the state cohorts, in the same order
-as \code{stateCohortLabels}. With \code{baseUrl = NULL}, supply local JSON
-filenames without their extensions.}
+\item{atlasStateCohorts}{Named vector of ATLAS state cohort IDs, such as
+\code{c(Stable = 101, Complication = 102, Dead = 103)}. Names become the
+state labels. With \code{baseUrl = NULL}, use local JSON filenames without
+their extensions as the values. An unnamed vector instead requires
+\code{stateCohortLabels} in the same order.}
 
-\item{stateCohortLabels}{Character vector of state labels. Supply one per
-state cohort for CDM input. Labels must be nonempty, non-missing and unique
+\item{stateCohortLabels}{Character vector of state labels. May be omitted
+when \code{atlasStateCohorts} is named. If both are supplied, the labels
+must match its names in order. Labels must be nonempty, non-missing and unique
 even when ignoring case. \code{"0"}, \code{"START"}, \code{"EXIT"} and
 \code{"OUT OF COHORT"} are reserved, including case variants. Labels may
 contain spaces or punctuation and need not start with a letter. They are
@@ -88,7 +91,7 @@ string names a fallback state. See the gap rules below.}
 Names ignore case and surrounding whitespace. \code{NULL} is allowed
 during configuration, but generation needs a choice.}
 
-\item{lengthOfStay}{Positive whole-number cycle length in days, within R's
+\item{cycleLength}{Positive whole-number cycle length in days, within R's
 integer range. Required when generating discrete trajectories. It may be
 \code{NULL} during configuration. The final cycle is shortened at the
 observation boundary.}
@@ -129,7 +132,10 @@ Requires \code{mergeStates = TRUE}. Supply at most one definition for
 each membership set. Omitted properties inherit from the original states.}
 }
 \value{
-An environment containing the study settings.
+An environment of class \code{c2t_study} containing the study
+  settings. Printing shows a compact summary; inspect individual settings
+  with \code{study$settingName} or all settings with
+  \code{as.list(study, all.names = TRUE)}.
 }
 \description{
 Choose the observation cohort, state definitions and rules for a study.
@@ -222,8 +228,9 @@ See \code{mergedState()} for individual exceptions.
 \section{Saving and sharing a study}{
 
 A completed import and generation saves the analysis settings in
-\code{Settings/analysisSettings.rds}. Only version 4 is accepted.
-Reconfigure and rerun older studies to create a current snapshot.
+\code{Settings/analysisSettings.rds} in version 5 format. Version 4 snapshots
+are also accepted: their stored lengthOfStay setting becomes cycleLength
+when read, without rewriting the file. Reconfigure and rerun earlier studies.
 CDM snapshots contain the exact cohort JSON definitions captured at import.
 Saved runs use those definitions and fresh patient data, leaving working
 JSON files unchanged.
@@ -261,7 +268,7 @@ study <- cohort2TrajectoryConfiguration(
   useCDM = FALSE, trajectoryDataObject = cohorts,
   stateCohortLabels = c("Stable", "Complication"),
   stateCohortPriorityOrder = c("Complication", "Stable"),
-  stateSelectionType = "Priority", lengthOfStay = 7
+  stateSelectionType = "Priority", cycleLength = 7
 )
 getDataForStudy(studyEnv = study)
 trajectories <- createTrajectories(studyEnv = study)

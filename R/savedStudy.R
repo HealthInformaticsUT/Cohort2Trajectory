@@ -16,7 +16,7 @@
 }
 
 .studyGenerationFields <- function() {
-  c("trajectoryType", "oocFix", "outOfCohortAllowed", "lengthOfStay",
+  c("trajectoryType", "oocFix", "outOfCohortAllowed", "cycleLength",
     "stateCohortLabels", "stateCohortPriorityOrder", "stateSelectionType",
     "stateCohortAbsorbing", "stateCohortMandatory", "allowedStatesList",
     "mergedStateOverrides")
@@ -40,15 +40,31 @@
          call. = FALSE)
   }
   saved <- readRDS(path)
-  if (!is.list(saved) || !identical(saved$version, 4L)) {
+  if (!is.list(saved) ||
+      !(identical(saved$version, 4L) || identical(saved$version, 5L))) {
     stop("Unsupported saved-study format at ", path,
-         ". Only version 4 is supported. Configure the study with runSavedStudy = FALSE ",
+         ". Only versions 4 and 5 are supported. Configure the study with runSavedStudy = FALSE ",
          "and complete import and trajectory generation with this package version.",
          call. = FALSE)
   }
   if (!is.list(saved$import) || !is.list(saved$generation) ||
-      !all(.studyImportFields() %in% names(saved$import)) ||
-      !all(.studyGenerationFields() %in% names(saved$generation))) {
+      anyNA(names(saved$import)) || anyNA(names(saved$generation)) ||
+      anyDuplicated(names(saved$import)) || anyDuplicated(names(saved$generation))) {
+    stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
+  }
+  if (identical(saved$version, 4L)) {
+    if (!"lengthOfStay" %in% names(saved$generation) ||
+        "cycleLength" %in% names(saved$generation)) {
+      stop("Version 4 saved-study generation settings must contain lengthOfStay ",
+           "and no cycleLength field: ", path, call. = FALSE)
+    }
+    # Translate the historical storage name once, without rewriting the file.
+    names(saved$generation)[names(saved$generation) == "lengthOfStay"] <- "cycleLength"
+    saved$version <- 5L
+  }
+  if (!all(.studyImportFields() %in% names(saved$import)) ||
+      !all(.studyGenerationFields() %in% names(saved$generation)) ||
+      "lengthOfStay" %in% names(saved$generation)) {
     stop("Unsupported or incomplete saved-study settings: ", path, call. = FALSE)
   }
   if (!setequal(saved$import$stateCohortMandatory, saved$generation$stateCohortMandatory)) {
@@ -67,6 +83,7 @@
     "trajectoryType", allowNull = FALSE
   )
   if (saved$generation$trajectoryType == "Discrete") {
+    .validatePositiveInteger(saved$generation$cycleLength, "cycleLength", "days")
     .validateGapFallback(saved$generation$oocFix,
                          saved$generation$stateCohortLabels)
   }
@@ -137,7 +154,7 @@
   if (is.null(imported)) {
     imported <- mget(.studyImportFields(), envir = studyEnv, inherits = FALSE)
   }
-  snapshot <- list(version = 4L, import = imported, generation = generation,
+  snapshot <- list(version = 5L, import = imported, generation = generation,
                    definitions = studyEnv$.cohortDefinitions,
                    definitionContents = studyEnv$.cohortDefinitionContents,
                    stateDictionary = studyEnv$stateDictionary)

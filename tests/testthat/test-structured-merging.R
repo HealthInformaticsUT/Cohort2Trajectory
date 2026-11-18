@@ -62,7 +62,7 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
       pathToStudy = root, studyName = type, useCDM = FALSE, trajectoryDataObject = raw,
       stateCohortLabels = labels, stateCohortPriorityOrder = labels,
       stateCohortMandatory = "B", stateCohortAbsorbing = "A",
-      stateSelectionType = "Priority", trajectoryType = type, lengthOfStay = 7,
+      stateSelectionType = "Priority", trajectoryType = type, cycleLength = 7,
       allowedStatesList = list(A = "C", B = character(0), C = "C"), mergeStates = TRUE,
       mergedStateOverrides = list(mergedState(c("A", "B"), absorbing = FALSE, label = "Combined"))
     )
@@ -73,7 +73,7 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
     expect_identical(together$state_label, rep(c("START", "Combined", "C", "EXIT"), 2))
     expect_equal(createTrajectories(studyEnv = study, batchSize = 1), together)
     saved <- readRDS(file.path(root, type, "Settings", "analysisSettings.rds"))
-    expect_identical(saved$version, 4L)
+    expect_identical(saved$version, 5L)
     expect_identical(saved$generation$allowedStatesList, study$allowedStatesList)
     restored <- cohort2TrajectoryConfiguration(
       pathToStudy = root, studyName = type, useCDM = FALSE, runSavedStudy = TRUE,
@@ -105,7 +105,7 @@ test_that("older snapshot formats are rejected without modifying their files", {
   on.exit(unlink(root, recursive = TRUE))
   study <- cohort2TrajectoryConfiguration(
     pathToStudy = root, useCDM = FALSE,
-    stateCohortLabels = "A", stateSelectionType = "Priority", lengthOfStay = 7
+    stateCohortLabels = "A", stateSelectionType = "Priority", cycleLength = 7
   )
   snapshot <- list(import = mget(.studyImportFields(), envir = study),
                    generation = mget(.studyGenerationFields(), envir = study))
@@ -116,7 +116,7 @@ test_that("older snapshot formats are rejected without modifying their files", {
     before <- tools::md5sum(file)
     expect_error(cohort2TrajectoryConfiguration(
       pathToStudy = root, studyName = study$studyName, useCDM = FALSE, runSavedStudy = TRUE
-    ), "Only version 4 is supported")
+    ), "Only versions 4 and 5 are supported")
     expect_identical(tools::md5sum(file), before)
   }
 })
@@ -137,7 +137,7 @@ test_that("merged labels do not override gap controls or named fallbacks", {
     pathToStudy = root, studyName = "gaps", useCDM = FALSE,
     trajectoryDataObject = raw, stateCohortLabels = labels,
     stateCohortPriorityOrder = labels, stateSelectionType = "Priority",
-    lengthOfStay = 7, mergeStates = TRUE,
+    cycleLength = 7, mergeStates = TRUE,
     mergedStateOverrides = list(mergedState(c("A", "B"), label = "Combined"))
   )
   getDataForStudy(studyEnv = study)

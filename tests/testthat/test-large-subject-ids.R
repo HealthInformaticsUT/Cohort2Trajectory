@@ -17,7 +17,7 @@ test_that("original text IDs survive public import, merging, batching and CSV ou
       stateCohortLabels = c("A", "B", "C", "D", "E"),
       stateCohortPriorityOrder = c("A", "B", "C", "D", "E"),
       stateCohortAbsorbing = "B", stateSelectionType = "Priority",
-      trajectoryType = type, lengthOfStay = 1, runSavedStudy = FALSE
+      trajectoryType = type, cycleLength = 1, runSavedStudy = FALSE
     )
     getDataForStudy(studyEnv = study, runSavedStudy = FALSE,
                     pathToData = inputFile, mergeStates = TRUE)
