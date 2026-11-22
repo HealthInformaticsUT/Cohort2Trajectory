@@ -190,10 +190,14 @@ and fresh data were supplied.
 
 ## Before fitting a model
 
-The four labels can be used as four model states. If an analysis instead treats
-pneumonia onset and mortality as two steps within a week, it needs an explicit
-rule for the transition from alive without pneumonia to death with pneumonia
-history. A general transition estimator cannot infer that rule from the label.
+The four labels can be used as four model states. To evaluate pneumonia onset
+and then mortality within a week, generate a second C2T view that retains
+pneumonia history even in the death week. The second view omits death as a
+competing label, but its observation endpoint must still match the final-outcome
+view so no weeks are added after death. TMA's `prepareStageObservations()` pairs
+the views and `estimateStageTransitions()` fits the two stages. This lets an
+intervention change onset while leaving the conditional mortality probabilities
+unchanged. See TMA's `inst/examples/c2t-to-icer.R` for the complete example.
 
 Likewise, a requirement that pneumonia precede death by at least one calendar
 day belongs in the analyst's cohort definitions. Do not infer that separation

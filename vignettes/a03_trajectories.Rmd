@@ -187,6 +187,15 @@ different timing detail. Selection, target-boundary clipping and state merging
 can still affect those intervals. See [Trajectory output](a05_output.html) for
 the output fields, date conventions and available files.
 
+For a model that evaluates onset before mortality, you can generate two discrete
+views from the same input: a history view that retains pneumonia in the terminal
+week, and a final-outcome view where death takes priority. Both views must use
+the same patient-week boundaries and stop at the same endpoint. In TMA,
+`prepareStageObservations()` pairs the views within each week before
+`estimateStageTransitions()` estimates the probabilities. It does not estimate
+two independent sequences of adjacent weekly labels. The full example is in
+TMA's `inst/examples/c2t-to-icer.R`.
+
 ## Saved studies and output
 
 For a fresh study, generation settings can be supplied directly as in the
