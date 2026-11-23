@@ -14,8 +14,8 @@ Order does not matter. Labels must not be blank or missing.}
 \item{allowedTransitions}{Optional replacement destinations. A character
 vector names individual states. A list specifies sets of original members,
 so \code{list("C", c("C", "D"))} permits both C alone and the combination
-of C and D. \code{character(0)} or \code{list()} permits no destinations.
-Omit the argument to inherit transitions. \code{NULL} is not accepted.}
+of C and D. \code{NULL}, \code{character(0)} or \code{list()} permits no
+destinations. Omit the argument to inherit transitions.}
 
 \item{absorbing}{Optional \code{TRUE} or \code{FALSE} replacing inherited
 absorbing status. Omit it to inherit. \code{FALSE} lets the trajectory
@@ -73,6 +73,7 @@ overrides for a fresh saved-study import.
 \examples{
 mergedState(c("A", "B"), allowedTransitions = "C", absorbing = FALSE)
 mergedState(c("A", "B"), absorbing = FALSE)
+mergedState(c("A", "B"), allowedTransitions = NULL)
 mergedState(c("A", "B"), allowedTransitions = list("C", c("C", "D")))
 }
 \seealso{

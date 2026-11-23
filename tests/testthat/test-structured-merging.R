@@ -36,10 +36,16 @@ test_that("union inheritance and explicit replacements use structured membership
   expect_identical(changed$allowed[[ab]], cd)
   expect_false(ab %in% changed$absorbing)
   expect_identical(changed$registry$label[changed$registry$state_key == ab], "Custom + label [x]")
-  empty <- .mergedRules(registry, labels, rules, "A",
-                         list(mergedState(c("A", "B"), allowedTransitions = character(0))))
-  expect_length(empty$allowed[[ab]], 0)
-  expect_true(ab %in% empty$absorbing)
+  omitted <- mergedState(c("A", "B"))
+  expect_false("allowedTransitions" %in% names(omitted))
+  for (destinations in list(NULL, character(0), list())) {
+    override <- mergedState(c("A", "B"), allowedTransitions = destinations)
+    expect_identical(override$allowedTransitions, list())
+    expect_true("allowedTransitions" %in% names(override))
+    empty <- .mergedRules(registry, labels, rules, "A", list(override))
+    expect_length(empty$allowed[[ab]], 0)
+    expect_true(ab %in% empty$absorbing)
+  }
   onlyFlag <- .mergedRules(registry, labels, rules, "A",
                             list(mergedState(c("A", "B"), absorbing = FALSE)))
   expect_identical(onlyFlag$allowed, result$allowed)

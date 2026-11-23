@@ -115,7 +115,9 @@ overrides <- list(
 ```
 
 This override requires `mergeStates = TRUE`. Its destinations and absorbing
-status replace the inherited values. See the
+status replace the inherited values. Omit `allowedTransitions` to inherit
+destinations, or set it to `NULL` to permit none. `character(0)` and `list()`
+also permit none. This does not change whether the state is absorbing. See the
 [merged-state reference](../reference/mergedState.html) for further examples
 and [output files](a05_output.html) for the state dictionary.
 

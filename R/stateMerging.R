@@ -10,8 +10,8 @@
 #' @param allowedTransitions Optional replacement destinations. A character
 #'   vector names individual states. A list specifies sets of original members,
 #'   so \code{list("C", c("C", "D"))} permits both C alone and the combination
-#'   of C and D. \code{character(0)} or \code{list()} permits no destinations.
-#'   Omit the argument to inherit transitions. \code{NULL} is not accepted.
+#'   of C and D. \code{NULL}, \code{character(0)} or \code{list()} permits no
+#'   destinations. Omit the argument to inherit transitions.
 #' @param absorbing Optional \code{TRUE} or \code{FALSE} replacing inherited
 #'   absorbing status. Omit it to inherit. \code{FALSE} lets the trajectory
 #'   continue even when an original member is absorbing.
@@ -59,6 +59,7 @@
 #' @examples
 #' mergedState(c("A", "B"), allowedTransitions = "C", absorbing = FALSE)
 #' mergedState(c("A", "B"), absorbing = FALSE)
+#' mergedState(c("A", "B"), allowedTransitions = NULL)
 #' mergedState(c("A", "B"), allowedTransitions = list("C", c("C", "D")))
 mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
   members <- .stateMembers(members)
@@ -89,8 +90,9 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
 }
 
 .destinationSets <- function(x) {
-  if (is.null(x) || !(is.character(x) || is.list(x))) {
-    stop("allowedTransitions must be a character vector or list of member vectors. Omit it to inherit.", call. = FALSE)
+  if (is.null(x)) return(list())
+  if (!(is.character(x) || is.list(x))) {
+    stop("allowedTransitions must be NULL, a character vector or a list of member vectors. Omit it to inherit.", call. = FALSE)
   }
   lapply(if (is.character(x)) as.list(x) else x, .stateMembers)
 }

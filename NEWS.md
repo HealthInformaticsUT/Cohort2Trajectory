@@ -1,5 +1,9 @@
 # Cohort2Trajectory 1.3.0.9000
 
+* `mergedState()` accepts `allowedTransitions = NULL` for no destinations,
+  just like `character(0)` or `list()`. Omitting the argument still inherits
+  the original states' transition rules.
+
 * Nonmerged generation now rejects unknown transition destinations before
   writing outputs. Configured but unobserved states, observed local states
   and named discrete gap fallbacks remain valid, with case-insensitive matching.
