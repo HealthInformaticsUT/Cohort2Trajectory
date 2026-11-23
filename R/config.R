@@ -72,6 +72,8 @@
 #'   non-missing. Put all destinations for one source in a single entry.
 #'   An empty list allows all transitions. \code{character(0)} or \code{NULL}
 #'   in an individual entry permits no destinations.
+#'   Nonmerged generation checks destinations against configured and observed
+#'   states and any named discrete fallback. Configured states may be unobserved.
 #' @param mergeStates Set \code{TRUE} to represent overlapping state intervals
 #'   as a combined state with explicit membership.
 #' @param mergedStateOverrides List of \code{mergedState()} definitions.

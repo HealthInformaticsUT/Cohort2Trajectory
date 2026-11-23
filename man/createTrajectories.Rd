@@ -67,7 +67,10 @@ NULL and character(0) both mean no requirements.}
 
 \item{allowedStatesList}{Named list of allowed destinations for each source
 state. Use one unique, nonempty, non-missing source name per entry, such
-as list(A = c("B", "C")). An empty list imposes no restrictions.}
+as list(A = c("B", "C")). An empty list imposes no restrictions.
+In nonmerged studies, destinations must match configured or observed
+states, or a named discrete fallback, ignoring case. Unknown destinations
+are rejected before generation writes output files.}
 
 \item{useCDM}{Whether to join age and gender from the supplied CDM. Otherwise,
 age and gender_concept_id contain NA. No birth date is assumed or added.}

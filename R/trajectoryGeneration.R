@@ -29,6 +29,9 @@
 #' @param allowedStatesList Named list of allowed destinations for each source
 #'   state. Use one unique, nonempty, non-missing source name per entry, such
 #'   as list(A = c("B", "C")). An empty list imposes no restrictions.
+#'   In nonmerged studies, destinations must match configured or observed
+#'   states, or a named discrete fallback, ignoring case. Unknown destinations
+#'   are rejected before generation writes output files.
 #' @param oocFix Discrete gap rule. Use "None" or "OUT OF COHORT" to leave gaps
 #'   unresolved, "Last present state" to carry an allowed state forward, or
 #'   a state label as a fallback. See Details for label requirements.
@@ -239,6 +242,7 @@ createTrajectories <- function(cdm = NULL,
         knownStates <- c(knownStates, oocFix)
       }
     }
+    .validateAllowedStateDestinations(allowedStatesList, knownStates)
     .validateAbsorbingStateReferences(stateCohortAbsorbing, knownStates)
   }
   registry <- NULL

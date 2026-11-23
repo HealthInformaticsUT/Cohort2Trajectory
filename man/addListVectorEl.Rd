@@ -25,6 +25,8 @@ Destinations are deduplicated case-insensitively using R's
   spelling and order are preserved and new destinations are appended.
   Source names still require exact spelling. The input list is not modified
   in place.
+  This helper edits the list without checking study membership. Trajectory
+  generation rejects destinations that are unknown to the study.
 }
 \examples{
 rules <- list(Stable = "Stable", Complication = "Complication")

@@ -117,6 +117,12 @@ markers do not need an incoming transition rule. For merged studies, a nonempty
 list must include every original state, including absorbing states. Use
 `character(0)` for an original state with no permitted destinations.
 
+For nonmerged studies, generation rejects destinations that are absent from
+the configured states, observed intervals and named discrete gap fallback.
+Configured states remain valid even when no patient has them. The check runs
+before trajectory or settings files are replaced, so a misspelled destination
+cannot silently enter the saved study rules.
+
 Rules are applied separately for each patient, using the last retained clinical
 state. A rejected record does not become the source for later transitions. In
 discrete mode, only allowed states compete for the cycle. In continuous mode,

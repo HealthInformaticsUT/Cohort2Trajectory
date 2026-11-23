@@ -67,6 +67,30 @@
   invisible(NULL)
 }
 
+# The complete state set is known after import, including named gap fallbacks.
+# Destination matching follows the same case-insensitive rule as generation.
+.validateAllowedStateDestinations <- function(rules, states) {
+  known <- tolower(enc2utf8(as.character(states)))
+  for (source in names(rules)) {
+    destinations <- rules[[source]]
+    if (is.null(destinations)) next
+    if (!is.character(destinations) || anyNA(destinations) ||
+        any(!nzchar(trimws(destinations)))) {
+      stop("allowedStatesList destinations from ", shQuote(source),
+           " must be nonempty, non-missing character labels. Use character(0) or NULL for no destinations.",
+           call. = FALSE)
+    }
+    unknown <- unique(destinations[!tolower(enc2utf8(destinations)) %in% known])
+    if (length(unknown)) {
+      stop("allowedStatesList contains unknown destinations from ", shQuote(source),
+           ": ", paste(shQuote(unknown), collapse = ", "),
+           ". Use configured or observed state labels, or a named discrete fallback.",
+           call. = FALSE)
+    }
+  }
+  invisible(NULL)
+}
+
 # Native engines compare bytes. Use one encoding for their working labels,
 # leaving the user's configuration and saved settings unchanged.
 .utf8StateLabels <- function(labels) {

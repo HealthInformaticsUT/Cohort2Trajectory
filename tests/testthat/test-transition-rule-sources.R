@@ -58,3 +58,51 @@ test_that("duplicate source overrides and saved rules cannot silently change tra
     expect_identical(tools::md5sum(files[3]), checksum)
   }
 })
+
+test_that("unknown destinations fail before generation replaces study outputs", {
+  path <- tempfile("c2t-rule-destinations-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  input <- data.frame(subject_id = "001", cohort_definition_id = c("0", "A", "B"),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+    cohort_end_date = as.Date("2020-01-01") + c(13, 6, 13))
+  rules <- createStateList(c("A", "B"))
+  invalid <- addListVectorEl(rules, "A", "Typo")
+  for (type in c("Discrete", "Continuous")) {
+    study <- cohort2TrajectoryConfiguration(
+      studyName = type, pathToStudy = path, useCDM = FALSE, trajectoryDataObject = input,
+      stateCohortLabels = c("A", "B"), stateCohortPriorityOrder = c("A", "B"),
+      stateSelectionType = "Priority", trajectoryType = type, cycleLength = 7,
+      allowedStatesList = invalid)
+    getDataForStudy(studyEnv = study)
+    expect_error(createTrajectories(studyEnv = study),
+      "allowedStatesList.*unknown.*A.*Typo")
+    createTrajectories(studyEnv = study, allowedStatesList = rules)
+    files <- file.path(path, type, c(paste0("Data/patientData", type, ".csv"),
+                                    "Settings/analysisSettings.rds"))
+    before <- tools::md5sum(files)
+    expect_error(createTrajectories(studyEnv = study, allowedStatesList = invalid),
+      "allowedStatesList.*unknown.*A.*Typo")
+    expect_identical(tools::md5sum(files), before)
+  }
+})
+
+test_that("destination checks accept declared, observed and discrete fallback states", {
+  path <- tempfile("c2t-known-destinations-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  input <- data.frame(subject_id = "001", cohort_definition_id = c("0", "A", "B"),
+    cohort_start_date = as.Date("2020-01-01") + c(0, 0, 14),
+    cohort_end_date = as.Date("2020-01-01") + c(20, 6, 20))
+  study <- cohort2TrajectoryConfiguration(
+    studyName = "known", pathToStudy = path, useCDM = FALSE, trajectoryDataObject = input,
+    stateCohortLabels = c("A", "Unseen"), stateCohortPriorityOrder = c("A", "B", "Unseen"),
+    stateSelectionType = "Priority", cycleLength = 7, oocFix = "Gap",
+    allowedStatesList = list(A = c("b", "gap", "unseen"), B = character(0),
+                            Gap = "b", Unseen = NULL))
+  getDataForStudy(studyEnv = study)
+  expect_identical(createTrajectories(studyEnv = study)$state_label,
+                   c("START", "A", "Gap", "B", "EXIT"))
+  expect_error(createTrajectories(studyEnv = study, trajectoryType = "Continuous"),
+    "allowedStatesList.*unknown.*A.*gap")
+})

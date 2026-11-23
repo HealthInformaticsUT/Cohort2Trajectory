@@ -1,5 +1,9 @@
 # Cohort2Trajectory 1.3.0.9000
 
+* Nonmerged generation now rejects unknown transition destinations before
+  writing outputs. Configured but unobserved states, observed local states
+  and named discrete gap fallbacks remain valid, with case-insensitive matching.
+
 * Named `atlasStateCohorts` supplies state labels alongside ATLAS IDs or local
   JSON filenames, without a separate `stateCohortLabels` vector.
 

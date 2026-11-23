@@ -261,6 +261,8 @@ removeListVectorEl <-
 #'   spelling and order are preserved and new destinations are appended.
 #'   Source names still require exact spelling. The input list is not modified
 #'   in place.
+#'   This helper edits the list without checking study membership. Trajectory
+#'   generation rejects destinations that are unknown to the study.
 #' @return The updated transition list.
 #' @export
 #' @examples

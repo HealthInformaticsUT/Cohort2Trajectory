@@ -15,7 +15,8 @@ make_state_id_fixture <- function() {
 }
 
 run_state_id_fixture <- function(data, type, batch_size, labels = c("B", "A", "Unused"),
-                                 gap = "None", rules = createStateList(c("A", "B", "Unused", "Background"))) {
+                                 gap = "None", rules = createStateList(c("A", "B", "Unused",
+                                   if (type == "Discrete" && gap == "Background") "Background"))) {
   study_path <- tempfile("c2t-state-ids-")
   dir.create(study_path)
   on.exit(unlink(study_path, recursive = TRUE), add = TRUE)
