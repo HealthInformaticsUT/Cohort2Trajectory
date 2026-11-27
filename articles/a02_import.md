@@ -5,7 +5,10 @@
 [`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
 retrieves the cohort records, cleans their intervals and saves the input
 for trajectory generation. It needs the study environment returned by
-[`cohort2TrajectoryConfiguration()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md).
+[`cohort2TrajectoryConfiguration()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+and updates that environment after a successful import. It returns
+`NULL` invisibly; keep the environment for the call to
+[`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
 See
 [configuration](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.md)
 if you have not created one.
@@ -21,16 +24,35 @@ getDataForStudy(cdm = cdm, studyEnv = studyEnv)
 ```
 
 With a non-NULL `baseUrl`, the package downloads the selected cohort
-definitions from the ATLAS WebAPI. CDMConnector then generates those
-cohorts on the supplied database and retrieves their records. ATLAS
-supplies definitions, not patient data. `atlasTargetCohort` and
-`atlasStateCohorts` refer to definition IDs, not rows in a previously
-generated cohort table.
+definitions from the ATLAS WebAPI. CDMConnector generates those cohorts
+on the supplied database and retrieves their records.
+`atlasTargetCohort` and `atlasStateCohorts` identify these definitions.
+Patient records come from the connected CDM database.
 
 The target definition is stored as `JSON/0.json`. State definitions use
 `JSON/atlas_<id>.json`. The package creates `CohortsToCreate.csv` to map
 files to generated cohorts. Clinical labels are kept separate from these
 filenames.
+
+The database account must be able to create and drop tables in its write
+schema. Generated cohorts use a unique package-owned name and are
+removed after their records have been collected. Existing tables are
+preserved, and the database connection stays open.
+
+For an authenticated WebAPI, pass the required HTTP headers in the
+import call:
+
+``` r
+
+getDataForStudy(
+  cdm = cdm, studyEnv = studyEnv,
+  webApiHeaders = c(Authorization = paste("Bearer", Sys.getenv("ATLAS_TOKEN")))
+)
+```
+
+Headers are used only for the download and are excluded from saved
+settings. No browser login is started. Use the header names and
+authentication scheme required by your WebAPI, or use local cohort JSON.
 
 ### Use local cohort JSON instead of ATLAS
 
@@ -48,12 +70,11 @@ studyEnv <- cohort2TrajectoryConfiguration(
   useCDM = TRUE,
   baseUrl = NULL,
   atlasTargetCohort = "target",
-  atlasStateCohorts = c("states/A", "states/B"),
-  stateCohortLabels = c("A", "B"),
+  atlasStateCohorts = c(A = "states/A", B = "states/B"),
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 
 # Place the JSON files in the study folder before this call.
@@ -82,12 +103,11 @@ Use these four column names exactly:
 | `cohort_start_date` | Interval start, as an R `Date` in a data frame. |
 | `cohort_end_date` | Interval end, as an R `Date` in a data frame. |
 
-For CSV input, write dates as `YYYY-MM-DD`. Dates must be present and
-the end must not precede the start. Intervals include both endpoints.
-Patient IDs must not be missing or blank. Numeric whole-number and
-`integer64` IDs are also accepted, but use character or `integer64`
-before creating values at or above `2^53` to avoid rounding in R
-doubles.
+For CSV input, write dates as `YYYY-MM-DD`. Dates must be present, with
+the end on or after the start. Intervals include both endpoints. Patient
+IDs must be present and nonblank. Numeric whole-number and `integer64`
+IDs are also accepted. Use character or `integer64` before creating
+values at or above `2^53` to avoid rounding in R doubles.
 
 The target label is the text `"0"`, regardless of the clinical labels.
 This example includes a second patient with a target interval and no
@@ -115,7 +135,7 @@ studyEnv <- cohort2TrajectoryConfiguration(
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 
 getDataForStudy(studyEnv = studyEnv)
@@ -148,23 +168,33 @@ CDM imports ignore both local source arguments.
 
 ## What cleaning does
 
-Only patients with a target row are retained. If a patient has several
-target intervals, the first interval by start date supplies the bounds.
-State records before its start are removed or clipped. By default,
-records after its end are also removed or clipped.
-`outOfCohortAllowed = TRUE` allows retained state records to extend
-beyond the target end, without moving the target start.
+Only patients with a target row are retained. With the default
+`targetEpisodeHandling = "First"`, the first target interval by start
+date supplies the bounds. State records are removed or clipped to those
+bounds. `outOfCohortAllowed = TRUE` lets retained records extend the
+target end, without moving its start.
+
+With `targetEpisodeHandling = "All"`, identical target intervals are
+deduplicated and each distinct interval becomes an episode. Overlapping
+target intervals are rejected, including a shared endpoint because dates
+are inclusive. Adjacent intervals are valid. States are clipped to every
+intersecting episode; no rows are created for gaps between episodes.
+This mode requires `outOfCohortAllowed = FALSE`. Set the period choice
+during configuration or pass it to
+[`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+for a fresh study; reimport to change it.
 
 Overlapping records for the same patient and state are combined. Every
-label in `stateCohortMandatory` must occur within the retained interval.
-This checks presence anywhere in that interval, not eligibility on Day
-7. Use `NULL` or `character(0)` when no state is mandatory. Patients
-with only a target interval remain eligible when no mandatory rule
-excludes them.
+label in `stateCohortMandatory` must occur within each retained episode.
+Eligibility is checked separately for every episode in `"All"` mode.
+Episodes with no state records remain eligible when there are no
+mandatory requirements. Episode numbers are assigned chronologically
+within the patient before eligibility filtering, so retained episode IDs
+can have gaps.
 
 When `mergeStates = TRUE`, overlaps between different states are then
-represented by their structured membership. Import does not infer
-diagnoses, prior history or clinical meaning from the state labels.
+represented by their structured membership, as described in
+[configuration](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html#merge-overlapping-states-when-needed).
 
 If no eligible patients remain, import does not succeed. Previous
 cleaned files are kept, and trajectory generation is blocked until a
@@ -173,8 +203,8 @@ requires another import.
 
 ## Saved studies
 
-Restore a version 4 snapshot with `runSavedStudy = TRUE`, then import
-fresh data. See [saved-study
+Restore a version 6, 5 or 4 snapshot with `runSavedStudy = TRUE`, then
+import fresh data. See [saved-study
 configuration](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html#repeat-a-saved-study)
 for the Settings-only sharing workflow. A saved CDM study uses the
 definitions embedded in the RDS file, without an ATLAS connection or
@@ -188,7 +218,9 @@ getDataForStudy(cdm = newCdm, studyEnv = savedStudy)
 For a saved local-data study, configure `useCDM = FALSE` and supply a
 new local source. The same per-call source precedence applies. Saved
 runs restore their analysis settings, so do not pass replacement labels,
-mandatory states, transition rules or merging options.
+mandatory states, transition rules, episode handling or merging options.
+Versions 4 and 5 restore `targetEpisodeHandling = "First"` and
+`stopAfterAbsorbingEpisode = FALSE`.
 
 After import, continue to [trajectory
 generation](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.md).

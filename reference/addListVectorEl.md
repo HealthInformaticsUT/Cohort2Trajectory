@@ -32,3 +32,18 @@ Destinations are deduplicated case-insensitively using R's locale-aware
 case conversion, as in trajectory generation. The first spelling and
 order are preserved and new destinations are appended. Source names
 still require exact spelling. The input list is not modified in place.
+This helper edits the list without checking study membership. Trajectory
+generation rejects destinations that are unknown to the study.
+
+## Examples
+
+``` r
+rules <- list(Stable = "Stable", Complication = "Complication")
+addListVectorEl(rules, "Stable", "Complication")
+#> $Stable
+#> [1] "Stable"       "Complication"
+#> 
+#> $Complication
+#> [1] "Complication"
+#> 
+```

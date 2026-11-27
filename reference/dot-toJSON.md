@@ -1,6 +1,6 @@
-# Function which converts text formatted JSON to digestible JSON
+# Serialize a cohort expression as JSON
 
-Function which converts text formatted JSON to digestible JSON
+Serialize a cohort expression as JSON
 
 ## Usage
 
@@ -12,4 +12,8 @@ Function which converts text formatted JSON to digestible JSON
 
 - input:
 
-  Text formatted JSON which needs conversion to digestible JSON
+  An R object containing a cohort expression.
+
+- pretty:
+
+  Whether to indent the JSON output.

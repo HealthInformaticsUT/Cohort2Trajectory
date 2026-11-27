@@ -1,8 +1,9 @@
 # Generate patient trajectories from imported cohort intervals
 
 Apply the configured selection, transition and gap rules to a successful
-study import. The analyst defines clinical states and their intervals.
-The target cohort supplies the observation bounds.
+study import. See
+[`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+for these rules and the required state definitions.
 
 ## Usage
 
@@ -14,7 +15,7 @@ createTrajectories(
   runSavedStudy = studyEnv$runSavedStudy,
   oocFix = studyEnv$oocFix,
   outOfCohortAllowed = studyEnv$outOfCohortAllowed,
-  lengthOfStay = studyEnv$lengthOfStay,
+  cycleLength = studyEnv$cycleLength,
   stateCohortLabels = studyEnv$stateCohortLabels,
   stateCohortPriorityOrder = studyEnv$stateCohortPriorityOrder,
   stateSelectionType = studyEnv$stateSelectionType,
@@ -24,7 +25,8 @@ createTrajectories(
   useCDM = studyEnv$useCDM,
   pathToStudy = studyEnv$pathToStudy,
   batchSize = studyEnv$batchSize,
-  mergedStateOverrides = studyEnv$mergedStateOverrides
+  mergedStateOverrides = studyEnv$mergedStateOverrides,
+  stopAfterAbsorbingEpisode = studyEnv$stopAfterAbsorbingEpisode
 )
 ```
 
@@ -33,16 +35,18 @@ createTrajectories(
 - cdm:
 
   A CDM reference created with CDMConnector, required when joining
-  demographics with useCDM = TRUE.
+  demographics with `useCDM = TRUE`.
 
 - studyEnv:
 
-  Study environment returned by cohort2TrajectoryConfiguration.
+  Study environment returned by
+  [`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md).
+  Its settings supply the defaults.
 
 - trajectoryType:
 
-  Trajectory format, either "Discrete" or "Continuous". Names are
-  case-insensitive. Numeric choice codes are not accepted.
+  `"Discrete"` or `"Continuous"`, ignoring case and surrounding
+  whitespace. A choice is required for generation.
 
 - runSavedStudy:
 
@@ -51,195 +55,225 @@ createTrajectories(
 
 - oocFix:
 
-  Discrete gap rule. Use "None" or "OUT OF COHORT" to leave gaps
-  unresolved, "Last present state" to carry an allowed state forward, or
-  a state label as a fallback. See Details for label requirements.
+  Discrete gap rule: `"None"`, `"OUT OF COHORT"`, `"Last present state"`
+  or a fallback state label. See
+  [`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+  for transition and label rules.
 
 - outOfCohortAllowed:
 
-  Whether retained records may extend the target interval's end. The
-  target start is unchanged.
+  Whether retained state records may extend the trajectory beyond the
+  target interval's end. The target start is unchanged.
 
-- lengthOfStay:
+- cycleLength:
 
-  Positive whole-number cycle length in days for discrete trajectories.
-  Use 7 for weekly cycles. Continuous output does not use it.
+  Positive whole-number cycle length in days, within R's integer range.
+  Required when generating discrete trajectories. It may be `NULL`
+  during configuration. The final cycle is shortened at the observation
+  boundary.
 
 - stateCohortLabels:
 
-  Nonblank, non-missing clinical state labels, unique ignoring case. The
-  labels "0", "START", "EXIT" and "OUT OF COHORT" are reserved, also
-  ignoring case.
+  Character vector of state labels. May be omitted when
+  `atlasStateCohorts` is named. If both are supplied, the labels must
+  match its names in order. Labels must be nonempty, non-missing and
+  unique even when ignoring case. `"0"`, `"START"`, `"EXIT"` and
+  `"OUT OF COHORT"` are reserved, including case variants. Labels may
+  contain spaces or punctuation. They are separate from database cohort
+  names and definition filenames.
 
 - stateCohortPriorityOrder:
 
-  State labels ordered from highest to lowest priority. Required for all
-  discrete methods and continuous Priority.
+  State labels from highest to lowest priority. All states within the
+  observation bounds must be listed for discrete selection or continuous
+  `"Priority"` selection. For a merged study, `NULL` uses a
+  deterministic order of original states.
 
 - stateSelectionType:
 
-  Selection method, either "First", "Overlap" or "Priority". Names are
-  case-insensitive. A method must be specified.
+  `"First"`, `"Overlap"` or `"Priority"`, ignoring case and surrounding
+  whitespace. A choice is required for generation.
 
 - stateCohortAbsorbing:
 
-  Labels of states that end a trajectory when retained. In nonmerged
-  studies, use the exact spelling of a configured state, observed state
-  or named discrete fallback. NULL and character(0) mean no absorbing
-  states. Configured states may be absent from the data.
+  State labels that end follow-up when selected. `NULL` or
+  `character(0)` means none. For an unmerged study, use exact configured
+  or observed labels, or a named discrete fallback. Configured states
+  may be absent from the current data. For merged studies, supply
+  original state labels here and use `mergedStateOverrides` for
+  exceptions.
 
 - stateCohortMandatory:
 
-  Mandatory states used by the successful import. Rerun getDataForStudy
-  to change them. Order and duplicates do not matter. NULL and
-  character(0) both mean no requirements.
+  Mandatory states used by the successful import. Rerun
+  [`getDataForStudy`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+  to change them. Order and duplicates do not matter. `NULL` and
+  `character(0)` both mean no requirements.
 
 - allowedStatesList:
 
-  Named list of allowed destinations for each source state. Use one
-  unique, nonempty, non-missing source name per entry, such as list(A =
-  c("B", "C")). An empty list imposes no restrictions.
+  Named list of allowed destinations, for example
+  `list(A = c("B", "C"))`. Source names must be unique, nonempty and
+  non-missing. Put all destinations for one source in a single entry. An
+  empty list allows all transitions. `character(0)` or `NULL` in an
+  individual entry permits no destinations. Nonmerged generation checks
+  destinations against configured and observed states and any named
+  discrete fallback, ignoring case. Unknown destinations are rejected
+  before output files are written. Configured states may be unobserved.
 
 - useCDM:
 
-  Whether to join age and gender from the supplied CDM. Otherwise, age
-  and gender_concept_id contain NA. No birth date is assumed or added.
+  Whether to join age and gender from the supplied CDM. Otherwise, `age`
+  and `gender_concept_id` contain `NA`.
 
 - pathToStudy:
 
   Directory containing the study folder. Generation uses the location
-  stored in studyEnv.
+  stored in `studyEnv`.
 
 - batchSize:
 
-  Positive whole-number maximum patients per batch.
+  Maximum patients per generation batch. Supply one positive whole
+  number within R's integer range. The default is 1000.
 
 - mergedStateOverrides:
 
-  List of mergedState() definitions that replace selected inherited
-  properties of merged states.
+  List of
+  [`mergedState`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+  definitions. Requires `mergeStates = TRUE`. Supply at most one
+  definition per membership set. Omitted properties retain inherited
+  values.
+
+- stopAfterAbsorbingEpisode:
+
+  Whether a selected absorbing state also excludes later episodes for
+  that patient. The default, `FALSE`, lets later episodes start afresh.
+  An absorbing state always ends its own episode.
 
 ## Value
 
-A data frame of trajectory rows, also saved as a CSV in the study's Data
-directory. See the output vignette for the complete schema.
-
-## Details
-
-In discrete mode, First selects the earliest-starting eligible interval
-in a cycle. Overlap selects the state covering the most distinct days in
-that cycle, combining intervals without double-counting shared days.
-Both methods use the priority order to resolve ties. Priority selects
-the highest-ranked eligible state present during any part of the cycle.
-Every clinical state in the bounded input must appear in the priority
-order.
-
-In continuous mode, First and Overlap both retain intervals that pass
-the transition rules, including overlaps. Priority assigns shared days
-to the highest-ranked eligible state and can split lower-priority
-intervals. It also requires every clinical state to appear in the
-priority order. Uninterrupted selected intervals do not require
-self-transitions at unrelated record boundaries. Gaps are not filled and
-simultaneous records keep their dates. Models requiring unique event
-times need an explicit tie-handling rule.
-
-Transition rules use the last retained clinical state. Rejected records
-do not change that state. Source names must use the exact clinical
-labels. Destination matching is case-insensitive. In a nonempty rule
-list, each source used for a transition needs an entry. For merged
-studies, a nonempty list must include every original state, including
-absorbing states. character(0) permits no destinations. The first
-clinical state and boundary markers need no incoming rule. Only an
-allowed, retained absorbing state can end follow-up before the
-observation boundary.
-
-For discrete gaps, carry-forward requires an allowed self-transition and
-a named fallback must be an allowed destination. Otherwise the cycle
-remains OUT OF COHORT. This means no selected state, not loss of
-observation, and does not reset the last retained state for later
-transition checks. Supply one nonempty oocFix string. "None" and "Last
-present state" always select gap-handling behavior, even if a clinical
-state has that label. Boundary labels "0", "START" and "EXIT" are not
-valid fallbacks. Use the exact spelling of an existing label. A new
-label must not differ only in case from an existing clinical or
-merged-state label. For merged states, use the display label rather than
-state_key. Declare key-like text in stateCohortLabels if it is intended
-as a separate literal state.
+A data frame of class `c2t_trajectories`, also saved as a CSV in the
+study's `Data` directory. Printing shows counts and a short preview; use
+`as.data.frame(result)` for the ordinary data-frame display. See
+[`print.c2t_trajectories`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/print.c2t_study.md)
+for printing options and the output vignette for the complete schema.
+The `trajectory_definition` attribute records the effective trajectory
+type, cycle length, ordered clinical labels and absorbing labels.
+TrajectoryMarkovAnalysis reads first-period definitions directly.
+All-period output uses version 2 metadata with episode identity and time
+origin, requiring an episode-aware downstream reader. Labels and
+absorbing status reflect merged-state overrides; configured but
+unobserved states remain declared.
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html) preserves this
+attribute; CSV output contains only rows and columns.
 
 ## Boundaries and timing
 
-The first target interval, labelled 0 in cleaned data, supplies the
-start and end boundaries. Patients without clinical state records remain
+Target intervals, labelled `"0"` in cleaned data, supply the start and
+end boundaries. The import's `targetEpisodeHandling` selects the first
+interval or all episodes. Patients without clinical state records remain
 eligible unless mandatory-state requirements exclude them. Discrete
 cycles include both endpoint dates, and the final cycle is shortened at
 the observation boundary. A selected absorbing state stops generation
-after its cycle. The cycle is not independently shortened to that
-state's original onset date.
+after its cycle. Its original onset date does not shorten that cycle.
 
 Continuous trajectories end at the retained absorbing interval's end
-date. Earlier overlapping intervals are capped at that endpoint. START
-and EXIT are boundary markers and do not add observed time. EXIT is on
-the day after the last discrete cycle or continuous follow-up endpoint.
-Its time_in_cohort is elapsed years from trajectory start, using 365.25
+date. Earlier overlapping intervals are capped at that endpoint. `START`
+and `EXIT` are boundary markers and add no observed time. `EXIT` is on
+the day after the last cycle or continuous endpoint. Its
+`time_in_cohort` is elapsed years from trajectory start, using 365.25
 days per year.
 
-Setting outOfCohortAllowed = TRUE can extend the endpoint using retained
-state records, but cannot recover records removed during import. Public
-imports require a target row for each included patient. The package does
-not infer observation coverage, episode duration or clinical history. An
-analyst-defined history-specific terminal state preserves its category
-when selected, but a discrete row does not retain exact event dates or
-ordering within its cycle.
+`outOfCohortAllowed = TRUE` can extend the endpoint using retained state
+records; it cannot recover records removed during import. A discrete
+state label represents the selected state for a cycle, without
+preserving exact event dates or ordering within that cycle.
 
 ## Study workflow
 
-Run getDataForStudy successfully before generation. An unsuccessful
-import blocks generation until a later import succeeds. Existing output
-files are preserved but are not reused for that failed attempt. The
-trajectory CSV is written only after all patient batches finish, so a
-batch error does not replace a previous complete file with a partial
-result.
+Run
+[`getDataForStudy`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+successfully before generation. A failed import blocks generation until
+a later import succeeds; previous patient files are preserved and are
+not reused for the failed attempt. The trajectory CSV is written after
+all patient batches finish, preserving a previous complete file if a
+batch fails. Unknown transition destinations are rejected before
+generation writes output files.
 
-A completed fresh run saves Settings/analysisSettings.rds in version 4
-format. This preserves analysis settings and any imported CDM definition
-contents, not patient data. NULL, character(0) and nested lists retain
-their R types. Only version 4 snapshots are accepted. Saved runs restore
-their analysis rules and require fresh input. Configure a new study to
-change those rules.
+A completed fresh run saves `Settings/analysisSettings.rds` in version 6
+format. Versions 4 and 5 also load with first-period behavior. See
+[`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+for saving and sharing rules.
 
 ## Labels and identifiers
 
-State IDs are assigned once per study. In unmerged studies, START has ID
-1, followed by configured states in their supplied order, additional
-input and discrete gap labels in alphabetical order, then EXIT.
+State IDs are assigned once per study. In unmerged studies, `START` has
+ID 1, followed by configured states in their supplied order, additional
+input and discrete gap labels in alphabetical order, then `EXIT`.
 Configured states keep their IDs when absent from a batch. Merged
-studies use dictionary order and add state_key to the output. Their
-stateDictionary is available in studyEnv and Data/stateDictionary.rds.
-Use keys and membership for cross-site comparison rather than run-local
-state IDs. Original-state rules remain unchanged in the configuration.
+studies use dictionary order and add `state_key` to the output. Their
+`stateDictionary` is available in `studyEnv` and
+`Data/stateDictionary.rds`. Use keys and membership for comparison
+between sites; state IDs are local to the study.
 
-Patient IDs are mapped internally and restored before demographic joins
-and output. File and CDM input preserve large identifiers and leading
-zeros as text. Canonical numeric IDs below 2^53 retain numeric output.
-Supply larger in-memory IDs as character or integer64 because doubles
-may already have rounded them. When reading exported CSVs, read
-subject_id as character to preserve long or zero-prefixed identifiers.
-Temporary IDs are not exported.
-
-Working labels and rules are converted to UTF-8 without changing
-spelling or case. Configuration and saved settings retain the supplied
-labels.
+Patient identifiers are preserved. File and CDM input preserve large IDs
+and leading zeros as text. Canonical numeric IDs below `2^53` retain
+numeric output. Read `subject_id` as character when importing exported
+CSVs to preserve long or zero-prefixed identifiers.
 
 ## See also
 
+[`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md),
 [`vignette("a03_trajectories", package = "Cohort2Trajectory")`](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.md),
 [`vignette("a05_output", package = "Cohort2Trajectory")`](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
 
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
-} # }
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
+)
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", cycleLength = 7
+)
+getDataForStudy(studyEnv = study)
+#> ℹ Importing data ...
+#> ✔ Importing data ... [3ms]
+#> 
+#> ✔ Get cohort data success!
+#> ℹ Cleaning data ...
+#> ✔ Data cleaning completed!
+#> ℹ Cleaning data ...
+
+#> ℹ Saved cleaned data /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c4c341355/example/Data/importedDataCleaned.csv
+#> ℹ Cleaning data ...
+
+#> ✔ Cleaning data ... [25ms]
+#> 
+trajectories <- createTrajectories(studyEnv = study)
+#> ℹ Creating batch 1!!!
+#> ℹ Saved trajectory dataframe: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c4c341355/example/Data/patientDataDiscrete.csv
+#> ℹ Saved settings to: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c4c341355/example/Settings/analysisSettings.rds
+#> ✔ Trajectories generated!
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+#> <Cohort2Trajectory trajectories>
+#> Patients: 1 | Clinical states present: 2 | Rows: 5 
+#> Boundary rows (START/EXIT): 2 | Unresolved rows (OUT OF COHORT): 0 
+#> Preview: 5 of 5 rows; 4 of 4 columns
+#>   subject_id  state_label state_start_date state_end_date
+#> 1        001        START       2020-01-01     2020-01-01
+#> 2        001       Stable       2020-01-01     2020-01-07
+#> 3        001 Complication       2020-01-08     2020-01-14
+#> 4        001 Complication       2020-01-15     2020-01-21
+#> 5        001         EXIT       2020-01-22     2020-01-22
+#> Use as.data.frame(x) to inspect every column.
+unlink(folder, recursive = TRUE)
 ```

@@ -1,6 +1,6 @@
-# Function for saving summary tables to path
+# Save a table as CSV or another object as an R data file
 
-Function for saving summary tables to path
+Save a table as CSV or another object as an R data file
 
 ## Usage
 

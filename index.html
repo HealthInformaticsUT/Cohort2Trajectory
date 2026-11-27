@@ -5,14 +5,14 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS • Cohort2Trajectory</title>
+<title>Create Patient Trajectories from Clinical Cohorts • Cohort2Trajectory</title>
 <script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS">
-<meta name="description" content="Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time. Package can be run with GUI or CLI.">
-<meta property="og:description" content="Package Cohort2Trajectory creates patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS. The package can be used with access to OMOP CDM database. The package creates discrete and continuous time trajectories (and outputs them as .csv file) which describe patients' treatment through time. Package can be run with GUI or CLI.">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Create Patient Trajectories from Clinical Cohorts">
+<meta name="description" content="Constructs discrete and continuous patient histories from analyst-defined cohort intervals. Resolves overlapping states using explicit priorities, transition rules and structured state membership, while retaining patient identifiers and observation boundaries. Accepts local data or cohorts generated with CDMConnector in the Observational Medical Outcomes Partnership (OMOP) Common Data Model. Saves reusable study settings and returns trajectory tables for subsequent analysis.">
+<meta property="og:description" content="Constructs discrete and continuous patient histories from analyst-defined cohort intervals. Resolves overlapping states using explicit priorities, transition rules and structured state membership, while retaining patient identifiers and observation boundaries. Accepts local data or cohorts generated with CDMConnector in the Observational Medical Outcomes Partnership (OMOP) Common Data Model. Saves reusable study settings and returns trajectory tables for subsequent analysis.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -66,100 +67,93 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="cohort2trajectory">Cohort2Trajectory<a class="anchor" aria-label="anchor" href="#cohort2trajectory"></a>
 </h1></div>
-<p>Cohort2Trajectory turns cohort intervals into patient trajectories. The target cohort defines each patient’s observation period. State cohorts describe what happened during that period. The analyst defines those cohorts and decides which state takes priority when records overlap.</p>
-<p>The package accepts cohorts generated in an OMOP Common Data Model database, an R data frame or a CSV file. It produces either fixed-length cycles or continuous intervals. It does not infer diagnoses, recovery or a history state from the names of the supplied cohorts.</p>
+<p>Cohort2Trajectory turns cohort intervals into patient trajectories for analysis. A target cohort defines each patient’s observation period; state cohorts define events or periods within it. When states overlap, you choose which takes priority or whether to represent their combination.</p>
+<p>The package accepts an R data frame, a CSV file or cohorts generated in an OMOP Common Data Model database through CDMConnector. It produces fixed-length cycles or continuous intervals, with explicit rules for state selection, allowed transitions, gaps and absorbing states. Study settings can be reused with fresh data at another site.</p>
 <div class="section level2">
-<h2 id="start-here">Start here<a class="anchor" aria-label="anchor" href="#start-here"></a>
+<h2 id="a-small-example">A small example<a class="anchor" aria-label="anchor" href="#a-small-example"></a>
 </h2>
-<p>The <a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">documentation site</a> contains the function reference and these articles:</p>
-<ul>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html">Getting started</a>: a small example that needs no database.</li>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html">Configure a study</a>: observation bounds, selection rules and overlapping states.</li>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html">Import cohort data</a>: local data, ATLAS definitions and saved studies.</li>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html">Create trajectories</a>: discrete and continuous output.</li>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html">A weekly worked example</a>: pneumonia history, two death states and a saved-study rerun.</li>
-<li>
-<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html">Read the output</a>: columns, dates, saved files and downstream use.</li>
-</ul>
-<p>The usual workflow has three steps:</p>
+<p>This example needs no database. In local input, <code>"0"</code> identifies the target cohort and other labels identify states. Intervals include both endpoint dates.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
-<span>  studyName <span class="op">=</span> <span class="st">"MyStudy"</span>,</span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">Cohort2Trajectory</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">cohorts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  subject_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"001"</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  cohort_definition_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"Stable"</span>, <span class="st">"Complication"</span><span class="op">)</span>,</span>
+<span>  cohort_start_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">7</span><span class="op">)</span>,</span>
+<span>  cohort_end_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-21"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"example"</span>,</span>
 <span>  pathToStudy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  useCDM <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="va">input</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
-<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
+<span>  trajectoryDataObject <span class="op">=</span> <span class="va">cohorts</span>,</span>
+<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Stable"</span>, <span class="st">"Complication"</span><span class="op">)</span>,</span>
+<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Complication"</span>, <span class="st">"Stable"</span><span class="op">)</span>,</span>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
 <span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
-<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
-<span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span></code></pre></div>
-<p>Here <code>input</code> is your cohort table. It needs <code>subject_id</code>, <code>cohort_definition_id</code>, <code>cohort_start_date</code> and <code>cohort_end_date</code>. Use <code>"0"</code> for target-cohort rows and the clinical labels for state rows. Supply dates as <code>Date</code> values in R or <code>YYYY-MM-DD</code> in CSV. The getting-started article supplies a complete input table.</p>
-<p>Use names such as <code>"Discrete"</code> and <code>"Priority"</code> for the public options. They ignore case and surrounding spaces. Numeric option codes are not accepted.</p>
+<span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
+<span><span class="va">trajectories</span></span></code></pre></div>
+<p>The patient is Stable in the first week and in Complication for the next two. The returned table also contains <code>START</code> and <code>EXIT</code> boundary rows. Input and output files are saved under <code>file.path(tempdir(), "example")</code>.</p>
 </div>
 <div class="section level2">
-<h2 id="what-the-trajectory-means">What the trajectory means<a class="anchor" aria-label="anchor" href="#what-the-trajectory-means"></a>
+<h2 id="choosing-a-trajectory">Choosing a trajectory<a class="anchor" aria-label="anchor" href="#choosing-a-trajectory"></a>
 </h2>
-<p>A discrete trajectory assigns one state to each cycle. A seven-day cycle has seven days, including both endpoints. The final cycle can be shorter. Its selected state does not mean that the patient spent every day in that state. For example, a death recorded within the week can determine the week’s label.</p>
-<p>A continuous trajectory keeps selected interval dates. It does not fill gaps or move simultaneous records onto different dates. In either format, <code>START</code> and <code>EXIT</code> mark boundaries, not clinical states. <code>OUT OF COHORT</code> means that no state was selected for a discrete cycle. It does not mean observation ended.</p>
-<p>Overlapping states can be combined with <code>mergeStates = TRUE</code>. Membership is stored explicitly. A label containing <code>+</code> is never split to guess its members. Use <code><a href="reference/mergedState.html">mergedState()</a></code> when a particular combination needs different allowed destinations, absorbing status or a display label. The configuration article explains the inheritance rules and their limits.</p>
+<p>A discrete trajectory selects one state per cycle. Its label describes the selection for that cycle, not necessarily every day within it. The final cycle can be shorter than <code>cycleLength</code>. A continuous trajectory retains selected interval dates and can resolve overlaps by priority.</p>
+<p>You supply the clinical definitions: an episode, a history of that episode and recovery need their own cohort definitions when the analysis distinguishes them. <code>OUT OF COHORT</code> marks a discrete cycle with no selected state. <code>START</code> and <code>EXIT</code> mark observation boundaries.</p>
+<p>By default, the first target interval supplies each patient’s observation period. Use <code>targetEpisodeHandling = "All"</code> to keep every non-overlapping target period as a separate episode, identified by <code>episode_id</code>. Selection and elapsed time restart in each episode; gaps between periods are omitted. Later episodes remain eligible after an absorbing state unless <code>stopAfterAbsorbingEpisode = TRUE</code>. See the <a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html#multiple-observation-periods">multiple-period example</a>.</p>
+<p>Use <code>mergeStates = TRUE</code> to represent overlapping states together. <code><a href="reference/mergedState.html">mergedState()</a></code> can change a combination’s destinations, absorbing status or display label. Membership is stored separately from labels.</p>
 </div>
 <div class="section level2">
-<h2 id="rerun-a-saved-study">Rerun a saved study<a class="anchor" aria-label="anchor" href="#rerun-a-saved-study"></a>
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
-<p>A successful import and trajectory run saves its rules in <code>Settings/analysisSettings.rds</code>. For CDM studies, this file also contains the cohort JSON definitions used during import.</p>
-<p>Copy the completed study’s <code>Settings</code> folder to the new study folder. Do not copy <code>Data</code> when sharing a study because it contains patient-level records. For a CDM rerun, supply a connection to the new database:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">study</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
-<span>  studyName <span class="op">=</span> <span class="st">"MyStudy"</span>,</span>
-<span>  pathToStudy <span class="op">=</span> <span class="st">"/new/location"</span>,</span>
-<span>  runSavedStudy <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
-<span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span></code></pre></div>
-<p>There is no need to re-enter the analytical settings or connect to ATLAS. For local data, also set <code>useCDM = FALSE</code> and supply fresh input through <code>trajectoryDataObject</code> or <code>pathToData</code>. To change the analysis rules, configure a new run instead of overriding a saved study.</p>
-<p>Only the current RDS format, version 4, is supported. Older studies must be reconfigured and rerun. Settings CSV files and the removed arguments <code>mergeThreshold</code> and <code>updateAutomaticallyForMergedStates</code> are not supported.</p>
-</div>
-<div class="section level2">
-<h2 id="database-access">Database access<a class="anchor" aria-label="anchor" href="#database-access"></a>
-</h2>
-<p>CDM studies use a CDMConnector connection. The database account needs read access to the required CDM and vocabulary tables, and permission to create and populate tables in the configured write schema. Start with a small cohort when checking a new server connection.</p>
-</div>
-<div class="section level2">
-<h2 id="related-packages">Related packages<a class="anchor" aria-label="anchor" href="#related-packages"></a>
-</h2>
+<p>The <a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">documentation site</a> contains the function reference and these guides, also available as package vignettes:</p>
 <ul>
-<li><a href="https://github.com/HealthInformaticsUT/CohortContrast" class="external-link">CohortContrast</a></li>
-<li><a href="https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis" class="external-link">TrajectoryMarkovAnalysis</a></li>
-<li><a href="https://github.com/HealthInformaticsUT/TrajectoryViz" class="external-link">TrajectoryViz</a></li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html">Getting started</a>: local input and the three-step workflow.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html">Configure a study</a>: observation bounds, selection and merged states.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html">Import cohort data</a>: CSV, data frames, ATLAS and local JSON definitions.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html">Create trajectories</a>: transition rules, gaps and saved-study reruns.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html">A weekly worked example</a>: pneumonia history and two death states.</li>
+<li>
+<a href="https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html">Read the output</a>: columns, files and downstream analysis.</li>
 </ul>
-<p>These packages have separate interfaces. Do not assume that an older analysis package can read the current trajectory output without checking its expected column names and handling of boundary rows.</p>
+<p>For CDM input, the database account needs read access to the required CDM and vocabulary tables and permission to create and drop tables in the write schema. ATLAS authentication headers can be supplied at import. Exported JSON definitions can be used without an ATLAS connection.</p>
 </div>
 <div class="section level2">
-<h2 id="publication-and-citation">Publication and citation<a class="anchor" aria-label="anchor" href="#publication-and-citation"></a>
+<h2 id="reuse-and-analysis">Reuse and analysis<a class="anchor" aria-label="anchor" href="#reuse-and-analysis"></a>
 </h2>
-<p>Haug M, Oja M, Pajusalu M, et al. <em>Markov modeling for cost-effectiveness using federated health data network</em>. Journal of the American Medical Informatics Association, 2024. <a href="https://doi.org/10.1093/jamia/ocae044" class="external-link">doi:10.1093/jamia/ocae044</a>.</p>
-<p>When reporting an analysis, also record the package version or Git commit and retain the settings used for the run.</p>
+<p>A completed run saves its settings in <code>Settings/analysisSettings.rds</code>, including the imported cohort JSON for CDM studies. Copy that folder to rerun the study with fresh data. Keep <code>Data</code> private: it contains patient records.</p>
+<p>Returned trajectories carry their cycle length, ordered state labels and absorbing states for use by <a href="https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis" class="external-link">TrajectoryMarkovAnalysis</a>. Use <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> to preserve both the rows and these definitions. CSV contains only the rows, so downstream tools need the definitions supplied separately. The current TMA reader accepts the default single-period format. It rejects the version-2 definition used by <code>targetEpisodeHandling = "All"</code>; those episodes need an analysis that preserves their separate observation boundaries.</p>
+<p>Related packages: <a href="https://github.com/HealthInformaticsUT/CohortContrast" class="external-link">CohortContrast</a> and <a href="https://github.com/HealthInformaticsUT/TrajectoryViz" class="external-link">TrajectoryViz</a>.</p>
 </div>
 <div class="section level2">
-<h2 id="license-and-contact">License and contact<a class="anchor" aria-label="anchor" href="#license-and-contact"></a>
+<h2 id="citation-and-contact">Citation and contact<a class="anchor" aria-label="anchor" href="#citation-and-contact"></a>
 </h2>
+<p>Haug M, Oja M, Pajusalu M, et al. <em>Markov modeling for cost-effectiveness using federated health data network</em>. Journal of the American Medical Informatics Association, 2024. <a href="https://doi.org/10.1093/jamia/ocae044" class="external-link">doi:10.1093/jamia/ocae044</a>. Record the package version and settings used for your analysis.</p>
 <p>Apache License 2.0. Developed by the University of Tartu Health Informatics research group. Contact <a href="mailto:markus.haug@ut.ee">Markus Haug</a>.</p>
 </div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/issues" class="external-link">Report a bug</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>Apache License (&gt;= 2) | file <a href="LICENSE-text.html">LICENSE</a>
-</li>
+<li>Apache License (== 2.0)</li>
 </ul>
 </div>
 
@@ -175,8 +169,8 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Markus Haug <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-0935-3307" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
-<li>Greete Kelli Aava <br><small class="roles"> Maintainer, contributor </small>   </li>
 <li>Raivo Kolde <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-2886-6298" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
 
@@ -187,7 +181,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

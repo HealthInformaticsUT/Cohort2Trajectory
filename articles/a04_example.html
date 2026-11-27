@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -70,21 +71,17 @@
       <h1>A weekly worked example</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/vignettes/a04_example.Rmd" class="external-link"><code>vignettes/a04_example.Rmd</code></a></small>
       <div class="d-none name"><code>a04_example.Rmd</code></div>
     </div>
 
     
     
-<p>This synthetic example builds weekly trajectories with four
-analyst-defined states: alive without recorded pneumonia, alive with
-pneumonia history, death without that history, and death with it. The
-two death states are mutually exclusive. They describe recorded history,
-not the cause of death.</p>
-<p>The package does not construct these clinical definitions. Here we
-supply their intervals directly. In a database study, the analyst would
-define equivalent state cohorts. The target interval ends at death or
-the end of observation in this example.</p>
+<p>This example uses synthetic intervals to build weekly trajectories
+with four states: alive with or without recorded pneumonia history, and
+death with or without that history. The analyst defines these states;
+the two death states describe prior history, not cause of death. Each
+target interval ends at death or the end of observation.</p>
 <div class="section level2">
 <h2 id="five-patient-histories">Five patient histories<a class="anchor" aria-label="anchor" href="#five-patient-histories"></a>
 </h2>
@@ -138,9 +135,8 @@ the second cycle.</li>
 <span>  <span class="fu">interval</span><span class="op">(</span><span class="st">"005"</span>, <span class="st">"0"</span>, <span class="st">"2020-01-01"</span>, <span class="st">"2020-01-10"</span><span class="op">)</span>,</span>
 <span>  <span class="fu">interval</span><span class="op">(</span><span class="st">"005"</span>, <span class="va">states</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="st">"2020-01-01"</span>, <span class="st">"2020-01-10"</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>The two overlapping history records for <code>002</code> describe the
-same state. Import combines their coverage without counting the
-overlapping days twice.</p>
+<p>Import combines <code>002</code>’s overlapping history records
+without counting shared days twice.</p>
 </div>
 <div class="section level2">
 <h2 id="choose-the-weekly-rules">Choose the weekly rules<a class="anchor" aria-label="anchor" href="#choose-the-weekly-rules"></a>
@@ -171,7 +167,7 @@ cycle.</p>
 <span>  allowedStatesList <span class="op">=</span> <span class="va">allowed</span>,</span>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
 <span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
-<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
@@ -267,86 +263,35 @@ cycle.</p>
 </tr>
 </tbody>
 </table>
-<p>For <code>003</code>, the second cycle is labelled
-<code>Death, pneumonia history</code>. The label preserves the history
-classification even though that cycle also contained living days before
-and after pneumonia. It does not retain the January 10 onset date as a
-separate weekly row.</p>
-<p>For <code>004</code>, the first cycle is already a death cycle. This
-does not imply that the patient died on January 1. Weekly dates describe
-the cycle, not the exact onset of its selected state. Both patients’
-final cycles end on their death dates here because their target
-intervals end on those dates. If the target interval extended further,
-selecting an absorbing state would stop after its cycle rather than
-shorten that cycle to the event day.</p>
-<p>For <code>005</code>, the second cycle covers only January 8 to 10.
-Its <code>EXIT</code> marker is January 11. An analysis must not
-interpret that marker as a death or count it as an additional day of
-follow-up.</p>
-<p>These checks run when this article is built:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">expected</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="st">"001"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">states</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span>,</span>
-<span>  <span class="st">"002"</span> <span class="op">=</span> <span class="va">states</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  <span class="st">"003"</span> <span class="op">=</span> <span class="va">states</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>  <span class="st">"004"</span> <span class="op">=</span> <span class="va">states</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>,</span>
-<span>  <span class="st">"005"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="va">states</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">id</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">expected</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span></span>
-<span>    <span class="va">clinical</span><span class="op">$</span><span class="va">state_label</span><span class="op">[</span><span class="va">clinical</span><span class="op">$</span><span class="va">subject_id</span> <span class="op">==</span> <span class="va">id</span><span class="op">]</span>, <span class="va">expected</span><span class="op">[[</span><span class="va">id</span><span class="op">]</span><span class="op">]</span></span>
-<span>  <span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">tail</a></span><span class="op">(</span><span class="va">clinical</span><span class="op">$</span><span class="va">state_end_date</span><span class="op">[</span><span class="va">clinical</span><span class="op">$</span><span class="va">subject_id</span> <span class="op">==</span> <span class="st">"005"</span><span class="op">]</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">==</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-10"</span><span class="op">)</span>,</span>
-<span>  <span class="va">trajectories</span><span class="op">$</span><span class="va">state_start_date</span><span class="op">[</span></span>
-<span>    <span class="va">trajectories</span><span class="op">$</span><span class="va">subject_id</span> <span class="op">==</span> <span class="st">"005"</span> <span class="op">&amp;</span> <span class="va">trajectories</span><span class="op">$</span><span class="va">state_label</span> <span class="op">==</span> <span class="st">"EXIT"</span></span>
-<span>  <span class="op">]</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-11"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="rerun-from-the-saved-settings">Rerun from the saved settings<a class="anchor" aria-label="anchor" href="#rerun-from-the-saved-settings"></a>
-</h2>
-<p>Copy just the settings into a new location and provide fresh input.
-We reuse the synthetic data to check that moving the study does not
-change its result. On the server, the new input would come from that
-site’s database.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">newPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"c2t-weekly-replay-"</span><span class="op">)</span></span>
-<span><span class="va">newSettings</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">newPath</span>, <span class="st">"WeeklyExample"</span>, <span class="st">"Settings"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">newSettings</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">copied</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">studyPath</span>, <span class="st">"WeeklyExample"</span>, <span class="st">"Settings"</span>, <span class="st">"analysisSettings.rds"</span><span class="op">)</span>,</span>
-<span>  <span class="va">newSettings</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="va">copied</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">restored</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
-<span>  studyName <span class="op">=</span> <span class="st">"WeeklyExample"</span>,</span>
-<span>  pathToStudy <span class="op">=</span> <span class="va">newPath</span>,</span>
-<span>  useCDM <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  trajectoryDataObject <span class="op">=</span> <span class="va">input</span>,</span>
-<span>  runSavedStudy <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">restored</span><span class="op">)</span></span>
-<span><span class="va">replayed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">restored</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="va">trajectories</span>, <span class="va">replayed</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>No state definitions or selection rules were re-entered. Only the
-location and fresh data were supplied.</p>
+<p>For <code>003</code>, cycle two is labelled
+<code>Death, pneumonia history</code>. It preserves the history category
+but not the January 10 onset date as a separate row.</p>
+<p>For <code>004</code>, the first cycle is a death cycle even though
+death occurred on January 4. Row dates describe the cycle. Both
+patients’ final cycles end on their death dates because their target
+intervals end there. With a later target endpoint, absorption would stop
+after the cycle without shortening it to the event date.</p>
+<p>For <code>005</code>, the second cycle covers January 8 to 10. Its
+January 11 <code>EXIT</code> marker adds no observed time and does not
+indicate death.</p>
+<p>The completed run saves these rules in
+<code>WeeklyExample/Settings/analysisSettings.rds</code>. See <a href="a02_import.html">Import cohort data</a> to rerun them with fresh
+data in a new location.</p>
 </div>
 <div class="section level2">
 <h2 id="before-fitting-a-model">Before fitting a model<a class="anchor" aria-label="anchor" href="#before-fitting-a-model"></a>
 </h2>
-<p>The four labels can be used as four model states. If an analysis
-instead treats pneumonia onset and mortality as two steps within a week,
-it needs an explicit rule for the transition from alive without
-pneumonia to death with pneumonia history. A general transition
-estimator cannot infer that rule from the label.</p>
-<p>Likewise, a requirement that pneumonia precede death by at least one
-calendar day belongs in the analyst’s cohort definitions. Do not infer
-that separation from two weekly labels. Use the underlying state
-intervals for analyses that need exact dates. See <a href="a05_output.html">Read the output</a> for their locations.</p>
+<p>The four labels can be four model states. For a model of onset
+followed by mortality within a week, create a second view retaining
+pneumonia history instead of selecting death. Keep identical
+patient-week boundaries and observation endpoints in both views, with no
+weeks added after death. TMA’s <code>prepareStageObservations()</code>
+pairs them and <code>estimateStageTransitions()</code> fits the stages.
+See TMA’s <code>inst/examples/c2t-to-icer.R</code> for an intervention
+example.</p>
+<p>A requirement that pneumonia precede death by at least one day
+belongs in the cohort definitions. Weekly labels cannot establish that
+separation. Use the underlying intervals when exact dates matter; <a href="a05_output.html">Read the output</a> lists their locations.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -355,7 +300,7 @@ intervals for analyses that need exact dates. See <a href="a05_output.html">Read
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

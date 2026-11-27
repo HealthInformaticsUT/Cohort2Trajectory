@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,6 +27,7 @@
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -42,7 +43,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Add an allowed transition</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/R/helpers.R" class="external-link"><code>R/helpers.R</code></a></small>
       <div class="d-none name"><code>addListVectorEl.Rd</code></div>
     </div>
 
@@ -81,15 +82,29 @@
   locale-aware case conversion, as in trajectory generation. The first
   spelling and order are preserved and new destinations are appended.
   Source names still require exact spelling. The input list is not modified
-  in place.</p>
+  in place.
+  This helper edits the list without checking study membership. Trajectory
+  generation rejects destinations that are unknown to the study.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">rules</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Stable <span class="op">=</span> <span class="st">"Stable"</span>, Complication <span class="op">=</span> <span class="st">"Complication"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">addListVectorEl</span><span class="op">(</span><span class="va">rules</span>, <span class="st">"Stable"</span>, <span class="st">"Complication"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $Stable</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Stable"       "Complication"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $Complication</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Complication"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -1,6 +1,7 @@
-# Get selected generated cohorts patient data
+# Generate and collect selected cohorts
 
-This function queries all patient ID's in selected cohorts
+Read or download cohort definitions, generate the cohorts and collect
+their patient intervals.
 
 ## Usage
 
@@ -13,7 +14,8 @@ getCohortData(
   baseUrl = "http://localhost:8080/WebAPI",
   pathToStudy = studyEnv$pathToStudy,
   studyName = studyEnv$studyName,
-  stateCohortLabels = NULL
+  stateCohortLabels = NULL,
+  webApiHeaders = NULL
 )
 ```
 
@@ -50,6 +52,10 @@ getCohortData(
 - stateCohortLabels:
 
   Vector of the customized labels of the state cohorts
+
+- webApiHeaders:
+
+  Optional named HTTP headers, used only during download.
 
 ## Value
 

@@ -23,9 +23,9 @@ mergedState(members, allowedTransitions, absorbing, label = NULL)
   Optional replacement destinations. A character vector names individual
   states. A list specifies sets of original members, so
   `list("C", c("C", "D"))` permits both C alone and the combination of C
-  and D. `character(0)` or [`list()`](https://rdrr.io/r/base/list.html)
-  permits no destinations. Omit the argument to inherit transitions.
-  `NULL` is not accepted.
+  and D. `NULL`, `character(0)` or
+  [`list()`](https://rdrr.io/r/base/list.html) permits no destinations.
+  Omit the argument to inherit transitions.
 
 - absorbing:
 
@@ -85,6 +85,61 @@ overrides for a fresh saved-study import.
 
 ``` r
 mergedState(c("A", "B"), allowedTransitions = "C", absorbing = FALSE)
+#> $members
+#> [1] "A" "B"
+#> 
+#> $label
+#> NULL
+#> 
+#> $allowedTransitions
+#> $allowedTransitions[[1]]
+#> [1] "C"
+#> 
+#> 
+#> $absorbing
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "c2t_merged_state"
 mergedState(c("A", "B"), absorbing = FALSE)
+#> $members
+#> [1] "A" "B"
+#> 
+#> $label
+#> NULL
+#> 
+#> $absorbing
+#> [1] FALSE
+#> 
+#> attr(,"class")
+#> [1] "c2t_merged_state"
+mergedState(c("A", "B"), allowedTransitions = NULL)
+#> $members
+#> [1] "A" "B"
+#> 
+#> $label
+#> NULL
+#> 
+#> $allowedTransitions
+#> list()
+#> 
+#> attr(,"class")
+#> [1] "c2t_merged_state"
 mergedState(c("A", "B"), allowedTransitions = list("C", c("C", "D")))
+#> $members
+#> [1] "A" "B"
+#> 
+#> $label
+#> NULL
+#> 
+#> $allowedTransitions
+#> $allowedTransitions[[1]]
+#> [1] "C"
+#> 
+#> $allowedTransitions[[2]]
+#> [1] "C" "D"
+#> 
+#> 
+#> attr(,"class")
+#> [1] "c2t_merged_state"
 ```

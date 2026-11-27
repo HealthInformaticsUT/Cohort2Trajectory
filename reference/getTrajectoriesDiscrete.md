@@ -1,7 +1,6 @@
-# Convert the imported cohort data to patient treatmnet trajectories
+# Construct discrete patient histories
 
-This function outputs a data.frame object which describes the movement
-of patients between the defined states
+Select one state per cycle and add trajectory boundary markers.
 
 ## Usage
 
@@ -30,7 +29,8 @@ getTrajectoriesDiscrete(
 
 - cohortData:
 
-  A data.frame object which is queried with getCohortsPatients function
+  Cohort intervals with subject_id, cohort_definition_id,
+  cohort_start_date and cohort_end_date columns.
 
 - stateDuration:
 

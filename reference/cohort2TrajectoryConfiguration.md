@@ -1,12 +1,10 @@
 # Configure a trajectory study
 
-Choose the observation cohort, state definitions and rules for a study.
-The analyst defines what each cohort means. This function creates the
-study folders and returns an environment used by
-[`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+Choose cohorts and rules, create the study folders and return an
+environment for
+[`getDataForStudy`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
 and
-[`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
-It does not import data or generate trajectories.
+[`createTrajectories`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
 
 ## Usage
 
@@ -25,7 +23,7 @@ cohort2TrajectoryConfiguration(
   stateSelectionType = NULL,
   oocFix = "None",
   trajectoryType = "Discrete",
-  lengthOfStay = NULL,
+  cycleLength = NULL,
   outOfCohortAllowed = FALSE,
   runSavedStudy = FALSE,
   useCDM = TRUE,
@@ -34,7 +32,9 @@ cohort2TrajectoryConfiguration(
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
   batchSize = 1000,
-  mergedStateOverrides = list()
+  mergedStateOverrides = list(),
+  targetEpisodeHandling = "First",
+  stopAfterAbsorbingEpisode = FALSE
 )
 ```
 
@@ -64,23 +64,26 @@ cohort2TrajectoryConfiguration(
 - atlasTargetCohort:
 
   ATLAS ID of the target cohort. With `baseUrl = NULL`, supply its local
-  JSON filename without the extension. The first target interval defines
-  each patient's observation period.
+  JSON filename without the extension. Target intervals define each
+  patient's observation periods.
 
 - atlasStateCohorts:
 
-  ATLAS IDs of the state cohorts, in the same order as
-  `stateCohortLabels`. With `baseUrl = NULL`, supply local JSON
-  filenames without their extensions.
+  Named vector of ATLAS state cohort IDs, such as
+  `c(Stable = 101, Complication = 102, Dead = 103)`. Names become the
+  state labels. With `baseUrl = NULL`, use local JSON filenames without
+  their extensions as the values. An unnamed vector instead requires
+  `stateCohortLabels` in the same order.
 
 - stateCohortLabels:
 
-  Character vector of state labels. Supply one per state cohort for CDM
-  input. Labels must be nonempty, non-missing and unique even when
-  ignoring case. `"0"`, `"START"`, `"EXIT"` and `"OUT OF COHORT"` are
-  reserved, including case variants. Labels may contain spaces or
-  punctuation and need not start with a letter. They are separate from
-  database cohort names and definition filenames.
+  Character vector of state labels. May be omitted when
+  `atlasStateCohorts` is named. If both are supplied, the labels must
+  match its names in order. Labels must be nonempty, non-missing and
+  unique even when ignoring case. `"0"`, `"START"`, `"EXIT"` and
+  `"OUT OF COHORT"` are reserved, including case variants. Labels may
+  contain spaces or punctuation. They are separate from database cohort
+  names and definition filenames.
 
 - stateCohortPriorityOrder:
 
@@ -93,9 +96,8 @@ cohort2TrajectoryConfiguration(
 
   State labels that every included patient must have within the retained
   observation bounds. `NULL` or `character(0)` imposes no requirement.
-  All labels are literal, including `"No mandatory state"`. These
-  requirements are applied during import. Rerun
-  [`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
+  Labels are literal. Requirements are applied during import; rerun
+  [`getDataForStudy`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
   to change them.
 
 - stateCohortAbsorbing:
@@ -126,7 +128,7 @@ cohort2TrajectoryConfiguration(
   whitespace. `NULL` is allowed during configuration, but generation
   needs a choice.
 
-- lengthOfStay:
+- cycleLength:
 
   Positive whole-number cycle length in days, within R's integer range.
   Required when generating discrete trajectories. It may be `NULL`
@@ -169,7 +171,10 @@ cohort2TrajectoryConfiguration(
   `list(A = c("B", "C"))`. Source names must be unique, nonempty and
   non-missing. Put all destinations for one source in a single entry. An
   empty list allows all transitions. `character(0)` or `NULL` in an
-  individual entry permits no destinations.
+  individual entry permits no destinations. Nonmerged generation checks
+  destinations against configured and observed states and any named
+  discrete fallback, ignoring case. Unknown destinations are rejected
+  before output files are written. Configured states may be unobserved.
 
 - mergeStates:
 
@@ -184,26 +189,55 @@ cohort2TrajectoryConfiguration(
 - mergedStateOverrides:
 
   List of
-  [`mergedState()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+  [`mergedState`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
   definitions. Requires `mergeStates = TRUE`. Supply at most one
-  definition for each membership set. Omitted properties inherit from
-  the original states.
+  definition per membership set. Omitted properties retain inherited
+  values.
+
+- targetEpisodeHandling:
+
+  `"First"` (default) retains the earliest target interval per patient.
+  `"All"` retains separate, nonoverlapping intervals as episodes. Names
+  ignore case and surrounding whitespace. Requires
+  `outOfCohortAllowed = FALSE`. Changing this choice requires another
+  import.
+
+- stopAfterAbsorbingEpisode:
+
+  Whether a selected absorbing state also excludes later episodes for
+  that patient. The default, `FALSE`, lets later episodes start afresh.
+  An absorbing state always ends its own episode.
 
 ## Value
 
-An environment containing the study settings.
+An environment of class `c2t_study` containing the study settings.
+Printing shows a compact summary; inspect individual settings with
+`study$settingName` or all settings with
+`as.list(study, all.names = TRUE)`.
 
 ## Observation and state definitions
 
-The target cohort supplies observation intervals. State cohorts describe
-events or periods within them, according to definitions chosen by the
-analyst. The first target interval for each patient sets the trajectory
-bounds, including for patients without state records.
+The analyst defines target and state cohorts. By default, the first
+target interval for each patient sets the observation bounds, including
+for patients without state records. State cohorts describe events within
+those bounds; their labels do not change their dates or clinical
+meaning.
 
 Date intervals include both endpoints. A shared boundary date counts as
 one day of overlap. Discrete trajectories assign a state to each cycle.
 Continuous trajectories retain selected intervals and boundary markers
 without filling gaps or changing the times of simultaneous events.
+
+With `targetEpisodeHandling = "All"`, identical target intervals are
+deduplicated and overlapping intervals are rejected. Adjacent intervals
+are separate episodes. State records are clipped to every period they
+intersect; gaps between periods produce no rows. Mandatory states are
+required within each episode, before state merging. The chronological
+`episode_id` is assigned before eligibility filtering and is retained in
+output alongside the original `subject_id`. Cycles, elapsed time,
+sequence numbering, transition checks and carry-forward restart in each
+episode. An absorbing state ends that episode; later episodes remain
+eligible unless `stopAfterAbsorbingEpisode = TRUE`.
 
 ## State selection and gaps
 
@@ -216,9 +250,9 @@ priority entries raise an error for all three discrete methods.
 
 If no state qualifies, `oocFix` applies. Carry-forward needs an allowed
 self-transition, and a named fallback must be an allowed destination.
-Otherwise the cycle is `"OUT OF COHORT"`. This label means no state was
-selected, not that observation ended. It preserves the last selected
-state for checking later transitions.
+Otherwise the cycle is `"OUT OF COHORT"`, meaning no state was selected.
+Observation continues, and later transitions use the last selected
+state.
 
 `"None"` and `"Last present state"` always select gap behaviour, even if
 a clinical state has that label. Fallbacks cannot be `"0"`, `"START"` or
@@ -227,21 +261,23 @@ must not differ only in case from an existing state. For a merged state,
 use its display label, not its internal `state_key`. Text resembling a
 key can be a separate literal state if declared in `stateCohortLabels`.
 
-Continuous `"Priority"` selection resolves overlaps among allowed states
-at each interval boundary. Every state within the bounds must appear in
-the priority order. An ongoing interval does not need a self-transition
-just because another record starts or ends. A selected absorbing
-interval keeps its bounded recorded endpoint even if a higher-priority
-record arrives later. Models requiring unique timestamps must resolve
-simultaneous events.
+Continuous `"First"` and `"Overlap"` both retain allowed intervals,
+including overlaps. `"Priority"` assigns overlapping days to the
+highest-priority allowed state and can split lower-priority intervals.
+Continuous `"Priority"` requires every state within the bounds in the
+priority order. An ongoing interval does not need a self-transition when
+another record starts or ends. A selected absorbing interval keeps its
+bounded endpoint even if a higher-priority record arrives later. Models
+requiring unique timestamps must resolve simultaneous events.
 
 ## Transitions and absorbing states
 
-Source names use exact state labels. Destination matching ignores case
-using R's locale-aware conversion. Output preserves the clinical labels.
-In an unmerged study with a nonempty rule list, an entry is required
-only when a state is used as a transition source. Rules apply separately
-to each patient and use the last retained clinical state.
+Source names use exact state labels. Destination matching ignores case.
+Output preserves the clinical labels. In an unmerged study with a
+nonempty rule list, an entry is required only when a state is used as a
+transition source. Rules apply separately to each patient and use the
+last retained clinical state; rejected records do not change that state.
+The first clinical state and boundary markers need no incoming rule.
 
 A prohibited absorbing record does not end follow-up. Discrete
 generation ends after the selected absorbing cycle. Continuous
@@ -267,31 +303,33 @@ highest-priority member determines its priority. At equal priority,
 larger combinations come first, followed by state key order. Without a
 supplied priority order, original states are ordered deterministically.
 Explicit
-[`mergedState()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
-properties replace the inherited properties. Absorbing status takes
-precedence over outgoing transitions.
+[`mergedState`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+properties replace inherited properties. Omitted properties retain
+inherited values. Setting `allowedTransitions` to `NULL`, `character(0)`
+or [`list()`](https://rdrr.io/r/base/list.html) permits no destinations.
+Absorbing status is separate and takes precedence over outgoing
+transitions.
 
 The study environment's `stateDictionary` and the generated
 `Data/stateDictionary.rds` record the resolved states and their rules.
-See
-[`mergedState()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
-for individual exceptions.
+The original-state rules remain unchanged in the configuration.
 
 ## Saving and sharing a study
 
 A completed import and generation saves the analysis settings in
-`Settings/analysisSettings.rds`. Only version 4 is accepted. Reconfigure
-and rerun older studies to create a current snapshot. CDM snapshots
-contain the exact cohort JSON definitions captured at import. Saved runs
-use those definitions and fresh patient data, leaving working JSON files
-unchanged.
+`Settings/analysisSettings.rds` in version 6 format. Versions 4 and 5
+load with `targetEpisodeHandling = "First"` and
+`stopAfterAbsorbingEpisode = FALSE`. Reconfigure earlier formats.
+Omitted and explicit empty override fields remain distinct in saved
+settings. CDM snapshots contain the exact cohort JSON definitions
+captured at import. Saved runs use those definitions and fresh patient
+data, leaving working JSON files unchanged.
 
 Copy the completed study's `Settings` folder to the new location. Do not
 share `Data`, which contains patient records. Supply the new connection
 to import and generation, or configure fresh local input with
 `useCDM = FALSE`. Import must succeed before generation. To change
-definitions or analysis rules, configure a fresh study. Conflicting
-saved mandatory-state requirements also require a fresh run.
+definitions or analysis rules, configure a fresh study.
 
 Local definition names may contain relative subpaths, such as `states/A`
 for `JSON/states/A.json`. Saved paths cannot be absolute or contain
@@ -313,17 +351,50 @@ by the original identifiers before output. For in-memory IDs at or above
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-study <- cohort2TrajectoryConfiguration(
-  studyName = "ExampleStudy",
-  pathToStudy = getwd(),
-  useCDM = FALSE,
-  trajectoryDataObject = cohorts,
-  stateCohortLabels = c("A", "B"),
-  stateCohortPriorityOrder = c("A", "B"),
-  stateSelectionType = "Priority",
-  trajectoryType = "Discrete",
-  lengthOfStay = 7
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
 )
-} # }
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", cycleLength = 7
+)
+getDataForStudy(studyEnv = study)
+#> ℹ Importing data ...
+#> ✔ Importing data ... [4ms]
+#> 
+#> ✔ Get cohort data success!
+#> ℹ Cleaning data ...
+#> ✔ Data cleaning completed!
+#> ℹ Cleaning data ...
+
+#> ℹ Saved cleaned data /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c7e139ca4/example/Data/importedDataCleaned.csv
+#> ℹ Cleaning data ...
+
+#> ✔ Cleaning data ... [29ms]
+#> 
+trajectories <- createTrajectories(studyEnv = study)
+#> ℹ Creating batch 1!!!
+#> ℹ Saved trajectory dataframe: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c7e139ca4/example/Data/patientDataDiscrete.csv
+#> ℹ Saved settings to: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c7e139ca4/example/Settings/analysisSettings.rds
+#> ✔ Trajectories generated!
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+#> <Cohort2Trajectory trajectories>
+#> Patients: 1 | Clinical states present: 2 | Rows: 5 
+#> Boundary rows (START/EXIT): 2 | Unresolved rows (OUT OF COHORT): 0 
+#> Preview: 5 of 5 rows; 4 of 4 columns
+#>   subject_id  state_label state_start_date state_end_date
+#> 1        001        START       2020-01-01     2020-01-01
+#> 2        001       Stable       2020-01-01     2020-01-07
+#> 3        001 Complication       2020-01-08     2020-01-14
+#> 4        001 Complication       2020-01-15     2020-01-21
+#> 5        001         EXIT       2020-01-22     2020-01-22
+#> Use as.data.frame(x) to inspect every column.
+unlink(folder, recursive = TRUE)
 ```

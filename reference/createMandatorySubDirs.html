@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,6 +27,7 @@
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -42,7 +43,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create the mandatory study subdirectories</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/R/helpers.R" class="external-link"><code>R/helpers.R</code></a></small>
       <div class="d-none name"><code>createMandatorySubDirs.Rd</code></div>
     </div>
 
@@ -60,7 +61,11 @@
 
 
 <dl><dt id="arg-pathtostudy">pathToStudy<a class="anchor" aria-label="anchor" href="#arg-pathtostudy"></a></dt>
-<dd><p>Path to the package</p></dd>
+<dd><p>Parent folder for the study.</p></dd>
+
+
+<dt id="arg-studyname">studyName<a class="anchor" aria-label="anchor" href="#arg-studyname"></a></dt>
+<dd><p>Name of the study folder.</p></dd>
 
 </dl></div>
 
@@ -69,7 +74,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

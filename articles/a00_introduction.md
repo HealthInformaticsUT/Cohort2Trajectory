@@ -1,9 +1,15 @@
 # Getting started
 
-Cohort2Trajectory builds patient histories from a target cohort and
-state cohorts. The target cohort defines when each patient is observed.
-The state cohorts supply the clinical intervals. You decide what those
-intervals mean and how overlaps should be handled.
+Cohort records describe intervals: when a patient was observed and when
+each clinical state applied. Cohort2Trajectory turns those records into
+patient histories using the same selection and transition rules for
+every patient.
+
+The target cohort defines each patient’s observation period. State
+cohorts describe events or conditions within that period. You define
+their clinical meaning, choose how to handle overlaps, and request
+either fixed-length cycles or continuous intervals. The resulting table
+can be used for trajectory plots or state-transition analysis.
 
 This example uses local data, so you do not need a database connection.
 For an OMOP database, see [Import cohort
@@ -35,9 +41,9 @@ matter.
 
 ## Configure, import and generate
 
-Choose seven-day cycles and put B ahead of A if they overlap. The input
-here does not contain any overlap, but specifying the rule makes it
-explicit.
+Choose seven-day cycles and put B ahead of A when they overlap. The
+priority rule is part of the study settings, even though this example
+has no overlaps.
 
 ``` r
 
@@ -53,7 +59,7 @@ study <- cohort2TrajectoryConfiguration(
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 getDataForStudy(studyEnv = study)
 trajectories <- createTrajectories(studyEnv = study)
@@ -80,27 +86,33 @@ knitr::kable(trajectories[c(
 | 002        | EXIT          | 2020-01-11       | 2020-01-11     |
 
 Patient `002` is still included. Both cycles have the label
-`OUT OF COHORT` because no state was supplied. That label means an
-unresolved cycle, not a loss of observation. The second cycle ends on
-January 10, the target-cohort end date, rather than being extended to a
-full week.
+`OUT OF COHORT` because no state was supplied. This label marks a cycle
+with no selected state. The second cycle ends on January 10, the
+target-cohort end date.
 
 `START` is the start boundary. `EXIT` is the day after the last cycle
 and does not add an observed day. Neither is a clinical state.
 
 The function returns the trajectory table and saves it under
 `Example/Data/patientDataDiscrete.csv`. The completed analysis settings
-are saved under `Example/Settings/analysisSettings.rds`.
+are saved under `Example/Settings/analysisSettings.rds` so the study can
+be repeated with fresh input. The returned table also carries its state
+definitions and cycle length; use
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html) to preserve these
+when saving the table in R.
 
 ## Next steps
 
 - [Configure a
   study](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.md)
   explains state selection, transitions and merging.
+- [Create
+  trajectories](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.md)
+  includes a runnable example with multiple observation periods per
+  patient.
 - [A weekly worked
   example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.md)
-  uses analyst-defined pneumonia-history and death states and checks a
-  saved-study rerun.
+  uses analyst-defined pneumonia-history and death states.
 - [Read the
   output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
   explains the columns and what must be considered before downstream

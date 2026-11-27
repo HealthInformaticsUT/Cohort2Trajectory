@@ -12,4 +12,8 @@ createMandatorySubDirs(pathToStudy, studyName)
 
 - pathToStudy:
 
-  Path to the package
+  Parent folder for the study.
+
+- studyName:
+
+  Name of the study folder.

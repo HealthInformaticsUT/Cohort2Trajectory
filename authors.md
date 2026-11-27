@@ -5,19 +5,23 @@
 - **Markus Haug**. Author, maintainer.
   [](https://orcid.org/0000-0003-0935-3307)
 
-- **Greete Kelli Aava**. Maintainer, contributor.
+- **Greete Kelli Aava**. Contributor.
 
 - **Raivo Kolde**. Author. [](https://orcid.org/0000-0003-2886-6298)
 
 ## Citation
 
-Haug M, Kolde R (2026). *Cohort2Trajectory: Package for creating patient
-orientated treatment trajectories from cohorts defined in OHDSI ATLAS*.
-R package version 1.2.0.
+Source:
+[`DESCRIPTION`](https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/DESCRIPTION)
+
+Haug M, Kolde R (2026). *Cohort2Trajectory: Create Patient Trajectories
+from Clinical Cohorts*. R package version 1.3.0.9000,
+<https://healthinformaticsut.github.io/Cohort2Trajectory/>.
 
     @Manual{,
-      title = {Cohort2Trajectory: Package for creating patient orientated treatment trajectories from cohorts defined in OHDSI ATLAS},
+      title = {Cohort2Trajectory: Create Patient Trajectories from Clinical Cohorts},
       author = {Markus Haug and Raivo Kolde},
       year = {2026},
-      note = {R package version 1.2.0},
+      note = {R package version 1.3.0.9000},
+      url = {https://healthinformaticsut.github.io/Cohort2Trajectory/},
     }

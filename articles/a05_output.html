@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -68,18 +69,24 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Read the output</h1>
-
-
-
+            
+      
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/vignettes/a05_output.Rmd" class="external-link"><code>vignettes/a05_output.Rmd</code></a></small>
       <div class="d-none name"><code>a05_output.Rmd</code></div>
     </div>
 
-
-
-<p><code><a href="../reference/createTrajectories.html">createTrajectories()</a></code> returns a data frame and writes the
-same trajectory to <code>Data/patientDataDiscrete.csv</code> or
-<code>Data/patientDataContinuous.csv</code> in the study folder. Use
-column names rather than their positions when reading the result.</p>
+    
+    
+<p><code><a href="../reference/createTrajectories.html">createTrajectories()</a></code> returns a
+<code>c2t_trajectories</code> data frame and writes its rows to
+<code>Data/patientDataDiscrete.csv</code> or
+<code>Data/patientDataContinuous.csv</code> in the study folder.</p>
+<p>Printing shows patient and state counts, boundary and unresolved-row
+counts, and a short preview. Every row and column remains available:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">trajectories</span>                  <span class="co"># Compact preview</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">trajectories</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>    <span class="co"># Show more rows</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">trajectories</span><span class="op">)</span>   <span class="co"># Ordinary data-frame display</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="columns">Columns<a class="anchor" aria-label="anchor" href="#columns"></a>
 </h2>
@@ -99,60 +106,72 @@ column names rather than their positions when reading the result.</p>
 are not exported.</td>
 </tr>
 <tr class="even">
+<td align="left"><code>episode_id</code></td>
+<td align="left">Present only with
+<code>targetEpisodeHandling = "All"</code>. Chronological target-period
+number within the patient, assigned before eligibility filtering.</td>
+</tr>
+<tr class="odd">
 <td align="left"><code>state_label</code></td>
 <td align="left">The selected clinical label, or <code>START</code>,
 <code>EXIT</code> or <code>OUT OF COHORT</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>state_start_date</code></td>
 <td align="left">First date of the selected interval or discrete
 cycle.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>state_end_date</code></td>
 <td align="left">Last date of that interval or cycle, including this
 date.</td>
 </tr>
-<tr class="odd">
-<td align="left"><code>time_in_cohort</code></td>
-<td align="left">Years from trajectory start to this row’s start,
-calculated as elapsed days divided by 365.25.</td>
-</tr>
 <tr class="even">
+<td align="left"><code>time_in_cohort</code></td>
+<td align="left">Years from the observation period’s start to this row’s
+start, calculated as elapsed days divided by 365.25.</td>
+</tr>
+<tr class="odd">
 <td align="left"><code>seq_ordinal</code></td>
 <td align="left">Consecutive occurrence number of the same label in that
 patient’s output rows. It resets when the label changes. It is not a
 cycle number.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>state_id</code></td>
 <td align="left">An identifier assigned to the label within the run. It
 is not a clinical concept ID or a cross-database key.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>age</code></td>
 <td align="left">Age in years at this row’s start, when a CDM
 demographic join is used. Otherwise <code>NA</code>.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>gender_concept_id</code></td>
 <td align="left">The CDM person’s recorded gender concept ID, when
 joined. Otherwise <code>NA</code>.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>state_key</code></td>
 <td align="left">Present only for merged studies. Identifies the
 original members of a state across runs with the same labels.</td>
 </tr>
 </tbody>
 </table>
-<p>Dates are <code>Date</code> values in the returned R object and date
-strings in CSV. <code>state_id</code> may be character or numeric
-depending on the trajectory format. Treat it as an identifier, not as a
-quantity. For unmerged output, inspect its mapping with
+<p>In <code>"All"</code> mode, <code>START</code>, <code>EXIT</code>,
+cycles, <code>time_in_cohort</code> and <code>seq_ordinal</code> restart
+in each episode. Use both <code>subject_id</code> and
+<code>episode_id</code> to identify a history. State IDs and the state
+dictionary cover the whole study. No rows represent the gaps between
+episodes.</p>
+<p>Dates are <code>Date</code> values in R and date strings in CSV. Use
+column names rather than positions. Treat <code>state_id</code> as an
+identifier; its type can be character or numeric. Inspect unmerged IDs
+with
 <code>unique(trajectories[c("state_id", "state_label")])</code>.</p>
 <p>When reading a CSV, preserve patient identifiers as text:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span></span>
 <span>  <span class="st">"MyStudy/Data/patientDataDiscrete.csv"</span>,</span>
 <span>  colClasses <span class="op">=</span> <span class="st">"character"</span>,</span>
@@ -163,60 +182,56 @@ quantity. For unmerged output, inspect its mapping with
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">column</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time_in_cohort"</span>, <span class="st">"seq_ordinal"</span>, <span class="st">"age"</span>, <span class="st">"gender_concept_id"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">trajectories</span><span class="op">[[</span><span class="va">column</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/type.convert.html" class="external-link">type.convert</a></span><span class="op">(</span><span class="va">trajectories</span><span class="op">[[</span><span class="va">column</span><span class="op">]</span><span class="op">]</span>, as.is <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>This keeps leading zeros, long identifiers and literal labels such as
-<code>"NA"</code>. Only the known numeric columns are converted. For
-input already held in R, use character or <code>integer64</code> values
-for large identifiers. The package cannot recover digits already rounded
-by numeric storage.</p>
+<p>This preserves leading zeros, long identifiers and literal labels
+such as <code>"NA"</code>, then converts known numeric columns. Supply
+large in-memory input IDs as character or <code>integer64</code>; digits
+rounded by numeric storage cannot be recovered.</p>
 </div>
 <div class="section level2">
 <h2 id="observation-boundaries-and-unresolved-cycles">Observation boundaries and unresolved cycles<a class="anchor" aria-label="anchor" href="#observation-boundaries-and-unresolved-cycles"></a>
 </h2>
-<p>The first target-cohort interval supplies the trajectory’s start and
-end. An absorbing state can stop the trajectory earlier. With
-<code>outOfCohortAllowed = TRUE</code>, retained state records can
-extend its end, but not move its start earlier. The analyst is
-responsible for supplying valid observation bounds.</p>
-<p><code>START</code> marks the first date. <code>EXIT</code> marks the
-day after the retained follow-up endpoint. For discrete output, that is
-the end of the final cycle. Both markers have identical start and end
-dates. They do not contribute observed days and should not be counted as
-clinical states when estimating time spent in care.</p>
-<p><code>OUT OF COHORT</code> has a different meaning. It is a discrete
-cycle for which no state was selected. The cycle is still within the
-supplied observation period. Deleting such rows can make separated
-states look like adjacent observations. Choose how an analysis handles
-these gaps before estimating transitions.</p>
+<p>By default, the first target interval supplies observation bounds. A
+selected absorbing state can end follow-up early;
+<code>outOfCohortAllowed = TRUE</code> lets retained records extend its
+end, but not its start. With <code>targetEpisodeHandling = "All"</code>,
+every episode has its own target bounds and
+<code>outOfCohortAllowed</code> must be <code>FALSE</code>. Later
+episodes remain eligible after absorption unless
+<code>stopAfterAbsorbingEpisode = TRUE</code>.</p>
+<p><code>START</code> marks the first date. <code>EXIT</code> is the day
+after the retained follow-up endpoint: the final cycle end for discrete
+output. Each marker has identical start and end dates and contributes no
+observed days. Exclude them when estimating time spent in clinical
+states.</p>
+<p><code>OUT OF COHORT</code> is a discrete cycle with no selected
+state, within observation. Deleting these rows can make separated states
+look adjacent. Decide how to handle them before estimating
+transitions.</p>
 </div>
 <div class="section level2">
 <h2 id="discrete-dates-are-cycle-dates">Discrete dates are cycle dates<a class="anchor" aria-label="anchor" href="#discrete-dates-are-cycle-dates"></a>
 </h2>
-<p>With <code>lengthOfStay = 7</code>, a cycle beginning January 1 ends
+<p>With <code>cycleLength = 7</code>, a cycle beginning January 1 ends
 January 7. The next begins January 8. If observation ends January 10,
 that final cycle contains three observed days. For non-marker rows,
 duration is
 <code>as.integer(state_end_date - state_start_date) + 1</code>.</p>
-<p>One label represents the whole cycle according to the configured
-selection rule. Its start date is not necessarily the date that the
-selected event occurred. A selected death state stops generation after
-its cycle. The cycle is shortened to the actual death date only if the
-supplied trajectory boundary also ends there.</p>
-<p>Separate death states can preserve whether a complication had
-occurred before death, if the analyst defines them that way. They do not
-preserve the exact within-week complication date. See the <a href="a04_example.html">weekly example</a>.</p>
+<p>One label represents the whole cycle. Its dates need not match the
+selected event’s dates. A selected absorbing state stops generation
+after its cycle. Absorption does not shorten that cycle to the event
+date; an observation boundary on that date does.</p>
+<p>History-specific death states can preserve a prior complication
+category, but not its exact date within the cycle. See the <a href="a04_example.html">weekly example</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="continuous-dates-are-interval-dates">Continuous dates are interval dates<a class="anchor" aria-label="anchor" href="#continuous-dates-are-interval-dates"></a>
 </h2>
-<p>Continuous output keeps the selected interval endpoints, bounded by
-the target interval and absorbing-state rules. It does not invent state
-coverage in a gap or shift simultaneous records onto different days.
-Priority selection can split intervals. First and Overlap selection can
-retain overlapping intervals.</p>
-<p>Two rows can therefore share a start date or cover some of the same
-days. A downstream model that needs one state at every instant must
-handle that explicitly. Summing overlapping interval lengths will
-overcount patient-time.</p>
+<p>Continuous output retains selected interval endpoints, subject to
+observation and absorbing-state rules. Gaps remain unfilled and
+simultaneous records keep their dates. Priority can split intervals;
+First and Overlap can retain overlaps. Summing overlapping lengths
+overcounts patient-time. Models requiring one state at every instant
+need an explicit rule for these overlaps.</p>
 </div>
 <div class="section level2">
 <h2 id="state-membership">State membership<a class="anchor" aria-label="anchor" href="#state-membership"></a>
@@ -287,9 +302,9 @@ it also contains the cohort JSON definitions used during import.</td>
 <td align="left">Patient trajectories.</td>
 </tr>
 <tr class="odd">
-<td align="left"><code>Data/importedDataCleaned_*.csv</code></td>
+<td align="left"><code>Data/importedDataCleaned.csv</code></td>
 <td align="left">Intervals used as input to trajectory generation. The
-filename suffix identifies the target definition.</td>
+filename is independent of the cohort-definition path.</td>
 </tr>
 <tr class="even">
 <td align="left"><code>Data/sourceIntervals.rds</code></td>
@@ -303,38 +318,53 @@ rules.</td>
 </tr>
 </tbody>
 </table>
-<p>The interval files have already been cleaned. Observation limits and
-mandatory state requirements have been applied, and overlapping records
-of the same state have been combined. They are not a copy of every
-original database row. In merged studies, use
-<code>sourceIntervals.rds</code> to inspect the original state labels
-before composition.</p>
-<p>The version-4 settings file stores <code>import</code> and
-<code>generation</code> separately because some choices can be supplied
-at generation time. For example, the cycle length is under
-<code>settings$generation$lengthOfStay</code>. Clinical rules remain the
-analyst’s responsibility even though their execution settings are
-saved.</p>
-<p>When sharing a study, copy <code>Settings</code>, not
-<code>Data</code>. The settings file contains no patient records or
-database connection. It does include study-specific cohort definitions,
-which should be reviewed before sharing.</p>
+<p>The interval files reflect observation limits, mandatory-state
+requirements and combined overlapping records of the same state. In
+merged studies, <code>sourceIntervals.rds</code> retains the original
+state labels before composition.</p>
+<p>Settings store <code>import</code> and <code>generation</code>
+separately. For example, after
+<code>settings &lt;- readRDS("MyStudy/Settings/analysisSettings.rds")</code>,
+the cycle length is <code>settings$generation$cycleLength</code>. See <a href="a02_import.html">Import cohort data</a> for saved-study setup and
+format compatibility.</p>
+<p>Share <code>Settings</code> to reproduce the rules. CDM settings
+include cohort definitions; no settings file contains patient records or
+a database connection. <code>Data</code> contains patient-level
+records.</p>
 </div>
 <div class="section level2">
 <h2 id="handing-the-result-to-an-analysis-package">Handing the result to an analysis package<a class="anchor" aria-label="anchor" href="#handing-the-result-to-an-analysis-package"></a>
 </h2>
-<p>Pass the trajectory together with the settings and, for merged
-studies, the state dictionary. An analysis needs to know the cycle
-length, boundary-marker meaning, absorbing states and state membership.
-Do not infer these from label spelling or from the order of numeric
-IDs.</p>
-<p>Cohort2Trajectory constructs histories. It does not estimate
-transition probabilities, survival effects, costs or cost-effectiveness.
-Check that the downstream package accepts the current column names and
-identifiers, treats observation end separately from a clinical outcome,
-and handles shortened cycles as intended. Exact event-time analyses also
-need the relevant state intervals rather than dates inferred from weekly
-labels.</p>
+<p>The <code>trajectory_definition</code> attribute records the format
+version, effective trajectory type, cycle length, ordered clinical
+labels and absorbing labels. Labels and absorbing status reflect
+merged-state overrides; configured states remain declared when absent
+from the data. Inspect it with
+<code>attr(trajectories, "trajectory_definition")</code>.</p>
+<p>For default <code>"First"</code> output, TMA reads the version-1
+definition directly:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">histories</span> <span class="op">&lt;-</span> <span class="fu">TrajectoryMarkovAnalysis</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/TrajectoryMarkovAnalysis/man/prepareTrajectories.html" class="external-link">prepareTrajectories</a></span><span class="op">(</span><span class="va">trajectories</span><span class="op">)</span></span>
+<span><span class="va">transitions</span> <span class="op">&lt;-</span> <span class="fu">TrajectoryMarkovAnalysis</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/TrajectoryMarkovAnalysis/man/estimateTransitions.html" class="external-link">estimateTransitions</a></span><span class="op">(</span><span class="va">histories</span><span class="op">)</span></span></code></pre></div>
+<p><code>"All"</code> output uses a version-2 definition to mark its
+separate episodes. The current TMA reader accepts only version 1 and
+rejects this output. An analysis must preserve episode boundaries rather
+than joining the end of one episode to the start of the next. Removing
+the attribute does not make such a join valid.</p>
+<p>Use <code>saveRDS(trajectories, "trajectories.rds")</code> to
+preserve rows and definitions. Ordinary data-frame row subsets also
+retain the attribute. CSV preserves only rows. For <code>"First"</code>
+CSVs, supply cycle length, state labels and absorbing states to TMA
+explicitly. TMA rejects settings conflicting with an attached
+definition. Update the definition if a transformation changes state
+meanings or cycle length.</p>
+<p>Keep the separate state dictionary for merged membership. The handoff
+contains labels and absorbing status, rather than the full selection and
+transition rules.</p>
+<p>Cohort2Trajectory constructs histories; downstream packages estimate
+transitions, effects and costs. Check their treatment of boundaries,
+gaps, overlaps and short final cycles. Exact event-time analyses need
+interval dates rather than weekly cycle dates.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -343,7 +373,7 @@ labels.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

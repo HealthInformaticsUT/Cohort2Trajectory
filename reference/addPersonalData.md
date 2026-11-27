@@ -1,6 +1,6 @@
-# This function adds personal data to subjects: age, gender
+# Join demographics and calculate age at state entry
 
-This function adds personal data to subjects: age, gender
+Join demographics and calculate age at state entry
 
 ## Usage
 
@@ -12,7 +12,7 @@ addPersonalData(cohortData, cdm)
 
 - cohortData:
 
-  Imported cohort data
+  Trajectory table with subject_id and state_start_date.
 
 - cdm:
 
@@ -20,5 +20,4 @@ addPersonalData(cohortData, cdm)
 
 ## Value
 
-A dataframe with selected patients. Columns: cohort_definition_id,
-subject_id, cohort_start_date, cohort_end_date
+The trajectory table with gender_concept_id and age columns.

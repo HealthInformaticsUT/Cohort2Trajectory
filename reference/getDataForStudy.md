@@ -2,8 +2,8 @@
 
 Retrieve cohort data from an OMOP CDM or read local cohort intervals,
 then apply observation bounds, mandatory-state requirements and optional
-state merging. The analyst defines the target and clinical state
-cohorts.
+state merging. Pass the updated study environment to
+[`createTrajectories`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
 
 ## Usage
 
@@ -25,7 +25,9 @@ getDataForStudy(
   allowedStatesList = studyEnv$allowedStatesList,
   stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
   pathToData = studyEnv$pathToData,
-  mergedStateOverrides = studyEnv$mergedStateOverrides
+  mergedStateOverrides = studyEnv$mergedStateOverrides,
+  webApiHeaders = NULL,
+  targetEpisodeHandling = studyEnv$targetEpisodeHandling
 )
 ```
 
@@ -58,7 +60,9 @@ getDataForStudy(
 - atlasStateCohorts:
 
   ATLAS state cohort IDs, or local definition names without the .json
-  extension when baseUrl is NULL.
+  extension when baseUrl is NULL. A named vector supplies the labels
+  when stateCohortLabels is NULL. Otherwise its names must match the
+  configured or explicitly supplied labels in order.
 
 - atlasTargetCohort:
 
@@ -118,6 +122,22 @@ getDataForStudy(
   List of mergedState() definitions that replace selected inherited
   properties of merged states.
 
+- webApiHeaders:
+
+  Optional named character vector of HTTP headers for this download
+  only, for example an Authorization header. These values are never
+  stored in the study settings. Supply them again for each fresh
+  download. Saved studies use their embedded definitions and need no
+  authentication.
+
+- targetEpisodeHandling:
+
+  `"First"` (default) retains the earliest target interval per patient.
+  `"All"` retains separate, nonoverlapping intervals as episodes. Names
+  ignore case and surrounding whitespace. Requires
+  `outOfCohortAllowed = FALSE`. Changing this choice requires another
+  import.
+
 ## Value
 
 Invisibly returns NULL after a successful import. Cleaned data are saved
@@ -125,21 +145,22 @@ in the study's Data directory and studyEnv is updated for generation.
 
 ## Details
 
-The target cohort defines observation bounds. Clinical state intervals,
-including history states and finite episodes, must be defined by the
-analyst before import. State labels are preserved for CDM, data-frame
-and CSV input. Spaces and punctuation are not replaced to make
-filenames. Use the same labels in mandatory states, priorities and
-transition rules. CSV cohort_definition_id values are read as text,
-preserving leading zeros and the literal label "NA". Empty labels are
-invalid. All mandatory-state labels are literal, including "No mandatory
-state".
+The selected target intervals define observation bounds. Import clips
+state intervals to these bounds and combines overlapping records for the
+same patient, episode and state. With `targetEpisodeHandling = "All"`,
+each period is cleaned independently and mandatory states apply per
+episode. See
+[`cohort2TrajectoryConfiguration`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+for observation and state rules.
 
-A nonempty target cohort remains valid when no clinical state records
-survive cleaning, provided mandatory-state requirements do not exclude
-its patients. The target intervals still define follow-up. Discrete
-trajectories use the configured gap rule. Continuous trajectories retain
-boundaries without inventing clinical states.
+State labels are preserved across input sources, including spaces and
+punctuation. CSV identifiers and labels are read as text, preserving
+leading zeros and literal "NA" labels. Mandatory-state labels are also
+literal.
+
+Patients without state records remain eligible unless mandatory-state
+requirements exclude them. Discrete trajectories then use the gap rule;
+continuous trajectories contain only boundary markers.
 
 An empty eligible cohort is not a successful import. Previous cleaned
 data, merged-state artifacts and saved settings remain unchanged. An
@@ -157,11 +178,10 @@ both local source arguments.
 
 ## Cohort definitions and saved studies
 
-Fresh CDM imports stage definitions and their manifest in a temporary
-folder. Downloaded definitions and the manifest are published after data
-retrieval, cleaning and saving succeed. Failed downloads, queries or
-empty eligible cohorts leave the previous working JSON files unchanged.
-Existing local definitions and unrelated JSON files are not rewritten.
+Fresh CDM imports publish downloaded definitions and their manifest only
+after retrieval, cleaning and saving succeed. Failed imports preserve
+the previous working JSON files. Local definitions and unrelated JSON
+files are not rewritten.
 
 Successful CDM source overrides are retained for subsequent imports,
 keeping target and state selectors and the ATLAS URL aligned with
@@ -170,17 +190,15 @@ Downloaded definitions use 0.json for the target and atlas\_\<id\>.json
 for states. Repeated state IDs share a file without changing their
 clinical labels.
 
-Successful import captures the selected definition filenames and
-contents. After fresh trajectory generation completes, these are saved
-with the analysis settings in Settings/analysisSettings.rds. Only
-version 4 snapshots are accepted. The snapshot contains no patient data.
+After successful import and generation, the settings and cohort
+definitions are saved in Settings/analysisSettings.rds. Current
+snapshots use version 6; versions 4 and 5 load with first-period
+behavior. The snapshot contains no patient records.
 
-Saved CDM runs write the embedded definitions to a new private folder
-and use them to query fresh data. They do not read or replace working
-JSON files or their manifest. A later fresh import cannot change the
-definitions in an earlier completed snapshot. Saved local runs require
-fresh local input. Neither saved mode accepts overrides to its restored
-analysis rules.
+Saved CDM runs query fresh data using the embedded definitions, leaving
+working JSON files unchanged. Saved local runs require fresh local
+input. Both restore their analysis rules without accepting overrides.
+See the import vignette for the saved-study workflow.
 
 ## See also
 
@@ -190,7 +208,50 @@ analysis rules.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-getDataForStudy(cdm = cdm, studyEnv = studyEnv)
-} # }
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
+)
+folder <- tempfile("c2t-example-")
+study <- cohort2TrajectoryConfiguration(
+  studyName = "example", pathToStudy = folder,
+  useCDM = FALSE, trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
+  stateSelectionType = "Priority", cycleLength = 7
+)
+getDataForStudy(studyEnv = study)
+#> ℹ Importing data ...
+#> ✔ Importing data ... [3ms]
+#> 
+#> ✔ Get cohort data success!
+#> ℹ Cleaning data ...
+#> ✔ Data cleaning completed!
+#> ℹ Cleaning data ...
+
+#> ℹ Saved cleaned data /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Data/importedDataCleaned.csv
+#> ℹ Cleaning data ...
+
+#> ✔ Cleaning data ... [23ms]
+#> 
+trajectories <- createTrajectories(studyEnv = study)
+#> ℹ Creating batch 1!!!
+#> ℹ Saved trajectory dataframe: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Data/patientDataDiscrete.csv
+#> ℹ Saved settings to: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Settings/analysisSettings.rds
+#> ✔ Trajectories generated!
+trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
+#> <Cohort2Trajectory trajectories>
+#> Patients: 1 | Clinical states present: 2 | Rows: 5 
+#> Boundary rows (START/EXIT): 2 | Unresolved rows (OUT OF COHORT): 0 
+#> Preview: 5 of 5 rows; 4 of 4 columns
+#>   subject_id  state_label state_start_date state_end_date
+#> 1        001        START       2020-01-01     2020-01-01
+#> 2        001       Stable       2020-01-01     2020-01-07
+#> 3        001 Complication       2020-01-08     2020-01-14
+#> 4        001 Complication       2020-01-15     2020-01-21
+#> 5        001         EXIT       2020-01-22     2020-01-22
+#> Use as.data.frame(x) to inspect every column.
+unlink(folder, recursive = TRUE)
 ```

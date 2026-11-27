@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -70,7 +71,7 @@
       <h1>Configure a study</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/vignettes/a01_configuration.Rmd" class="external-link"><code>vignettes/a01_configuration.Rmd</code></a></small>
       <div class="d-none name"><code>a01_configuration.Rmd</code></div>
     </div>
 
@@ -82,17 +83,18 @@
 <p><code><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration()</a></code> creates a study
 environment and its folders. Pass that environment to both
 <code><a href="../reference/getDataForStudy.html">getDataForStudy()</a></code> and <code><a href="../reference/createTrajectories.html">createTrajectories()</a></code>.
-Configuration alone does not retrieve patient data or generate
-trajectories.</p>
-<p>The analyst defines the target and state cohorts. The target cohort
-supplies the observation interval. State cohorts supply the clinical
-facts to represent within that interval. Cohort2Trajectory does not
-infer the meaning of a state from its label.</p>
+The three steps separate study rules, data import and trajectory
+generation.</p>
+<p>Start with the study question. Define a target cohort for observation
+and a state cohort for each event or condition you need to follow. For
+example, a history state must have intervals that represent that
+history. Giving a cohort the label <code>"History"</code> does not
+extend its dates or create earlier events.</p>
 <p>This example uses cohort definitions from an ATLAS WebAPI. Replace
-the URL and cohort IDs with your own. Each state ID has one label in the
-same position.</p>
+the URL and cohort IDs with your own. Name each state ID with its
+clinical label.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">Cohort2Trajectory</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://healthinformaticsut.github.io/Cohort2Trajectory/">Cohort2Trajectory</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">studyEnv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
 <span>  studyName <span class="op">=</span> <span class="st">"example"</span>,</span>
@@ -100,20 +102,24 @@ same position.</p>
 <span>  useCDM <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  baseUrl <span class="op">=</span> <span class="st">"http://localhost:8080/WebAPI"</span>,</span>
 <span>  atlasTargetCohort <span class="op">=</span> <span class="fl">101</span>,</span>
-<span>  atlasStateCohorts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">202</span>, <span class="fl">203</span><span class="op">)</span>,</span>
-<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
+<span>  atlasStateCohorts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fl">202</span>, B <span class="op">=</span> <span class="fl">203</span><span class="op">)</span>,</span>
 <span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
 <span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
-<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Use <code>"Discrete"</code> or <code>"Continuous"</code> for
 <code>trajectoryType</code> and <code>"First"</code>,
 <code>"Overlap"</code> or <code>"Priority"</code> for
-<code>stateSelectionType</code>. These options accept names, not numeric
-codes. Discrete trajectories also need a positive whole number of days
-for <code>lengthOfStay</code>. The <a href="a03_trajectories.html">trajectory article</a> explains selection
+<code>stateSelectionType</code>. These options accept names without
+regard to case or surrounding spaces. Discrete trajectories need a
+positive whole number of days for <code>cycleLength</code>. The <a href="a03_trajectories.html">trajectory article</a> explains selection
 and gap handling.</p>
+<p>With a named <code>atlasStateCohorts</code> vector, there is no need
+to repeat <code>stateCohortLabels</code>. An unnamed vector with a
+separate label vector still works. If both are supplied, labels must
+match the names in order. The mapping does not set priorities or
+absorbing states. Supply those choices separately.</p>
 <p>Labels must be nonempty and unique even when ignoring case.
 <code>"0"</code>, <code>"START"</code>, <code>"EXIT"</code> and
 <code>"OUT OF COHORT"</code> are reserved. Keep the same spelling in
@@ -124,21 +130,41 @@ labels, priorities and rule-source names. Labels are not filenames.</p>
 </h2>
 <p><code>stateCohortMandatory = NULL</code> and
 <code>stateCohortAbsorbing = NULL</code> mean no mandatory or absorbing
-states. <code>character(0)</code> also means none. Do not add a
-placeholder state to express the absence of a rule.</p>
-<p>A mandatory state must occur somewhere in the patient’s retained
-interval. It does not mean that the patient must be in that state on Day
-7 or at another specified time. Define time-specific eligibility in the
-target cohort when that is part of the study design. Mandatory
-requirements are applied during import, so changing them requires
-another import.</p>
-<p>An absorbing state ends a trajectory when it is retained by the
-selection and transition rules. Use the exact state label in
+states. <code>character(0)</code> also means none.</p>
+<p>A mandatory state must occur somewhere in the retained observation
+period. Use the target cohort to define eligibility at a particular
+time, such as Day 7. Mandatory requirements are applied during import,
+so changing them requires another import.</p>
+<p>An absorbing state ends the current observation episode when retained
+by the selection and transition rules. Use its exact label in
 <code>stateCohortAbsorbing</code>.</p>
 <p>By default, <code>allowedStatesList</code> permits transitions
-between the configured states. Supply a named list to restrict them. An
-empty list imposes no restrictions. The <a href="../reference/cohort2TrajectoryConfiguration.html">function
-reference</a> describes the full rule syntax.</p>
+between the configured states. To restrict transitions, supply one named
+entry per source state:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">rules</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>A <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, B <span class="op">=</span> <span class="st">"B"</span><span class="op">)</span></span></code></pre></div>
+<p>Pass <code>allowedStatesList = rules</code> when configuring the
+study. This permits A to stay A or enter B, while B can only stay B.
+<code>character(0)</code> for one source permits no destinations from
+that source. An empty list, <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>, leaves transitions
+unrestricted. Unknown destination labels are rejected before generation.
+See <code><a href="../reference/cohort2TrajectoryConfiguration.html">help("cohort2TrajectoryConfiguration")</a></code> for the full
+rule syntax.</p>
+</div>
+<div class="section level2">
+<h2 id="choose-the-observation-periods">Choose the observation periods<a class="anchor" aria-label="anchor" href="#choose-the-observation-periods"></a>
+</h2>
+<p><code>targetEpisodeHandling = "First"</code> uses the first target
+interval per patient. This is the default. Set it to <code>"All"</code>
+to retain each distinct, non-overlapping target interval as a separate
+episode. Mandatory-state requirements then apply to each episode.
+Changing this choice requires another import.</p>
+<p>Transitions, gap handling and elapsed time restart independently in
+each episode. By default, an absorbing state ends only its own episode.
+Set <code>stopAfterAbsorbingEpisode = TRUE</code> to omit that patient’s
+later episodes after a selected, permitted absorbing state. This choice
+can also be supplied at generation for a fresh study. See the <a href="a03_trajectories.html#multiple-observation-periods">multiple-period
+example</a> for input rules and output.</p>
 </div>
 <div class="section level2">
 <h2 id="merge-overlapping-states-when-needed">Merge overlapping states when needed<a class="anchor" aria-label="anchor" href="#merge-overlapping-states-when-needed"></a>
@@ -167,7 +193,7 @@ come first when that priority is equal.</li>
 days 1 to 10 and B on days 5 to 7 produce A, then A+B, then A again. Two
 non-overlapping events within the same week are not combined merely
 because they share a cycle.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">overrides</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/mergedState.html">mergedState</a></span><span class="op">(</span></span>
 <span>    members <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>,</span>
@@ -176,11 +202,15 @@ because they share a cycle.</p>
 <span>    absorbing <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>This override requires <code>mergeStates = TRUE</code>. Its
-destinations and absorbing status replace the inherited values. See the
-<a href="../reference/mergedState.html">merged-state reference</a> for
-further examples and <a href="a05_output.html">output files</a> for the
-state dictionary.</p>
+<p>Pass <code>mergedStateOverrides = overrides</code> and
+<code>mergeStates = TRUE</code> to use this definition. Its destinations
+and absorbing status replace the inherited values. Omit
+<code>allowedTransitions</code> to inherit destinations, or set it to
+<code>NULL</code> to permit none. <code>character(0)</code> and
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> also permit none. Destinations and absorbing status
+are separate choices. See <code><a href="../reference/mergedState.html">help("mergedState")</a></code> for further
+examples and <a href="a05_output.html">output files</a> for the state
+dictionary.</p>
 </div>
 <div class="section level2">
 <h2 id="supply-a-cdm-connection-when-running-the-study">Supply a CDM connection when running the study<a class="anchor" aria-label="anchor" href="#supply-a-cdm-connection-when-running-the-study"></a>
@@ -188,8 +218,8 @@ state dictionary.</p>
 <p>Create a CDM reference with CDMConnector using your site’s database
 connection and a writable schema. For example, with an existing DBI
 connection named <code>connection</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">CDMConnector</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/CDMConnector/man/cdmFromCon.html" class="external-link">cdmFromCon</a></span><span class="op">(</span></span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cdm</span> <span class="op">&lt;-</span> <span class="fu">CDMConnector</span><span class="fu">::</span><span class="fu"><a href="https://darwin-eu.github.io/CDMConnector/reference/cdmFromCon.html" class="external-link">cdmFromCon</a></span><span class="op">(</span></span>
 <span>  con <span class="op">=</span> <span class="va">connection</span>,</span>
 <span>  cdmSchema <span class="op">=</span> <span class="st">"cdm"</span>,</span>
 <span>  writeSchema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>schema <span class="op">=</span> <span class="st">"results"</span>, prefix <span class="op">=</span> <span class="st">"c2t_"</span><span class="op">)</span></span>
@@ -205,15 +235,16 @@ saved study settings. For a data frame or CSV instead of a CDM, set
 <h2 id="repeat-a-saved-study">Repeat a saved study<a class="anchor" aria-label="anchor" href="#repeat-a-saved-study"></a>
 </h2>
 <p>After successful import and trajectory generation, the study contains
-<code>Settings/analysisSettings.rds</code>. The current snapshot format
-is version 4. It stores the analysis settings and, for a CDM study, the
-cohort JSON definitions used during import. It does not contain patient
-data or a database connection.</p>
+<code>Settings/analysisSettings.rds</code>. It stores the analysis
+settings and, for a CDM study, the cohort JSON definitions used during
+import. Patient data and database connections are excluded. Current
+snapshots use format version 6; versions 4 and 5 still load with
+first-period handling and no suppression of later episodes.</p>
 <p>Copy the completed study’s <code>Settings</code> folder to
 <code>new-study-location/example/Settings</code>. JSON and Data folders
 are not needed for a saved CDM run. Connect to the new database and
 restore the study:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">savedStudy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
 <span>  studyName <span class="op">=</span> <span class="st">"example"</span>,</span>
 <span>  pathToStudy <span class="op">=</span> <span class="st">"new-study-location"</span>,</span>
@@ -226,8 +257,7 @@ restore the study:</p>
 are restored from the snapshot. Saved runs import fresh patients using
 the embedded definitions, not edited files in the working JSON folder.
 To change analysis rules or cohort definitions, configure a fresh study
-and complete both steps. Older snapshot formats must also be rerun
-before they can be shared this way.</p>
+and complete both steps.</p>
 <p>A saved local-data study restores its rules in the same way. Set
 <code>useCDM = FALSE</code> and supply a new data frame or CSV, as
 described in the <a href="a02_import.html#saved-studies">import
@@ -240,7 +270,7 @@ article</a>.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

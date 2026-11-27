@@ -34,3 +34,19 @@ destinations. Destination matching is case-insensitive using R's
 locale-aware case conversion, as in trajectory generation. All matching
 entries are removed. Source names still require exact spelling. The
 input list is not modified in place.
+
+## Examples
+
+``` r
+rules <- createStateList(c("Stable", "Complication", "Death"))
+removeListVectorEl(rules, "Complication", "Stable")
+#> $Stable
+#> [1] "Stable"       "Complication" "Death"       
+#> 
+#> $Complication
+#> [1] "Complication" "Death"       
+#> 
+#> $Death
+#> [1] "Stable"       "Complication" "Death"       
+#> 
+```

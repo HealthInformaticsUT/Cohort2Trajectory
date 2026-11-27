@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -70,16 +71,21 @@
       <h1>Getting started</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/vignettes/a00_introduction.Rmd" class="external-link"><code>vignettes/a00_introduction.Rmd</code></a></small>
       <div class="d-none name"><code>a00_introduction.Rmd</code></div>
     </div>
 
     
     
-<p>Cohort2Trajectory builds patient histories from a target cohort and
-state cohorts. The target cohort defines when each patient is observed.
-The state cohorts supply the clinical intervals. You decide what those
-intervals mean and how overlaps should be handled.</p>
+<p>Cohort records describe intervals: when a patient was observed and
+when each clinical state applied. Cohort2Trajectory turns those records
+into patient histories using the same selection and transition rules for
+every patient.</p>
+<p>The target cohort defines each patient’s observation period. State
+cohorts describe events or conditions within that period. You define
+their clinical meaning, choose how to handle overlaps, and request
+either fixed-length cycles or continuous intervals. The resulting table
+can be used for trajectory plots or state-transition analysis.</p>
 <p>This example uses local data, so you do not need a database
 connection. For an OMOP database, see <a href="a02_import.html">Import
 cohort data</a>.</p>
@@ -107,9 +113,9 @@ leading zeros matter.</p>
 <div class="section level2">
 <h2 id="configure-import-and-generate">Configure, import and generate<a class="anchor" aria-label="anchor" href="#configure-import-and-generate"></a>
 </h2>
-<p>Choose seven-day cycles and put B ahead of A if they overlap. The
-input here does not contain any overlap, but specifying the rule makes
-it explicit.</p>
+<p>Choose seven-day cycles and put B ahead of A when they overlap. The
+priority rule is part of the study settings, even though this example
+has no overlaps.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">studyPath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"c2t-getting-started-"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">studyPath</span><span class="op">)</span></span>
@@ -123,7 +129,7 @@ it explicit.</p>
 <span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"B"</span>, <span class="st">"A"</span><span class="op">)</span>,</span>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
 <span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
-<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span>
 <span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">study</span><span class="op">)</span></span></code></pre></div>
@@ -194,17 +200,19 @@ it explicit.</p>
 </tbody>
 </table>
 <p>Patient <code>002</code> is still included. Both cycles have the
-label <code>OUT OF COHORT</code> because no state was supplied. That
-label means an unresolved cycle, not a loss of observation. The second
-cycle ends on January 10, the target-cohort end date, rather than being
-extended to a full week.</p>
+label <code>OUT OF COHORT</code> because no state was supplied. This
+label marks a cycle with no selected state. The second cycle ends on
+January 10, the target-cohort end date.</p>
 <p><code>START</code> is the start boundary. <code>EXIT</code> is the
 day after the last cycle and does not add an observed day. Neither is a
 clinical state.</p>
 <p>The function returns the trajectory table and saves it under
 <code>Example/Data/patientDataDiscrete.csv</code>. The completed
 analysis settings are saved under
-<code>Example/Settings/analysisSettings.rds</code>.</p>
+<code>Example/Settings/analysisSettings.rds</code> so the study can be
+repeated with fresh input. The returned table also carries its state
+definitions and cycle length; use <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> to preserve
+these when saving the table in R.</p>
 </div>
 <div class="section level2">
 <h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>
@@ -214,9 +222,11 @@ analysis settings are saved under
 <a href="a01_configuration.html">Configure a study</a> explains
 state selection, transitions and merging.</li>
 <li>
+<a href="a03_trajectories.html">Create trajectories</a> includes a
+runnable example with multiple observation periods per patient.</li>
+<li>
 <a href="a04_example.html">A weekly worked example</a> uses
-analyst-defined pneumonia-history and death states and checks a
-saved-study rerun.</li>
+analyst-defined pneumonia-history and death states.</li>
 <li>
 <a href="a05_output.html">Read the output</a> explains the columns
 and what must be considered before downstream analysis.</li>
@@ -229,7 +239,7 @@ and what must be considered before downstream analysis.</li>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

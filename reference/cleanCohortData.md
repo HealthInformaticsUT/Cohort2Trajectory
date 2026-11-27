@@ -1,7 +1,6 @@
-# This function eliminates patients which do not fulfill the inclusion criteria
+# Bound cohort intervals and apply mandatory-state requirements
 
-This function eliminates patients which do not fulfill the inclusion
-criteria
+Bound cohort intervals and apply mandatory-state requirements
 
 ## Usage
 
@@ -17,7 +16,7 @@ cleanCohortData(cohortData, mandatoryStates, outOfCohortAllowed = FALSE)
 
 - mandatoryStates:
 
-  States which have to be present in the trajectory, otherwise dropped#'
+  States required for each retained patient.
 
 - outOfCohortAllowed:
 

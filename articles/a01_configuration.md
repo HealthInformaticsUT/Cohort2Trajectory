@@ -8,17 +8,18 @@ both
 [`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
 and
 [`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
-Configuration alone does not retrieve patient data or generate
-trajectories.
+The three steps separate study rules, data import and trajectory
+generation.
 
-The analyst defines the target and state cohorts. The target cohort
-supplies the observation interval. State cohorts supply the clinical
-facts to represent within that interval. Cohort2Trajectory does not
-infer the meaning of a state from its label.
+Start with the study question. Define a target cohort for observation
+and a state cohort for each event or condition you need to follow. For
+example, a history state must have intervals that represent that
+history. Giving a cohort the label `"History"` does not extend its dates
+or create earlier events.
 
 This example uses cohort definitions from an ATLAS WebAPI. Replace the
-URL and cohort IDs with your own. Each state ID has one label in the
-same position.
+URL and cohort IDs with your own. Name each state ID with its clinical
+label.
 
 ``` r
 
@@ -30,21 +31,27 @@ studyEnv <- cohort2TrajectoryConfiguration(
   useCDM = TRUE,
   baseUrl = "http://localhost:8080/WebAPI",
   atlasTargetCohort = 101,
-  atlasStateCohorts = c(202, 203),
-  stateCohortLabels = c("A", "B"),
+  atlasStateCohorts = c(A = 202, B = 203),
   stateCohortPriorityOrder = c("B", "A"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 ```
 
 Use `"Discrete"` or `"Continuous"` for `trajectoryType` and `"First"`,
 `"Overlap"` or `"Priority"` for `stateSelectionType`. These options
-accept names, not numeric codes. Discrete trajectories also need a
-positive whole number of days for `lengthOfStay`. The [trajectory
+accept names without regard to case or surrounding spaces. Discrete
+trajectories need a positive whole number of days for `cycleLength`. The
+[trajectory
 article](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.md)
 explains selection and gap handling.
+
+With a named `atlasStateCohorts` vector, there is no need to repeat
+`stateCohortLabels`. An unnamed vector with a separate label vector
+still works. If both are supplied, labels must match the names in order.
+The mapping does not set priorities or absorbing states. Supply those
+choices separately.
 
 Labels must be nonempty and unique even when ignoring case. `"0"`,
 `"START"`, `"EXIT"` and `"OUT OF COHORT"` are reserved. Keep the same
@@ -54,25 +61,50 @@ filenames.
 ## Choose only the rules you need
 
 `stateCohortMandatory = NULL` and `stateCohortAbsorbing = NULL` mean no
-mandatory or absorbing states. `character(0)` also means none. Do not
-add a placeholder state to express the absence of a rule.
+mandatory or absorbing states. `character(0)` also means none.
 
-A mandatory state must occur somewhere in the patient’s retained
-interval. It does not mean that the patient must be in that state on Day
-7 or at another specified time. Define time-specific eligibility in the
-target cohort when that is part of the study design. Mandatory
-requirements are applied during import, so changing them requires
-another import.
+A mandatory state must occur somewhere in the retained observation
+period. Use the target cohort to define eligibility at a particular
+time, such as Day 7. Mandatory requirements are applied during import,
+so changing them requires another import.
 
-An absorbing state ends a trajectory when it is retained by the
-selection and transition rules. Use the exact state label in
+An absorbing state ends the current observation episode when retained by
+the selection and transition rules. Use its exact label in
 `stateCohortAbsorbing`.
 
 By default, `allowedStatesList` permits transitions between the
-configured states. Supply a named list to restrict them. An empty list
-imposes no restrictions. The [function
-reference](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
-describes the full rule syntax.
+configured states. To restrict transitions, supply one named entry per
+source state:
+
+``` r
+
+rules <- list(A = c("A", "B"), B = "B")
+```
+
+Pass `allowedStatesList = rules` when configuring the study. This
+permits A to stay A or enter B, while B can only stay B. `character(0)`
+for one source permits no destinations from that source. An empty list,
+[`list()`](https://rdrr.io/r/base/list.html), leaves transitions
+unrestricted. Unknown destination labels are rejected before generation.
+See
+[`help("cohort2TrajectoryConfiguration")`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/cohort2TrajectoryConfiguration.md)
+for the full rule syntax.
+
+## Choose the observation periods
+
+`targetEpisodeHandling = "First"` uses the first target interval per
+patient. This is the default. Set it to `"All"` to retain each distinct,
+non-overlapping target interval as a separate episode. Mandatory-state
+requirements then apply to each episode. Changing this choice requires
+another import.
+
+Transitions, gap handling and elapsed time restart independently in each
+episode. By default, an absorbing state ends only its own episode. Set
+`stopAfterAbsorbingEpisode = TRUE` to omit that patient’s later episodes
+after a selected, permitted absorbing state. This choice can also be
+supplied at generation for a fresh study. See the [multiple-period
+example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html#multiple-observation-periods)
+for input rules and output.
 
 ## Merge overlapping states when needed
 
@@ -114,9 +146,13 @@ overrides <- list(
 )
 ```
 
-This override requires `mergeStates = TRUE`. Its destinations and
-absorbing status replace the inherited values. See the [merged-state
-reference](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+Pass `mergedStateOverrides = overrides` and `mergeStates = TRUE` to use
+this definition. Its destinations and absorbing status replace the
+inherited values. Omit `allowedTransitions` to inherit destinations, or
+set it to `NULL` to permit none. `character(0)` and
+[`list()`](https://rdrr.io/r/base/list.html) also permit none.
+Destinations and absorbing status are separate choices. See
+[`help("mergedState")`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
 for further examples and [output
 files](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
 for the state dictionary.
@@ -147,10 +183,11 @@ example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_im
 ## Repeat a saved study
 
 After successful import and trajectory generation, the study contains
-`Settings/analysisSettings.rds`. The current snapshot format is version
-4. It stores the analysis settings and, for a CDM study, the cohort JSON
-definitions used during import. It does not contain patient data or a
-database connection.
+`Settings/analysisSettings.rds`. It stores the analysis settings and,
+for a CDM study, the cohort JSON definitions used during import. Patient
+data and database connections are excluded. Current snapshots use format
+version 6; versions 4 and 5 still load with first-period handling and no
+suppression of later episodes.
 
 Copy the completed study’s `Settings` folder to
 `new-study-location/example/Settings`. JSON and Data folders are not
@@ -173,8 +210,7 @@ Do not repeat labels, rules or cycle settings in these calls. They are
 restored from the snapshot. Saved runs import fresh patients using the
 embedded definitions, not edited files in the working JSON folder. To
 change analysis rules or cohort definitions, configure a fresh study and
-complete both steps. Older snapshot formats must also be rerun before
-they can be shared this way.
+complete both steps.
 
 A saved local-data study restores its rules in the same way. Set
 `useCDM = FALSE` and supply a new data frame or CSV, as described in the

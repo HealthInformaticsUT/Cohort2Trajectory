@@ -1,6 +1,6 @@
-# Custom function to merge overlapping date ranges within each group
+# Merge overlapping date intervals within one patient and state
 
-Custom function to merge overlapping date ranges within each group
+Merge overlapping date intervals within one patient and state
 
 ## Usage
 

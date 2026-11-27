@@ -1,6 +1,6 @@
-# Function for calculating overlap in date intervals
+# Count shared days between two inclusive date intervals
 
-Function for calculating overlap in date intervals
+Count shared days between two inclusive date intervals
 
 ## Usage
 

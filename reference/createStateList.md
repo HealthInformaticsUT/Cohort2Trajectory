@@ -1,6 +1,6 @@
-# Create a list of all states (as elements) for each state (as index)
+# Allow every state to transition to every state
 
-Create a list of all states (as elements) for each state (as index)
+Allow every state to transition to every state
 
 ## Usage
 
@@ -12,4 +12,23 @@ createStateList(stateVector)
 
 - stateVector:
 
-  Vector with the defines state labels
+  Character vector of state labels.
+
+## Value
+
+A named list allowing every state to transition to every state.
+
+## Examples
+
+``` r
+createStateList(c("Stable", "Complication", "Death"))
+#> $Stable
+#> [1] "Stable"       "Complication" "Death"       
+#> 
+#> $Complication
+#> [1] "Stable"       "Complication" "Death"       
+#> 
+#> $Death
+#> [1] "Stable"       "Complication" "Death"       
+#> 
+```

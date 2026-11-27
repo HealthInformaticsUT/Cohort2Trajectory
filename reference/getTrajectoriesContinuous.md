@@ -28,8 +28,8 @@ getTrajectoriesContinuous(
 
 - patientData:
 
-  Object of class data.frame with columns subject_id, state_label,
-  STATE_START_DATE, STATE_END_DATE
+  Cohort intervals with subject_id, cohort_definition_id,
+  cohort_start_date and cohort_end_date columns.
 
 - stateSelection:
 

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">Cohort2Trajectory</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -70,7 +71,7 @@
       <h1>Create trajectories</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/vignettes/a03_trajectories.Rmd" class="external-link"><code>vignettes/a03_trajectories.Rmd</code></a></small>
       <div class="d-none name"><code>a03_trajectories.Rmd</code></div>
     </div>
 
@@ -79,43 +80,36 @@
 <div class="section level2">
 <h2 id="before-generation">Before generation<a class="anchor" aria-label="anchor" href="#before-generation"></a>
 </h2>
-<p>The analyst defines the target cohort and the clinical state cohorts.
-The target interval supplies the observation bounds. State intervals
-determine when a patient belongs to each clinical state, including any
-history states. Cohort2Trajectory applies the configured selection and
-transition rules to these intervals. It does not infer clinical history,
-episode duration or observation coverage.</p>
 <p>Complete the <a href="a01_configuration.html">configuration</a> and
 <a href="a02_import.html">data import</a> before calling
 <code><a href="../reference/createTrajectories.html">createTrajectories()</a></code>. Use the same <code>studyEnv</code>
-throughout the workflow.</p>
+throughout. The target cohort defines observation bounds; the state
+cohorts define clinical intervals. Generation applies the selection,
+transition and absorbing-state rules to those intervals.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">cdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span>
 <span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">cdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
 <p>For local data, omit <code>cdm</code> and configure
-<code>useCDM = FALSE</code>. A failed import blocks generation until
-another import succeeds. Previously saved patient files are not used as
-a substitute for that failed import.</p>
+<code>useCDM = FALSE</code>. Generation requires a successful import; a
+failed import must be rerun before generation can proceed.</p>
 </div>
 <div class="section level2">
 <h2 id="discrete-trajectories">Discrete trajectories<a class="anchor" aria-label="anchor" href="#discrete-trajectories"></a>
 </h2>
-<p>Discrete trajectories assign one state to each fixed-length cycle.
-Set <code>lengthOfStay</code> to the number of calendar days per cycle.
-Despite its name, this argument is a cycle length, not a hospital length
-of stay. For example, use seven days for weekly trajectories:</p>
+<p>Discrete trajectories assign one state to each cycle.
+<code>cycleLength</code> is the number of calendar days per cycle; use
+seven for weekly trajectories:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span></span>
 <span>  cdm <span class="op">=</span> <span class="va">cdm</span>,</span>
 <span>  studyEnv <span class="op">=</span> <span class="va">studyEnv</span>,</span>
 <span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
-<span>  lengthOfStay <span class="op">=</span> <span class="fl">7</span></span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Cycles begin at the target start date. Both ends of a cycle are
-included, and the last cycle is shortened when the observation boundary
-falls before a full cycle ends. The example uses the priority order
-already configured in <code>studyEnv</code>.</p>
+<p>Cycles begin at the target start date and include both endpoint
+dates. The last cycle is shortened at the observation boundary. This
+example uses the priority order configured in <code>studyEnv</code>.</p>
 <p>The three selection methods choose among states that overlap the
 cycle and are allowed by the transition rules:</p>
 <table class="table">
@@ -148,25 +142,23 @@ cycle.</td>
 </tr>
 </tbody>
 </table>
-<p>List every clinical state in <code>stateCohortPriorityOrder</code>,
-with the highest priority first. This is required for all three discrete
-methods. Priority is a ranking, not a way to exclude states from the
-analysis.</p>
-<p>With <code>mergeStates = TRUE</code>, overlapping source intervals
-are composed into states with structured membership during import.
-Selection then uses those resolved states and their inherited rules,
-including any explicit merged-state overrides. See <a href="a01_configuration.html">Configuration</a> for the merging
-rules.</p>
-<p>Use the names <code>"Discrete"</code>, <code>"Continuous"</code>,
-<code>"First"</code>, <code>"Overlap"</code> and <code>"Priority"</code>
-for these settings. Names are case-insensitive. Numeric choice codes are
-not accepted by the public functions.</p>
+<p>All three methods require every clinical state in
+<code>stateCohortPriorityOrder</code>, highest priority first.</p>
+<p>With <code>mergeStates = TRUE</code>, selection uses the combined
+states created during import and their resolved rules. See <a href="a01_configuration.html">Configuration</a> for membership,
+inheritance and <code><a href="../reference/mergedState.html">mergedState()</a></code> overrides. Omitting an
+override’s <code>allowedTransitions</code> inherits destinations;
+supplying <code>NULL</code>, <code>character(0)</code> or
+<code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code> permits none. Absorbing status is a separate
+property.</p>
+<p>Option names are case-insensitive and ignore surrounding spaces. Use
+names, rather than numeric choice codes.</p>
 </div>
 <div class="section level2">
 <h2 id="continuous-trajectories">Continuous trajectories<a class="anchor" aria-label="anchor" href="#continuous-trajectories"></a>
 </h2>
-<p>Continuous trajectories use calendar intervals rather than fixed
-cycles. <code>lengthOfStay</code> does not determine their timing.</p>
+<p>Continuous trajectories use calendar intervals. They do not use
+<code>cycleLength</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span></span>
 <span>  cdm <span class="op">=</span> <span class="va">cdm</span>,</span>
@@ -175,40 +167,37 @@ cycles. <code>lengthOfStay</code> does not determine their timing.</p>
 <span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>In continuous mode, <code>"First"</code> and <code>"Overlap"</code>
-have the same behavior. They retain the bounded input intervals that
-pass the transition rules, including overlapping intervals. They do not
-perform the cycle-level comparisons described above.</p>
-<p>Continuous <code>"Priority"</code> assigns shared days to the
-highest-priority state that the transition rules permit. Lower-priority
-intervals can be shortened or split into separate fragments. Every
-clinical state must appear in the priority order. Continuing the same
-selected interval does not require a new self-transition each time an
+both retain bounded input intervals that pass the transition rules,
+including overlaps.</p>
+<p><code>"Priority"</code> assigns shared days to the highest-priority
+permitted state. It can shorten or split lower-priority intervals and
+requires every clinical state in the priority order. Continuing an
+uninterrupted interval does not require a self-transition when an
 unrelated record starts or ends.</p>
-<p>Continuous output does not extend a state across an undocumented gap.
-Simultaneous records keep their dates and equal elapsed times. Their
-ordering in the table is not evidence that one event occurred earlier
-within that day. A downstream model that requires distinct event times
-needs an explicit tie-handling rule.</p>
+<p>Gaps remain unfilled. Simultaneous records retain their dates and
+equal elapsed times, so row order does not establish within-day event
+order. Models requiring distinct event times need a tie-handling
+rule.</p>
 </div>
 <div class="section level2">
 <h2 id="transition-rules-and-gaps">Transition rules and gaps<a class="anchor" aria-label="anchor" href="#transition-rules-and-gaps"></a>
 </h2>
 <p>An empty <code>allowedStatesList</code> allows unrestricted
-transitions. Otherwise, each state used as a transition source needs one
-named entry containing all its allowed destinations. Use
-<code>character(0)</code> for a source with no allowed destinations.
-Source names must match the state labels exactly. Destination matching
-is case-insensitive. The first clinical state and the <code>START</code>
-and <code>EXIT</code> boundary markers do not need an incoming
-transition rule. For merged studies, a nonempty list must include every
-original state, including absorbing states. Use
-<code>character(0)</code> for an original state with no permitted
-destinations.</p>
-<p>Rules are applied separately for each patient, using the last
-retained clinical state. A rejected record does not become the source
-for later transitions. In discrete mode, only allowed states compete for
-the cycle. In continuous mode, prohibited records are excluded before
-the absorbing-state cutoff.</p>
+transitions. Otherwise, each transition source needs one named entry
+containing its allowed destinations. Use <code>character(0)</code> for a
+source with none. Source names must match state labels exactly;
+destination matching is case-insensitive. Merged studies require an
+entry for every original state, including absorbing states. The first
+clinical state and the <code>START</code> and <code>EXIT</code> markers
+need no incoming rule.</p>
+<p>For nonmerged studies, destinations must be configured states,
+observed states or a named discrete gap fallback. Configured states
+remain valid when absent from the data. Unknown destinations are
+rejected before trajectory or settings files are replaced.</p>
+<p>Rules use each patient’s last retained clinical state. Rejected
+records do not change that source. Only permitted states compete for a
+discrete cycle; in continuous mode, prohibited records are removed
+before the absorbing cutoff.</p>
 <p>When no state can be selected for a discrete cycle,
 <code>oocFix</code> controls the result:</p>
 <ul>
@@ -223,97 +212,202 @@ selected state, the gap remains <code>OUT OF COHORT</code>.</li>
 it is allowed. Use its exact spelling. For merged states, use the
 display label, not the internal <code>state_key</code>.</li>
 </ul>
-<p><code>OUT OF COHORT</code> means that no clinical state was selected
-for the cycle. It does not mean that the patient was unobserved. An
-unresolved cycle does not erase the last selected state when checking
-later transitions. The strings <code>"None"</code> and
-<code>"Last present state"</code> always select their gap-handling
-behavior, even if a clinical state has the same label. Gap handling
-applies only to discrete output.</p>
+<p><code>OUT OF COHORT</code> is an unresolved cycle within observation.
+It does not reset the last selected state for later transition checks.
+<code>"None"</code> and <code>"Last present state"</code> always select
+gap behavior, even if a clinical label has that spelling. These rules
+apply only to discrete output.</p>
 </div>
 <div class="section level2">
 <h2 id="observation-boundaries-and-absorbing-states">Observation boundaries and absorbing states<a class="anchor" aria-label="anchor" href="#observation-boundaries-and-absorbing-states"></a>
 </h2>
-<p>The first target-cohort interval supplies each patient’s start and
-end dates. Patients with no clinical state records can still have
-trajectories if they meet the mandatory-state requirements. Their
-discrete cycles follow the gap rule. Their continuous trajectories
-contain the boundary markers without invented clinical intervals.</p>
-<p>By default, state intervals are bounded by the target interval. With
-<code>outOfCohortAllowed = TRUE</code>, retained state records can
-extend its end, but not its start. Set this during import if those later
-records are needed. Changing it only at generation cannot recover
-records removed during import. Local input must include a target row for
-every patient to be retained during import.</p>
-<p>Only a selected, allowed absorbing state can end the trajectory
-before its observation boundary. A prohibited or unselected absorbing
-record does not end follow-up. No further transition checks are made
-after a retained absorbing state.</p>
-<p>For discrete trajectories, generation stops after the selected
-absorbing cycle. The row still uses the cycle’s dates, so it is not
-automatically shortened to the original event date. If the target
-interval itself ends on that date, the final cycle is shortened at that
-boundary. For continuous trajectories, follow-up ends at the retained
-absorbing interval’s end date. Earlier overlapping intervals are also
-capped at that endpoint.</p>
+<p>By default, the first target interval supplies each patient’s start
+and end dates. With <code>targetEpisodeHandling = "All"</code>, each
+target period supplies its own bounds. Periods without clinical state
+records remain eligible unless mandatory rules exclude them. Their
+discrete cycles follow the gap rule; continuous output contains only
+boundary markers.</p>
+<p>State intervals are bounded by the target interval unless
+<code>outOfCohortAllowed = TRUE</code>. This lets retained records
+extend its end, but not its start. Set it during import to keep later
+records: generation cannot recover discarded records. Local input needs
+a target row for every included patient.</p>
+<p>Only a selected, permitted absorbing state ends follow-up early
+within a period. No further transitions are checked in that period after
+it.</p>
+<p>Discrete output stops after the absorbing cycle, using the cycle’s
+dates. Absorption does not shorten that cycle to the original event
+date; an observation boundary on that date does. Continuous follow-up
+ends at the retained absorbing interval’s end date, and earlier
+overlapping intervals are capped there.</p>
 <p><code>START</code> marks the trajectory start. <code>EXIT</code>
-marks the day after the last retained cycle or the continuous follow-up
-endpoint. These markers do not add observed time and do not, by
-themselves, indicate death.</p>
+marks the day after the final cycle or continuous follow-up endpoint.
+Neither marker adds observed time or indicates death by itself.</p>
+</div>
+<div class="section level2">
+<h2 id="multiple-observation-periods">Multiple observation periods<a class="anchor" aria-label="anchor" href="#multiple-observation-periods"></a>
+</h2>
+<p>The default, <code>targetEpisodeHandling = "First"</code>, uses one
+target interval per patient. Use <code>"All"</code> to generate a
+separate episode for every distinct target interval. Each episode has
+its own <code>START</code> and <code>EXIT</code>, cycles, elapsed time
+and sequence counts. Transitions and carry-forward also restart; gaps
+between target periods produce no rows. State IDs and any merged-state
+dictionary remain study-wide, and <code>batchSize</code> still counts
+patients.</p>
+<p>Here one patient has two periods separated by a gap.
+<code>Discharged</code> is absorbing within the first period. The later
+admission is retained because <code>stopAfterAbsorbingEpisode</code>
+defaults to <code>FALSE</code>. Use <code>TRUE</code> for a terminal
+outcome, such as death, that should exclude subsequent observation
+periods.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">periods</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  subject_id <span class="op">=</span> <span class="st">"001"</span>,</span>
+<span>  cohort_definition_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0"</span>, <span class="st">"0"</span>, <span class="st">"In hospital"</span>, <span class="st">"Discharged"</span>, <span class="st">"In hospital"</span><span class="op">)</span>,</span>
+<span>  cohort_start_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">21</span>, <span class="fl">0</span>, <span class="fl">3</span>, <span class="fl">21</span><span class="op">)</span>,</span>
+<span>  cohort_end_date <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">27</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">27</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">episodePath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"c2t-episodes-"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">episodePath</span><span class="op">)</span></span>
+<span><span class="va">episodeStudy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cohort2TrajectoryConfiguration.html">cohort2TrajectoryConfiguration</a></span><span class="op">(</span></span>
+<span>  studyName <span class="op">=</span> <span class="st">"episodes"</span>,</span>
+<span>  pathToStudy <span class="op">=</span> <span class="va">episodePath</span>,</span>
+<span>  useCDM <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  trajectoryDataObject <span class="op">=</span> <span class="va">periods</span>,</span>
+<span>  stateCohortLabels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"In hospital"</span>, <span class="st">"Discharged"</span><span class="op">)</span>,</span>
+<span>  stateCohortPriorityOrder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Discharged"</span>, <span class="st">"In hospital"</span><span class="op">)</span>,</span>
+<span>  stateCohortAbsorbing <span class="op">=</span> <span class="st">"Discharged"</span>,</span>
+<span>  stateSelectionType <span class="op">=</span> <span class="st">"Priority"</span>,</span>
+<span>  trajectoryType <span class="op">=</span> <span class="st">"Discrete"</span>,</span>
+<span>  cycleLength <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  targetEpisodeHandling <span class="op">=</span> <span class="st">"All"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">episodeStudy</span><span class="op">)</span></span>
+<span><span class="va">episodeTrajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>studyEnv <span class="op">=</span> <span class="va">episodeStudy</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">episodeTrajectories</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"subject_id"</span>, <span class="st">"episode_id"</span>, <span class="st">"state_label"</span>, <span class="st">"state_start_date"</span>, <span class="st">"state_end_date"</span></span>
+<span><span class="op">)</span><span class="op">]</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">subject_id</th>
+<th align="right">episode_id</th>
+<th align="left">state_label</th>
+<th align="left">state_start_date</th>
+<th align="left">state_end_date</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">001</td>
+<td align="right">1</td>
+<td align="left">START</td>
+<td align="left">2020-01-01</td>
+<td align="left">2020-01-01</td>
+</tr>
+<tr class="even">
+<td align="left">001</td>
+<td align="right">1</td>
+<td align="left">Discharged</td>
+<td align="left">2020-01-01</td>
+<td align="left">2020-01-07</td>
+</tr>
+<tr class="odd">
+<td align="left">001</td>
+<td align="right">1</td>
+<td align="left">EXIT</td>
+<td align="left">2020-01-08</td>
+<td align="left">2020-01-08</td>
+</tr>
+<tr class="even">
+<td align="left">001</td>
+<td align="right">2</td>
+<td align="left">START</td>
+<td align="left">2020-01-22</td>
+<td align="left">2020-01-22</td>
+</tr>
+<tr class="odd">
+<td align="left">001</td>
+<td align="right">2</td>
+<td align="left">In hospital</td>
+<td align="left">2020-01-22</td>
+<td align="left">2020-01-28</td>
+</tr>
+<tr class="even">
+<td align="left">001</td>
+<td align="right">2</td>
+<td align="left">EXIT</td>
+<td align="left">2020-01-29</td>
+<td align="left">2020-01-29</td>
+</tr>
+</tbody>
+</table>
+<p>For a fresh study, change suppression at generation:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">firstEpisodeOnly</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span></span>
+<span>  studyEnv <span class="op">=</span> <span class="va">episodeStudy</span>,</span>
+<span>  stopAfterAbsorbingEpisode <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Only a selected, permitted absorbing state triggers suppression. A
+rejected absorbing record does not suppress later episodes. With
+suppression disabled, later episodes start independently of an earlier
+absorbing outcome.</p>
+<p>Input periods must not overlap; adjacent periods are allowed and
+identical duplicates are removed. State records spanning several periods
+are clipped to each. Mandatory-state requirements apply per episode; IDs
+are assigned before that filtering and can therefore have gaps.
+<code>outOfCohortAllowed = TRUE</code> is incompatible with
+<code>"All"</code>. Changing the period policy requires reimport.</p>
+<p>The current TMA reader rejects this multi-episode format. See <a href="a05_output.html#handing-the-result-to-an-analysis-package">Read
+the output</a> before using it in downstream analysis.</p>
 </div>
 <div class="section level2">
 <h2 id="clinical-history-and-event-timing">Clinical history and event timing<a class="anchor" aria-label="anchor" href="#clinical-history-and-event-timing"></a>
 </h2>
-<p>History belongs in the analyst’s state definitions. For example,
-separate absorbing states for death with and without a prior pneumonia
-history can retain that distinction in the selected terminal state.
-Cohort2Trajectory does not construct that history classification from
-the state labels.</p>
-<p>A selected history-specific death state preserves the category, but
-it does not recover exact event timing from a discrete cycle. If
-pneumonia and death occur within one weekly cycle, the output may
-contain only the selected death state. Its cycle dates do not reveal the
-pneumonia onset date, the interval between the events or whether they
-occurred on the same day. Changing the selection method does not make
-the weekly table a complete event log.</p>
-<p>Continuous trajectories and the cleaned interval files provide
-different timing detail. Selection, target-boundary clipping and state
-merging can still affect those intervals. See <a href="a05_output.html">Trajectory output</a> for the output fields, date
-conventions and available files.</p>
+<p>Define history in the state cohorts. Separate death states with and
+without prior pneumonia can preserve that distinction, but the package
+does not derive it from labels. If pneumonia and death fall in one
+weekly cycle, selection may retain only the death label. Its cycle dates
+cannot establish onset, elapsed time between events or same-day
+ordering. Use continuous output or cleaned intervals when the analysis
+needs those dates; see <a href="a05_output.html">Read the
+output</a>.</p>
+<p>To model onset before mortality, generate aligned weekly views: one
+retaining pneumonia history in the terminal week, and one where death
+takes priority. Use identical patient-week boundaries and endpoints.
+TMA’s <code>prepareStageObservations()</code> pairs the views within
+each week before <code>estimateStageTransitions()</code> estimates the
+stages, rather than treating them as independent weekly sequences. See
+TMA’s <code>inst/examples/c2t-to-icer.R</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="saved-studies-and-output">Saved studies and output<a class="anchor" aria-label="anchor" href="#saved-studies-and-output"></a>
 </h2>
-<p>For a fresh study, generation settings can be supplied directly as in
-the examples above. Mandatory-state requirements are an import decision.
-To change them, rerun <code><a href="../reference/getDataForStudy.html">getDataForStudy()</a></code> with the intended
-requirements before generating trajectories.</p>
-<p>A completed fresh run saves
-<code>Settings/analysisSettings.rds</code> in the current version 4
-format. It contains the analysis settings and, for CDM studies, the
-cohort definition contents used by the successful import. It does not
-contain patient data. Only version 4 snapshots are accepted. Older
-snapshots must be recreated by completing import and generation with the
-current package.</p>
+<p>Fresh studies accept generation overrides as above. To change
+mandatory-state requirements, rerun <code><a href="../reference/getDataForStudy.html">getDataForStudy()</a></code>
+first: these determine which patients are imported.</p>
+<p>A completed fresh run saves its rules in
+<code>Settings/analysisSettings.rds</code>. CDM settings also contain
+the imported cohort definitions; patient records are stored separately.
+See <a href="a02_import.html">Import cohort data</a> for saved-study
+setup and settings compatibility.</p>
 <p>After configuring a study with <code>runSavedStudy = TRUE</code>,
 import fresh data and use the restored analysis settings without
 overrides:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/getDataForStudy.html">getDataForStudy</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span>
 <span><span class="va">trajectories</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/createTrajectories.html">createTrajectories</a></span><span class="op">(</span>cdm <span class="op">=</span> <span class="va">newCdm</span>, studyEnv <span class="op">=</span> <span class="va">studyEnv</span><span class="op">)</span></span></code></pre></div>
-<p>Saved CDM runs use the definitions embedded in the snapshot, not the
-current working JSON files. Saved local runs use fresh local input.
-Configure a new study if the analysis rules need to change.</p>
-<p><code><a href="../reference/createTrajectories.html">createTrajectories()</a></code> returns a data frame and saves it
-in the study’s <code>Data</code> directory. The trajectory CSV is
-written after all patient batches finish, so a batch error does not
-replace it with a partial result.</p>
+<p>Saved CDM runs use the embedded cohort definitions. Saved local runs
+need fresh local input. Configure a new study to change the saved
+analysis rules.</p>
+<p><code><a href="../reference/createTrajectories.html">createTrajectories()</a></code> returns a data frame and saves a
+CSV in <code>Data</code> after all patient batches finish. A batch error
+does not replace it with a partial result.</p>
 <p>With <code>useCDM = TRUE</code> and a supplied CDM object, generation
-joins age and gender from the CDM. This can also be requested after
-importing local cohort data. With <code>useCDM = FALSE</code>,
-<code>age</code> and <code>gender_concept_id</code> are present but
-contain <code>NA</code>. No birth date is assumed. The <a href="a05_output.html">output article</a> describes the full schema and
-how to interpret these columns.</p>
+joins age and gender, including after a local import. Otherwise,
+<code>age</code> and <code>gender_concept_id</code> are <code>NA</code>.
+See <a href="a05_output.html">Read the output</a> for the schema and
+saved files.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -322,7 +416,7 @@ how to interpret these columns.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Markus Haug, Greete Kelli Aava, Raivo Kolde.</p>
+  <p>Developed by Markus Haug, Raivo Kolde.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -2,20 +2,16 @@
 
 ## Before generation
 
-The analyst defines the target cohort and the clinical state cohorts.
-The target interval supplies the observation bounds. State intervals
-determine when a patient belongs to each clinical state, including any
-history states. Cohort2Trajectory applies the configured selection and
-transition rules to these intervals. It does not infer clinical history,
-episode duration or observation coverage.
-
 Complete the
 [configuration](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.md)
 and [data
 import](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.md)
 before calling
 [`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md).
-Use the same `studyEnv` throughout the workflow.
+Use the same `studyEnv` throughout. The target cohort defines
+observation bounds; the state cohorts define clinical intervals.
+Generation applies the selection, transition and absorbing-state rules
+to those intervals.
 
 ``` r
 
@@ -23,16 +19,15 @@ getDataForStudy(cdm = cdm, studyEnv = studyEnv)
 trajectories <- createTrajectories(cdm = cdm, studyEnv = studyEnv)
 ```
 
-For local data, omit `cdm` and configure `useCDM = FALSE`. A failed
-import blocks generation until another import succeeds. Previously saved
-patient files are not used as a substitute for that failed import.
+For local data, omit `cdm` and configure `useCDM = FALSE`. Generation
+requires a successful import; a failed import must be rerun before
+generation can proceed.
 
 ## Discrete trajectories
 
-Discrete trajectories assign one state to each fixed-length cycle. Set
-`lengthOfStay` to the number of calendar days per cycle. Despite its
-name, this argument is a cycle length, not a hospital length of stay.
-For example, use seven days for weekly trajectories:
+Discrete trajectories assign one state to each cycle. `cycleLength` is
+the number of calendar days per cycle; use seven for weekly
+trajectories:
 
 ``` r
 
@@ -41,14 +36,13 @@ trajectories <- createTrajectories(
   studyEnv = studyEnv,
   trajectoryType = "Discrete",
   stateSelectionType = "Priority",
-  lengthOfStay = 7
+  cycleLength = 7
 )
 ```
 
-Cycles begin at the target start date. Both ends of a cycle are
-included, and the last cycle is shortened when the observation boundary
-falls before a full cycle ends. The example uses the priority order
-already configured in `studyEnv`.
+Cycles begin at the target start date and include both endpoint dates.
+The last cycle is shortened at the observation boundary. This example
+uses the priority order configured in `studyEnv`.
 
 The three selection methods choose among states that overlap the cycle
 and are allowed by the transition rules:
@@ -59,25 +53,26 @@ and are allowed by the transition rules:
 | `"Overlap"` | Choose the state covering the most distinct days in the cycle. Combine separate intervals for the same state without counting overlapping days twice. Resolve equal coverage using the priority order. |
 | `"Priority"` | Choose the highest-ranked state present during any part of the cycle. |
 
-List every clinical state in `stateCohortPriorityOrder`, with the
-highest priority first. This is required for all three discrete methods.
-Priority is a ranking, not a way to exclude states from the analysis.
+All three methods require every clinical state in
+`stateCohortPriorityOrder`, highest priority first.
 
-With `mergeStates = TRUE`, overlapping source intervals are composed
-into states with structured membership during import. Selection then
-uses those resolved states and their inherited rules, including any
-explicit merged-state overrides. See
+With `mergeStates = TRUE`, selection uses the combined states created
+during import and their resolved rules. See
 [Configuration](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.md)
-for the merging rules.
+for membership, inheritance and
+[`mergedState()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/mergedState.md)
+overrides. Omitting an override’s `allowedTransitions` inherits
+destinations; supplying `NULL`, `character(0)` or
+[`list()`](https://rdrr.io/r/base/list.html) permits none. Absorbing
+status is a separate property.
 
-Use the names `"Discrete"`, `"Continuous"`, `"First"`, `"Overlap"` and
-`"Priority"` for these settings. Names are case-insensitive. Numeric
-choice codes are not accepted by the public functions.
+Option names are case-insensitive and ignore surrounding spaces. Use
+names, rather than numeric choice codes.
 
 ## Continuous trajectories
 
-Continuous trajectories use calendar intervals rather than fixed cycles.
-`lengthOfStay` does not determine their timing.
+Continuous trajectories use calendar intervals. They do not use
+`cycleLength`.
 
 ``` r
 
@@ -89,41 +84,38 @@ trajectories <- createTrajectories(
 )
 ```
 
-In continuous mode, `"First"` and `"Overlap"` have the same behavior.
-They retain the bounded input intervals that pass the transition rules,
-including overlapping intervals. They do not perform the cycle-level
-comparisons described above.
+In continuous mode, `"First"` and `"Overlap"` both retain bounded input
+intervals that pass the transition rules, including overlaps.
 
-Continuous `"Priority"` assigns shared days to the highest-priority
-state that the transition rules permit. Lower-priority intervals can be
-shortened or split into separate fragments. Every clinical state must
-appear in the priority order. Continuing the same selected interval does
-not require a new self-transition each time an unrelated record starts
-or ends.
+`"Priority"` assigns shared days to the highest-priority permitted
+state. It can shorten or split lower-priority intervals and requires
+every clinical state in the priority order. Continuing an uninterrupted
+interval does not require a self-transition when an unrelated record
+starts or ends.
 
-Continuous output does not extend a state across an undocumented gap.
-Simultaneous records keep their dates and equal elapsed times. Their
-ordering in the table is not evidence that one event occurred earlier
-within that day. A downstream model that requires distinct event times
-needs an explicit tie-handling rule.
+Gaps remain unfilled. Simultaneous records retain their dates and equal
+elapsed times, so row order does not establish within-day event order.
+Models requiring distinct event times need a tie-handling rule.
 
 ## Transition rules and gaps
 
 An empty `allowedStatesList` allows unrestricted transitions. Otherwise,
-each state used as a transition source needs one named entry containing
-all its allowed destinations. Use `character(0)` for a source with no
-allowed destinations. Source names must match the state labels exactly.
-Destination matching is case-insensitive. The first clinical state and
-the `START` and `EXIT` boundary markers do not need an incoming
-transition rule. For merged studies, a nonempty list must include every
-original state, including absorbing states. Use `character(0)` for an
-original state with no permitted destinations.
+each transition source needs one named entry containing its allowed
+destinations. Use `character(0)` for a source with none. Source names
+must match state labels exactly; destination matching is
+case-insensitive. Merged studies require an entry for every original
+state, including absorbing states. The first clinical state and the
+`START` and `EXIT` markers need no incoming rule.
 
-Rules are applied separately for each patient, using the last retained
-clinical state. A rejected record does not become the source for later
-transitions. In discrete mode, only allowed states compete for the
-cycle. In continuous mode, prohibited records are excluded before the
-absorbing-state cutoff.
+For nonmerged studies, destinations must be configured states, observed
+states or a named discrete gap fallback. Configured states remain valid
+when absent from the data. Unknown destinations are rejected before
+trajectory or settings files are replaced.
+
+Rules use each patient’s last retained clinical state. Rejected records
+do not change that source. Only permitted states compete for a discrete
+cycle; in continuous mode, prohibited records are removed before the
+absorbing cutoff.
 
 When no state can be selected for a discrete cycle, `oocFix` controls
 the result:
@@ -136,81 +128,155 @@ the result:
   is allowed. Use its exact spelling. For merged states, use the display
   label, not the internal `state_key`.
 
-`OUT OF COHORT` means that no clinical state was selected for the cycle.
-It does not mean that the patient was unobserved. An unresolved cycle
-does not erase the last selected state when checking later transitions.
-The strings `"None"` and `"Last present state"` always select their
-gap-handling behavior, even if a clinical state has the same label. Gap
-handling applies only to discrete output.
+`OUT OF COHORT` is an unresolved cycle within observation. It does not
+reset the last selected state for later transition checks. `"None"` and
+`"Last present state"` always select gap behavior, even if a clinical
+label has that spelling. These rules apply only to discrete output.
 
 ## Observation boundaries and absorbing states
 
-The first target-cohort interval supplies each patient’s start and end
-dates. Patients with no clinical state records can still have
-trajectories if they meet the mandatory-state requirements. Their
-discrete cycles follow the gap rule. Their continuous trajectories
-contain the boundary markers without invented clinical intervals.
+By default, the first target interval supplies each patient’s start and
+end dates. With `targetEpisodeHandling = "All"`, each target period
+supplies its own bounds. Periods without clinical state records remain
+eligible unless mandatory rules exclude them. Their discrete cycles
+follow the gap rule; continuous output contains only boundary markers.
 
-By default, state intervals are bounded by the target interval. With
-`outOfCohortAllowed = TRUE`, retained state records can extend its end,
-but not its start. Set this during import if those later records are
-needed. Changing it only at generation cannot recover records removed
-during import. Local input must include a target row for every patient
-to be retained during import.
+State intervals are bounded by the target interval unless
+`outOfCohortAllowed = TRUE`. This lets retained records extend its end,
+but not its start. Set it during import to keep later records:
+generation cannot recover discarded records. Local input needs a target
+row for every included patient.
 
-Only a selected, allowed absorbing state can end the trajectory before
-its observation boundary. A prohibited or unselected absorbing record
-does not end follow-up. No further transition checks are made after a
-retained absorbing state.
+Only a selected, permitted absorbing state ends follow-up early within a
+period. No further transitions are checked in that period after it.
 
-For discrete trajectories, generation stops after the selected absorbing
-cycle. The row still uses the cycle’s dates, so it is not automatically
-shortened to the original event date. If the target interval itself ends
-on that date, the final cycle is shortened at that boundary. For
-continuous trajectories, follow-up ends at the retained absorbing
-interval’s end date. Earlier overlapping intervals are also capped at
-that endpoint.
+Discrete output stops after the absorbing cycle, using the cycle’s
+dates. Absorption does not shorten that cycle to the original event
+date; an observation boundary on that date does. Continuous follow-up
+ends at the retained absorbing interval’s end date, and earlier
+overlapping intervals are capped there.
 
-`START` marks the trajectory start. `EXIT` marks the day after the last
-retained cycle or the continuous follow-up endpoint. These markers do
-not add observed time and do not, by themselves, indicate death.
+`START` marks the trajectory start. `EXIT` marks the day after the final
+cycle or continuous follow-up endpoint. Neither marker adds observed
+time or indicates death by itself.
+
+## Multiple observation periods
+
+The default, `targetEpisodeHandling = "First"`, uses one target interval
+per patient. Use `"All"` to generate a separate episode for every
+distinct target interval. Each episode has its own `START` and `EXIT`,
+cycles, elapsed time and sequence counts. Transitions and carry-forward
+also restart; gaps between target periods produce no rows. State IDs and
+any merged-state dictionary remain study-wide, and `batchSize` still
+counts patients.
+
+Here one patient has two periods separated by a gap. `Discharged` is
+absorbing within the first period. The later admission is retained
+because `stopAfterAbsorbingEpisode` defaults to `FALSE`. Use `TRUE` for
+a terminal outcome, such as death, that should exclude subsequent
+observation periods.
+
+``` r
+
+periods <- data.frame(
+  subject_id = "001",
+  cohort_definition_id = c("0", "0", "In hospital", "Discharged", "In hospital"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 21, 0, 3, 21),
+  cohort_end_date = as.Date("2020-01-01") + c(6, 27, 2, 3, 27)
+)
+episodePath <- tempfile("c2t-episodes-")
+dir.create(episodePath)
+episodeStudy <- cohort2TrajectoryConfiguration(
+  studyName = "episodes",
+  pathToStudy = episodePath,
+  useCDM = FALSE,
+  trajectoryDataObject = periods,
+  stateCohortLabels = c("In hospital", "Discharged"),
+  stateCohortPriorityOrder = c("Discharged", "In hospital"),
+  stateCohortAbsorbing = "Discharged",
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  cycleLength = 7,
+  targetEpisodeHandling = "All"
+)
+getDataForStudy(studyEnv = episodeStudy)
+episodeTrajectories <- createTrajectories(studyEnv = episodeStudy)
+```
+
+``` r
+
+knitr::kable(episodeTrajectories[c(
+  "subject_id", "episode_id", "state_label", "state_start_date", "state_end_date"
+)], row.names = FALSE)
+```
+
+| subject_id | episode_id | state_label | state_start_date | state_end_date |
+|:-----------|-----------:|:------------|:-----------------|:---------------|
+| 001        |          1 | START       | 2020-01-01       | 2020-01-01     |
+| 001        |          1 | Discharged  | 2020-01-01       | 2020-01-07     |
+| 001        |          1 | EXIT        | 2020-01-08       | 2020-01-08     |
+| 001        |          2 | START       | 2020-01-22       | 2020-01-22     |
+| 001        |          2 | In hospital | 2020-01-22       | 2020-01-28     |
+| 001        |          2 | EXIT        | 2020-01-29       | 2020-01-29     |
+
+For a fresh study, change suppression at generation:
+
+``` r
+
+firstEpisodeOnly <- createTrajectories(
+  studyEnv = episodeStudy,
+  stopAfterAbsorbingEpisode = TRUE
+)
+```
+
+Only a selected, permitted absorbing state triggers suppression. A
+rejected absorbing record does not suppress later episodes. With
+suppression disabled, later episodes start independently of an earlier
+absorbing outcome.
+
+Input periods must not overlap; adjacent periods are allowed and
+identical duplicates are removed. State records spanning several periods
+are clipped to each. Mandatory-state requirements apply per episode; IDs
+are assigned before that filtering and can therefore have gaps.
+`outOfCohortAllowed = TRUE` is incompatible with `"All"`. Changing the
+period policy requires reimport.
+
+The current TMA reader rejects this multi-episode format. See [Read the
+output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html#handing-the-result-to-an-analysis-package)
+before using it in downstream analysis.
 
 ## Clinical history and event timing
 
-History belongs in the analyst’s state definitions. For example,
-separate absorbing states for death with and without a prior pneumonia
-history can retain that distinction in the selected terminal state.
-Cohort2Trajectory does not construct that history classification from
-the state labels.
+Define history in the state cohorts. Separate death states with and
+without prior pneumonia can preserve that distinction, but the package
+does not derive it from labels. If pneumonia and death fall in one
+weekly cycle, selection may retain only the death label. Its cycle dates
+cannot establish onset, elapsed time between events or same-day
+ordering. Use continuous output or cleaned intervals when the analysis
+needs those dates; see [Read the
+output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md).
 
-A selected history-specific death state preserves the category, but it
-does not recover exact event timing from a discrete cycle. If pneumonia
-and death occur within one weekly cycle, the output may contain only the
-selected death state. Its cycle dates do not reveal the pneumonia onset
-date, the interval between the events or whether they occurred on the
-same day. Changing the selection method does not make the weekly table a
-complete event log.
-
-Continuous trajectories and the cleaned interval files provide different
-timing detail. Selection, target-boundary clipping and state merging can
-still affect those intervals. See [Trajectory
-output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
-for the output fields, date conventions and available files.
+To model onset before mortality, generate aligned weekly views: one
+retaining pneumonia history in the terminal week, and one where death
+takes priority. Use identical patient-week boundaries and endpoints.
+TMA’s `prepareStageObservations()` pairs the views within each week
+before `estimateStageTransitions()` estimates the stages, rather than
+treating them as independent weekly sequences. See TMA’s
+`inst/examples/c2t-to-icer.R`.
 
 ## Saved studies and output
 
-For a fresh study, generation settings can be supplied directly as in
-the examples above. Mandatory-state requirements are an import decision.
-To change them, rerun
+Fresh studies accept generation overrides as above. To change
+mandatory-state requirements, rerun
 [`getDataForStudy()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/getDataForStudy.md)
-with the intended requirements before generating trajectories.
+first: these determine which patients are imported.
 
-A completed fresh run saves `Settings/analysisSettings.rds` in the
-current version 4 format. It contains the analysis settings and, for CDM
-studies, the cohort definition contents used by the successful import.
-It does not contain patient data. Only version 4 snapshots are accepted.
-Older snapshots must be recreated by completing import and generation
-with the current package.
+A completed fresh run saves its rules in
+`Settings/analysisSettings.rds`. CDM settings also contain the imported
+cohort definitions; patient records are stored separately. See [Import
+cohort
+data](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.md)
+for saved-study setup and settings compatibility.
 
 After configuring a study with `runSavedStudy = TRUE`, import fresh data
 and use the restored analysis settings without overrides:
@@ -221,18 +287,16 @@ getDataForStudy(cdm = newCdm, studyEnv = studyEnv)
 trajectories <- createTrajectories(cdm = newCdm, studyEnv = studyEnv)
 ```
 
-Saved CDM runs use the definitions embedded in the snapshot, not the
-current working JSON files. Saved local runs use fresh local input.
-Configure a new study if the analysis rules need to change.
+Saved CDM runs use the embedded cohort definitions. Saved local runs
+need fresh local input. Configure a new study to change the saved
+analysis rules.
 
 [`createTrajectories()`](https://healthinformaticsut.github.io/Cohort2Trajectory/reference/createTrajectories.md)
-returns a data frame and saves it in the study’s `Data` directory. The
-trajectory CSV is written after all patient batches finish, so a batch
-error does not replace it with a partial result.
+returns a data frame and saves a CSV in `Data` after all patient batches
+finish. A batch error does not replace it with a partial result.
 
 With `useCDM = TRUE` and a supplied CDM object, generation joins age and
-gender from the CDM. This can also be requested after importing local
-cohort data. With `useCDM = FALSE`, `age` and `gender_concept_id` are
-present but contain `NA`. No birth date is assumed. The [output
-article](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
-describes the full schema and how to interpret these columns.
+gender, including after a local import. Otherwise, `age` and
+`gender_concept_id` are `NA`. See [Read the
+output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.md)
+for the schema and saved files.

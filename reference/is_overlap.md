@@ -1,6 +1,6 @@
-# Function to check if two periods overlap
+# Check whether two inclusive date intervals overlap
 
-Function to check if two periods overlap
+Check whether two inclusive date intervals overlap
 
 ## Usage
 
