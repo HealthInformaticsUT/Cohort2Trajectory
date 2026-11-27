@@ -9,7 +9,6 @@
 ^tmp$
 ^LICENSE$
 ^tools$
-^cran-comments\.txt$
 ^.*\.Rcheck$
 ^.*\.(tar\.gz|zip)$
 (^|/)\.DS_Store$
