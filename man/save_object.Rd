@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{save_object}
 \alias{save_object}
-\title{Function for saving summary tables to path}
+\title{Save a table as CSV or another object as an R data file}
 \usage{
 save_object(object, path)
 }
@@ -12,6 +12,6 @@ save_object(object, path)
 \item{path}{Path to the file saved}
 }
 \description{
-Function for saving summary tables to path
+Save a table as CSV or another object as an R data file
 }
 \keyword{internal}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{.toJSON}
 \alias{.toJSON}
-\title{Function which converts text formatted JSON to digestible JSON}
+\title{Serialize a cohort expression as JSON}
 \usage{
 .toJSON(input, pretty = FALSE)
 }
@@ -12,6 +12,6 @@
 \item{pretty}{Whether to indent the JSON output.}
 }
 \description{
-Function which converts text formatted JSON to digestible JSON
+Serialize a cohort expression as JSON
 }
 \keyword{internal}

@@ -2,14 +2,14 @@
 % Please edit documentation in R/importData.R
 \name{cleanCohortData}
 \alias{cleanCohortData}
-\title{This function eliminates patients which do not fulfill the inclusion criteria}
+\title{Bound cohort intervals and apply mandatory-state requirements}
 \usage{
 cleanCohortData(cohortData, mandatoryStates, outOfCohortAllowed = FALSE)
 }
 \arguments{
 \item{cohortData}{Imported cohort data}
 
-\item{mandatoryStates}{States which have to be present in the trajectory, otherwise dropped#'}
+\item{mandatoryStates}{States required for each retained patient.}
 
 \item{outOfCohortAllowed}{boolean whether the patient trajectory can surpass the target cohort's observation-period}
 }
@@ -17,6 +17,6 @@ cleanCohortData(cohortData, mandatoryStates, outOfCohortAllowed = FALSE)
 A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 }
 \description{
-This function eliminates patients which do not fulfill the inclusion criteria
+Bound cohort intervals and apply mandatory-state requirements
 }
 \keyword{internal}

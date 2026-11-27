@@ -34,8 +34,7 @@ Imports:
     cli,
     httr2 (>= 1.0.0),
     rlang,
-    omopgenerics (>= 1.2.0),
-    SqlRender
+    omopgenerics (>= 1.2.0)
 Suggests:
     testthat (>= 3.1.7),
     duckdb,

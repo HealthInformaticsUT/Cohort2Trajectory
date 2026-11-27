@@ -14,6 +14,21 @@ test_that("date overlap counts the shared days including both endpoints", {
   expect_equal(unname(actual), intervals$expected)
 })
 
+test_that("import merges overlaps within each patient and state", {
+  origin <- as.Date("2020-01-01")
+  input <- data.frame(
+    subject_id = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L),
+    cohort_definition_id = c("0", "A", "A", "A", "B", "0", "A", "A"),
+    cohort_start_date = origin + c(0, 3, 0, 10, 1, 0, 4, 2),
+    cohort_end_date = origin + c(20, 6, 3, 12, 5, 20, 7, 4)
+  )
+  cleaned <- as.data.frame(cleanCohortData(input, mandatoryStates = NULL))
+  expect_equal(cleaned$subject_id, c(1L, 1L, 1L, 1L, 2L, 2L))
+  expect_equal(cleaned$cohort_definition_id, c("0", "A", "B", "A", "0", "A"))
+  expect_equal(cleaned$cohort_start_date, origin + c(0, 0, 1, 10, 0, 2))
+  expect_equal(cleaned$cohort_end_date, origin + c(20, 6, 5, 12, 20, 7))
+})
+
 test_that("discrete selection uses actual overlap at boundaries and within long records", {
   data <- data.frame(
     subject_id = c(1L, 1L, 2L, 2L),

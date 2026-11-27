@@ -2,7 +2,7 @@
 % Please edit documentation in R/importData.R
 \name{getTrajectoriesDiscrete}
 \alias{getTrajectoriesDiscrete}
-\title{Convert the imported cohort data to patient treatmnet trajectories}
+\title{Construct discrete patient histories}
 \usage{
 getTrajectoriesDiscrete(
   cdm,
@@ -22,7 +22,8 @@ getTrajectoriesDiscrete(
 \arguments{
 \item{cdm}{a cdm object}
 
-\item{cohortData}{A data.frame object which is queried with getCohortsPatients function}
+\item{cohortData}{Cohort intervals with subject_id, cohort_definition_id,
+cohort_start_date and cohort_end_date columns.}
 
 \item{stateDuration}{Positive whole-number cycle length in days. The final cycle is shortened when
 the trajectory boundary falls before a full cycle is complete.}
@@ -46,7 +47,7 @@ the trajectory boundary falls before a full cycle is complete.}
 \item{outOfCohortAllowed}{Whether retained states may extend the target endpoint.}
 }
 \description{
-This function outputs a data.frame object which describes the movement of patients between the defined states
+Select one state per cycle and add trajectory boundary markers.
 }
 \details{
 EXIT is a boundary marker on the day after the final retained cycle.

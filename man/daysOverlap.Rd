@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{daysOverlap}
 \alias{daysOverlap}
-\title{Function for calculating overlap in date intervals}
+\title{Count shared days between two inclusive date intervals}
 \usage{
 daysOverlap(dateStart, dateEnd, controlStart, controlEnd)
 }
@@ -16,6 +16,6 @@ daysOverlap(dateStart, dateEnd, controlStart, controlEnd)
 \item{controlEnd}{End of the date interval of interest}
 }
 \description{
-Function for calculating overlap in date intervals
+Count shared days between two inclusive date intervals
 }
 \keyword{internal}

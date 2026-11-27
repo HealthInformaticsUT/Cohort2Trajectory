@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{merge_overlaps}
 \alias{merge_overlaps}
-\title{Custom function to merge overlapping date ranges within each group}
+\title{Merge overlapping date intervals within one patient and state}
 \usage{
 merge_overlaps(data)
 }
@@ -10,6 +10,6 @@ merge_overlaps(data)
 \item{data}{A dataframe with raw cohort data}
 }
 \description{
-Custom function to merge overlapping date ranges within each group
+Merge overlapping date intervals within one patient and state
 }
 \keyword{internal}

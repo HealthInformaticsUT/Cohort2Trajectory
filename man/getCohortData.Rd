@@ -2,7 +2,7 @@
 % Please edit documentation in R/importData.R
 \name{getCohortData}
 \alias{getCohortData}
-\title{Get selected generated cohorts patient data}
+\title{Generate and collect selected cohorts}
 \usage{
 getCohortData(
   cdm,
@@ -39,6 +39,7 @@ getCohortData(
 A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
 }
 \description{
-This function queries all patient ID's in selected cohorts
+Read or download cohort definitions, generate the cohorts and collect their
+patient intervals.
 }
 \keyword{internal}

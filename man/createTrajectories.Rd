@@ -26,179 +26,148 @@ createTrajectories(
 }
 \arguments{
 \item{cdm}{A CDM reference created with CDMConnector, required when joining
-demographics with useCDM = TRUE.}
+demographics with \code{useCDM = TRUE}.}
 
-\item{studyEnv}{Study environment returned by cohort2TrajectoryConfiguration.}
+\item{studyEnv}{Study environment returned by
+\code{\link{cohort2TrajectoryConfiguration}}. Its settings supply the defaults.}
 
-\item{trajectoryType}{Trajectory format, either "Discrete" or "Continuous".
-Names are case-insensitive. Numeric choice codes are not accepted.}
+\item{trajectoryType}{\code{"Discrete"} or \code{"Continuous"}, ignoring case
+and surrounding whitespace. A choice is required for generation.}
 
 \item{runSavedStudy}{Whether to use restored saved-study settings. Import
 fresh data first. Saved runs do not accept analysis-setting overrides.}
 
-\item{oocFix}{Discrete gap rule. Use "None" or "OUT OF COHORT" to leave gaps
-unresolved, "Last present state" to carry an allowed state forward, or
-a state label as a fallback. See Details for label requirements.}
+\item{oocFix}{Discrete gap rule: \code{"None"}, \code{"OUT OF COHORT"},
+\code{"Last present state"} or a fallback state label. See
+\code{\link{cohort2TrajectoryConfiguration}} for transition and label rules.}
 
-\item{outOfCohortAllowed}{Whether retained records may extend the target
-interval's end. The target start is unchanged.}
+\item{outOfCohortAllowed}{Whether retained state records may extend the
+trajectory beyond the target interval's end. The target start is unchanged.}
 
-\item{cycleLength}{Positive whole-number cycle length in days for discrete
-trajectories. Use 7 for weekly cycles. Continuous output does not use it.}
+\item{cycleLength}{Positive whole-number cycle length in days, within R's
+integer range. Required when generating discrete trajectories. It may be
+\code{NULL} during configuration. The final cycle is shortened at the
+observation boundary.}
 
-\item{stateCohortLabels}{Nonblank, non-missing clinical state labels, unique
-ignoring case. The labels "0", "START", "EXIT" and "OUT OF COHORT" are
-reserved, also ignoring case.}
+\item{stateCohortLabels}{Character vector of state labels. May be omitted
+when \code{atlasStateCohorts} is named. If both are supplied, the labels
+must match its names in order. Labels must be nonempty, non-missing and unique
+even when ignoring case. \code{"0"}, \code{"START"}, \code{"EXIT"} and
+\code{"OUT OF COHORT"} are reserved, including case variants. Labels may
+contain spaces or punctuation. They are separate from database cohort
+names and definition filenames.}
 
-\item{stateCohortPriorityOrder}{State labels ordered from highest to lowest
-priority. Required for all discrete methods and continuous Priority.}
+\item{stateCohortPriorityOrder}{State labels from highest to lowest priority.
+All states within the observation bounds must be listed for discrete
+selection or continuous \code{"Priority"} selection. For a merged study,
+\code{NULL} uses a deterministic order of original states.}
 
-\item{stateSelectionType}{Selection method, either "First", "Overlap" or
-"Priority". Names are case-insensitive. A method must be specified.}
+\item{stateSelectionType}{\code{"First"}, \code{"Overlap"} or
+\code{"Priority"}, ignoring case and surrounding whitespace. A choice is
+required for generation.}
 
-\item{stateCohortAbsorbing}{Labels of states that end a trajectory when
-retained. In nonmerged studies, use the exact spelling of a configured
-state, observed state or named discrete fallback. NULL and character(0)
-mean no absorbing states. Configured states may be absent from the data.}
+\item{stateCohortAbsorbing}{State labels that end follow-up when selected.
+\code{NULL} or \code{character(0)} means none. For an unmerged study, use
+exact configured or observed labels, or a named discrete fallback.
+Configured states may be absent from the current data. For merged studies,
+supply original state labels here and use \code{mergedStateOverrides}
+for exceptions.}
 
 \item{stateCohortMandatory}{Mandatory states used by the successful import.
-Rerun getDataForStudy to change them. Order and duplicates do not matter.
-NULL and character(0) both mean no requirements.}
+Rerun \code{\link{getDataForStudy}} to change them. Order and duplicates do
+not matter. \code{NULL} and \code{character(0)} both mean no requirements.}
 
-\item{allowedStatesList}{Named list of allowed destinations for each source
-state. Use one unique, nonempty, non-missing source name per entry, such
-as list(A = c("B", "C")). An empty list imposes no restrictions.
-In nonmerged studies, destinations must match configured or observed
-states, or a named discrete fallback, ignoring case. Unknown destinations
-are rejected before generation writes output files.}
+\item{allowedStatesList}{Named list of allowed destinations, for example
+\code{list(A = c("B", "C"))}. Source names must be unique, nonempty and
+non-missing. Put all destinations for one source in a single entry.
+An empty list allows all transitions. \code{character(0)} or \code{NULL}
+in an individual entry permits no destinations.
+Nonmerged generation checks destinations against configured and observed
+states and any named discrete fallback, ignoring case. Unknown destinations
+are rejected before output files are written. Configured states may be
+unobserved.}
 
 \item{useCDM}{Whether to join age and gender from the supplied CDM. Otherwise,
-age and gender_concept_id contain NA. No birth date is assumed or added.}
+\code{age} and \code{gender_concept_id} contain \code{NA}.}
 
 \item{pathToStudy}{Directory containing the study folder. Generation uses
-the location stored in studyEnv.}
+the location stored in \code{studyEnv}.}
 
-\item{batchSize}{Positive whole-number maximum patients per batch.}
+\item{batchSize}{Maximum patients per generation batch. Supply one positive
+whole number within R's integer range. The default is 1000.}
 
-\item{mergedStateOverrides}{List of mergedState() definitions that replace
-selected inherited properties of merged states.}
+\item{mergedStateOverrides}{List of \code{\link{mergedState}} definitions.
+Requires \code{mergeStates = TRUE}. Supply at most one definition per
+membership set. Omitted properties retain inherited values.}
 }
 \value{
 A data frame of class \code{c2t_trajectories}, also saved as a CSV in
-  the study's Data directory. Printing shows counts and a short preview;
-  all columns and rows remain available. Use \code{as.data.frame(result)}
-  for the ordinary data-frame display. See the output vignette for the
-  complete schema and \code{\link{print.c2t_study}} for printing options.
+  the study's \code{Data} directory. Printing shows counts and a short preview;
+  use \code{as.data.frame(result)} for the ordinary data-frame display. See
+  \code{\link{print.c2t_trajectories}} for printing options and the output
+  vignette for the complete schema.
   The \code{trajectory_definition} attribute records the effective trajectory
-  type, cycle length, ordered clinical labels and absorbing labels. TMA reads
-  these settings directly. Configured but unobserved states and resolved
-  merged-state overrides are included. \code{saveRDS()} preserves this
-  attribute; CSV output contains only rows and columns.
+  type, cycle length, ordered clinical labels and absorbing labels.
+  \pkg{TrajectoryMarkovAnalysis} reads these settings directly. Labels and
+  absorbing status reflect merged-state overrides; configured but unobserved
+  states remain declared.
+  \code{saveRDS()} preserves this attribute; CSV output contains only rows
+  and columns.
 }
 \description{
 Apply the configured selection, transition and gap rules to a successful
-study import. The analyst defines clinical states and their intervals.
-The target cohort supplies the observation bounds.
-}
-\details{
-In discrete mode, First selects the earliest-starting eligible interval in
-a cycle. Overlap selects the state covering the most distinct days in that
-cycle, combining intervals without double-counting shared days. Both methods
-use the priority order to resolve ties. Priority selects the highest-ranked
-eligible state present during any part of the cycle. Every clinical state
-in the bounded input must appear in the priority order.
-
-In continuous mode, First and Overlap both retain intervals that pass the
-transition rules, including overlaps. Priority assigns shared days to the
-highest-ranked eligible state and can split lower-priority intervals. It
-also requires every clinical state to appear in the priority order.
-Uninterrupted selected intervals do not require self-transitions at unrelated
-record boundaries. Gaps are not filled and simultaneous records keep their
-dates. Models requiring unique event times need an explicit tie-handling rule.
-
-Transition rules use the last retained clinical state. Rejected records do
-not change that state. Source names must use the exact clinical labels.
-Destination matching is case-insensitive. In a nonempty rule list, each
-source used for a transition needs an entry. For merged studies, a nonempty
-list must include every original state, including absorbing states.
-character(0) permits no destinations. The first clinical state and boundary
-markers need no incoming
-rule. Only an allowed, retained absorbing state can end follow-up before
-the observation boundary.
-
-For discrete gaps, carry-forward requires an allowed self-transition and a
-named fallback must be an allowed destination. Otherwise the cycle remains
-OUT OF COHORT. This means no selected state, not loss of observation, and
-does not reset the last retained state for later transition checks.
-Supply one nonempty oocFix string. "None" and "Last present state" always
-select gap-handling behavior, even if a clinical state has that label.
-Boundary labels "0", "START" and "EXIT" are not valid fallbacks.
-Use the exact spelling of an existing label. A new label must not differ
-only in case from an existing clinical or merged-state label. For merged
-states, use the display label rather than state_key. Declare key-like text
-in stateCohortLabels if it is intended as a separate literal state.
+study import. See \code{\link{cohort2TrajectoryConfiguration}} for these rules
+and the required state definitions.
 }
 \section{Boundaries and timing}{
 
-The first target interval, labelled 0 in cleaned data, supplies the start
-and end boundaries. Patients without clinical state records remain eligible
-unless mandatory-state requirements exclude them. Discrete cycles include
+The first target interval, labelled \code{"0"} in cleaned data, supplies the
+start and end boundaries. Patients without clinical state records remain
+eligible unless mandatory-state requirements exclude them. Discrete cycles include
 both endpoint dates, and the final cycle is shortened at the observation
 boundary. A selected absorbing state stops generation after its cycle.
-The cycle is not independently shortened to that state's original onset date.
+Its original onset date does not shorten that cycle.
 
 Continuous trajectories end at the retained absorbing interval's end date.
-Earlier overlapping intervals are capped at that endpoint. START and EXIT
-are boundary markers and do not add observed time. EXIT is on the day after
-the last discrete cycle or continuous follow-up endpoint. Its time_in_cohort
+Earlier overlapping intervals are capped at that endpoint. \code{START} and
+\code{EXIT} are boundary markers and add no observed time. \code{EXIT} is on
+the day after the last cycle or continuous endpoint. Its \code{time_in_cohort}
 is elapsed years from trajectory start, using 365.25 days per year.
 
-Setting outOfCohortAllowed = TRUE can extend the endpoint using retained
-state records, but cannot recover records removed during import. Public
-imports require a target row for each included patient. The package does
-not infer observation coverage, episode duration or clinical
-history. An analyst-defined history-specific terminal state preserves its
-category when selected, but a discrete row does not retain exact event dates
-or ordering within its cycle.
+\code{outOfCohortAllowed = TRUE} can extend the endpoint using retained state
+records; it cannot recover records removed during import. A discrete state
+label represents the selected state for a cycle, without preserving exact
+event dates or ordering within that cycle.
 }
 
 \section{Study workflow}{
 
-Run getDataForStudy successfully before generation. An unsuccessful import
-blocks generation until a later import succeeds. Existing output files are
-preserved but are not reused for that failed attempt. The trajectory CSV
-is written only after all patient batches finish, so a batch error does not
-replace a previous complete file with a partial result.
+Run \code{\link{getDataForStudy}} successfully before generation. A failed
+import blocks generation until a later import succeeds; previous patient
+files are preserved and are not reused for the failed attempt. The trajectory
+CSV is written after all patient batches finish, preserving a previous
+complete file if a batch fails. Unknown transition destinations are rejected
+before generation writes output files.
 
-A completed fresh run saves Settings/analysisSettings.rds in version 5
-format. This preserves analysis settings and any imported CDM definition
-contents, not patient data. NULL, character(0) and nested lists retain their
-R types. Version 4 snapshots are also accepted; their stored lengthOfStay
-setting is read as cycleLength without rewriting the file. Saved runs
-restore their analysis rules and require fresh input. Configure a new
-study to change those rules.
+A completed fresh run saves \code{Settings/analysisSettings.rds} in version 5
+format. Version 4 snapshots are also supported. See
+\code{\link{cohort2TrajectoryConfiguration}} for saving and sharing rules.
 }
 
 \section{Labels and identifiers}{
 
-State IDs are assigned once per study. In unmerged studies, START has ID 1,
-followed by configured states in their supplied order, additional input and
-discrete gap labels in alphabetical order, then EXIT. Configured states keep
-their IDs when absent from a batch. Merged studies use dictionary order and
-add state_key to the output. Their stateDictionary is available in studyEnv
-and Data/stateDictionary.rds. Use keys and membership for cross-site comparison
-rather than run-local state IDs.
-Original-state rules remain unchanged in the configuration.
+State IDs are assigned once per study. In unmerged studies, \code{START} has
+ID 1, followed by configured states in their supplied order, additional input
+and discrete gap labels in alphabetical order, then \code{EXIT}. Configured
+states keep their IDs when absent from a batch. Merged studies use dictionary
+order and add \code{state_key} to the output. Their \code{stateDictionary} is available
+in \code{studyEnv} and \code{Data/stateDictionary.rds}. Use keys and membership
+for comparison between sites; state IDs are local to the study.
 
-Patient IDs are mapped internally and restored before demographic joins and
-output. File and CDM input preserve large identifiers and leading zeros as
-text. Canonical numeric IDs below 2^53 retain numeric output. Supply larger
-in-memory IDs as character or integer64 because doubles may already have
-rounded them. When reading exported CSVs, read subject_id as character to
-preserve long or zero-prefixed identifiers. Temporary IDs are not exported.
-
-Working labels and rules are converted to UTF-8 without changing spelling
-or case. Configuration and saved settings retain the supplied labels.
+Patient identifiers are preserved. File and CDM input preserve large IDs and
+leading zeros as text. Canonical numeric IDs below \code{2^53} retain numeric
+output. Read \code{subject_id} as character when importing exported CSVs to
+preserve long or zero-prefixed identifiers.
 }
 
 \examples{
@@ -222,6 +191,7 @@ trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date"
 unlink(folder, recursive = TRUE)
 }
 \seealso{
-\code{vignette("a03_trajectories", package = "Cohort2Trajectory")},
+\code{\link{cohort2TrajectoryConfiguration}},
+  \code{vignette("a03_trajectories", package = "Cohort2Trajectory")},
   \code{vignette("a05_output", package = "Cohort2Trajectory")}
 }

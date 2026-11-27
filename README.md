@@ -1,37 +1,38 @@
 # Cohort2Trajectory
 
-Cohort2Trajectory turns cohort intervals into patient trajectories. The target
-cohort defines each patient's observation period. State cohorts describe what
-happened during that period. The analyst defines those cohorts and decides
-which state takes priority when records overlap.
+Cohort2Trajectory turns cohort intervals into patient trajectories for analysis.
+A target cohort defines each patient's observation period; state cohorts define
+events or periods within it. When states overlap, you choose which takes
+priority or whether to represent their combination.
 
-The package accepts cohorts generated in an OMOP Common Data Model database,
-an R data frame or a CSV file. It produces either fixed-length cycles or
-continuous intervals. It does not infer diagnoses, recovery or a history state
-from the names of the supplied cohorts.
+The package accepts an R data frame, a CSV file or cohorts generated in an
+OMOP Common Data Model database through CDMConnector. It produces fixed-length
+cycles or continuous intervals, with explicit rules for state selection,
+allowed transitions, gaps and absorbing states. Study settings can be reused
+with fresh data at another site.
 
-## Start here
+## A small example
 
-The [documentation site](https://healthinformaticsut.github.io/Cohort2Trajectory/)
-contains the function reference and these articles:
-
-- [Getting started](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html): a small example that needs no database.
-- [Configure a study](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html): observation bounds, selection rules and overlapping states.
-- [Import cohort data](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html): local data, ATLAS definitions and saved studies.
-- [Create trajectories](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html): discrete and continuous output.
-- [A weekly worked example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html): pneumonia history, two death states and a saved-study rerun.
-- [Read the output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html): columns, dates, saved files and downstream use.
-
-The usual workflow has three steps:
+This example needs no database. In local input, `"0"` identifies the target
+cohort and other labels identify states. Intervals include both endpoint dates.
 
 ```r
+library(Cohort2Trajectory)
+
+cohorts <- data.frame(
+  subject_id = rep("001", 3),
+  cohort_definition_id = c("0", "Stable", "Complication"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 0, 7),
+  cohort_end_date = as.Date("2020-01-21")
+)
+
 study <- cohort2TrajectoryConfiguration(
-  studyName = "MyStudy",
+  studyName = "example",
   pathToStudy = tempdir(),
   useCDM = FALSE,
-  trajectoryDataObject = input,
-  stateCohortLabels = c("A", "B"),
-  stateCohortPriorityOrder = c("B", "A"),
+  trajectoryDataObject = cohorts,
+  stateCohortLabels = c("Stable", "Complication"),
+  stateCohortPriorityOrder = c("Complication", "Stable"),
   stateSelectionType = "Priority",
   trajectoryType = "Discrete",
   cycleLength = 7
@@ -39,137 +40,69 @@ study <- cohort2TrajectoryConfiguration(
 
 getDataForStudy(studyEnv = study)
 trajectories <- createTrajectories(studyEnv = study)
-```
-
-Here `input` is your cohort table. It needs `subject_id`,
-`cohort_definition_id`, `cohort_start_date` and `cohort_end_date`. Use `"0"`
-for target-cohort rows and the clinical labels for state rows. Supply dates as
-`Date` values in R or `YYYY-MM-DD` in CSV. The getting-started article supplies
-a complete input table.
-
-For ATLAS cohorts, name the IDs directly, for example
-`atlasStateCohorts = c(Stable = 101, Complication = 102, Dead = 103)`.
-These names supply `stateCohortLabels`. With local JSON definitions, name the
-filenames in the same way. Priorities and absorbing states remain explicit.
-
-Use names such as `"Discrete"` and `"Priority"` for the public options.
-They ignore case and surrounding spaces. Numeric option codes are not accepted.
-
-Printing `study` shows its main choices. Printing `trajectories` shows patient,
-clinical-state and row counts, with boundary and unresolved rows counted
-separately, followed by six rows of patient identifiers, labels and timing.
-Every column and value is retained.
-
-```r
-study
 trajectories
-print(trajectories, n = 10)
-as.data.frame(trajectories)        # ordinary display of every column
-as.list(study, all.names = TRUE)   # all study settings
 ```
 
-## Continue in TMA
+The patient is Stable in the first week and in Complication for the next two.
+The returned table also contains `START` and `EXIT` boundary rows. Input and
+output files are saved under `file.path(tempdir(), "example")`.
 
-The returned trajectories carry their cycle length, ordered state labels and
-absorbing states. TMA reads these definitions directly:
+## Choosing a trajectory
 
-```r
-histories <- TrajectoryMarkovAnalysis::prepareTrajectories(trajectories)
-transitions <- TrajectoryMarkovAnalysis::estimateTransitions(histories)
-```
+A discrete trajectory selects one state per cycle. Its label describes the
+selection for that cycle, not necessarily every day within it. The final cycle
+can be shorter than `cycleLength`. A continuous trajectory retains selected
+interval dates and can resolve overlaps by priority.
 
-Configured states remain declared even when no patient enters them. Merged
-states use their resolved display labels and absorbing rules. The handoff does
-not infer a clinical meaning or impose C2T's selection rules on a new model.
+You supply the clinical definitions: an episode, a history of that episode and
+recovery need their own cohort definitions when the analysis distinguishes them.
+`OUT OF COHORT` marks a discrete cycle with no selected state. `START` and
+`EXIT` mark observation boundaries.
 
-Use `saveRDS(trajectories, "trajectories.rds")` to keep both rows and definitions.
-CSV keeps only the rows, so when reading a CSV into TMA, supply `cycleLength`,
-`states` and `absorbingStates` explicitly. RDS trajectory files contain the
-same patient-level data as the table.
+Use `mergeStates = TRUE` to represent overlapping states together.
+`mergedState()` can change a combination's destinations, absorbing status or
+display label. Membership is stored separately from labels.
 
-## What the trajectory means
+## Documentation
 
-A discrete trajectory assigns one state to each cycle. A seven-day cycle has
-seven days, including both endpoints. The final cycle can be shorter. Its
-selected state does not mean that the patient spent every day in that state.
-For example, a death recorded within the week can determine the week's label.
+The [documentation site](https://healthinformaticsut.github.io/Cohort2Trajectory/)
+contains the function reference and these guides, also available as package
+vignettes:
 
-A continuous trajectory keeps selected interval dates. It does not fill gaps
-or move simultaneous records onto different dates. In either format, `START`
-and `EXIT` mark boundaries, not clinical states. `OUT OF COHORT` means that no
-state was selected for a discrete cycle. It does not mean observation ended.
+- [Getting started](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a00_introduction.html): local input and the three-step workflow.
+- [Configure a study](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a01_configuration.html): observation bounds, selection and merged states.
+- [Import cohort data](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a02_import.html): CSV, data frames, ATLAS and local JSON definitions.
+- [Create trajectories](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html): transition rules, gaps and saved-study reruns.
+- [A weekly worked example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a04_example.html): pneumonia history and two death states.
+- [Read the output](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a05_output.html): columns, files and downstream analysis.
 
-Overlapping states can be combined with `mergeStates = TRUE`. Membership is
-stored explicitly. A label containing `+` is never split to guess its members.
-Use `mergedState()` when a particular combination needs different allowed
-destinations, absorbing status or a display label. The configuration article
-explains the inheritance rules and their limits.
+For CDM input, the database account needs read access to the required CDM and
+vocabulary tables and permission to create and drop tables in the write schema.
+ATLAS authentication headers can be supplied at import. Exported JSON
+definitions can be used without an ATLAS connection.
 
-## Rerun a saved study
+## Reuse and analysis
 
-A successful import and trajectory run saves its rules in
-`Settings/analysisSettings.rds`. For CDM studies, this file also contains the
-cohort JSON definitions used during import.
+A completed run saves its settings in `Settings/analysisSettings.rds`, including
+the imported cohort JSON for CDM studies. Copy that folder to rerun the study
+with fresh data. Keep `Data` private: it contains patient records.
 
-Copy the completed study's `Settings` folder to the new study folder. Do not
-copy `Data` when sharing a study because it contains patient-level records.
-For a CDM rerun, supply a connection to the new database:
+Returned trajectories carry their cycle length, ordered state labels and
+absorbing states for use by
+[TrajectoryMarkovAnalysis](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis).
+Use `saveRDS()` to preserve both the rows and these definitions. CSV contains
+only the rows, so downstream tools need the definitions supplied separately.
 
-```r
-study <- cohort2TrajectoryConfiguration(
-  studyName = "MyStudy",
-  pathToStudy = "/new/location",
-  runSavedStudy = TRUE
-)
-getDataForStudy(cdm = newCdm, studyEnv = study)
-trajectories <- createTrajectories(cdm = newCdm, studyEnv = study)
-```
+Related packages:
+[CohortContrast](https://github.com/HealthInformaticsUT/CohortContrast) and
+[TrajectoryViz](https://github.com/HealthInformaticsUT/TrajectoryViz).
 
-There is no need to re-enter the analytical settings or connect to ATLAS.
-For local data, also set `useCDM = FALSE` and supply fresh input through
-`trajectoryDataObject` or `pathToData`. To change the analysis rules, configure
-a new run instead of overriding a saved study.
-
-New settings use RDS format version 5. Version 4 settings still load, with the
-stored `lengthOfStay` field read as `cycleLength`. In R calls, use
-`cycleLength` instead of `lengthOfStay`. Older settings formats must be
-reconfigured and rerun. Settings CSV files and the removed arguments
-`mergeThreshold` and `updateAutomaticallyForMergedStates` are not supported.
-
-## Database access
-
-CDM studies use a CDMConnector connection. The database account needs read
-access to the required CDM and vocabulary tables, and permission to create
-and drop tables in the configured write schema. Generated cohorts use unique
-names and are removed after collection. Existing tables are left in place, and
-the connection remains open. Start with a small cohort
-when checking a new server connection.
-
-ATLAS downloads use the configured WebAPI URL. If authentication is required,
-pass `webApiHeaders` to `getDataForStudy()`. Headers are never saved in the RDS
-settings and no browser login is started. You can also use exported cohort
-JSON with `baseUrl = NULL`.
-
-## Related packages
-
-- [CohortContrast](https://github.com/HealthInformaticsUT/CohortContrast)
-- [TrajectoryMarkovAnalysis](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis)
-- [TrajectoryViz](https://github.com/HealthInformaticsUT/TrajectoryViz)
-
-Current TMA reads the definitions attached to C2T output. Other packages and
-older versions may require explicit settings. Check their expected columns
-and treatment of boundary rows.
-
-## Publication and citation
+## Citation and contact
 
 Haug M, Oja M, Pajusalu M, et al. *Markov modeling for cost-effectiveness using
 federated health data network*. Journal of the American Medical Informatics
 Association, 2024. [doi:10.1093/jamia/ocae044](https://doi.org/10.1093/jamia/ocae044).
-
-When reporting an analysis, also record the package version or Git commit and
-retain the settings used for the run.
-
-## License and contact
+Record the package version and settings used for your analysis.
 
 Apache License 2.0. Developed by the University of Tartu Health Informatics
 research group. Contact [Markus Haug](mailto:markus.haug@ut.ee).

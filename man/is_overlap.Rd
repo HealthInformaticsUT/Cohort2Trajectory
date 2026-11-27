@@ -2,11 +2,11 @@
 % Please edit documentation in R/helpers.R
 \name{is_overlap}
 \alias{is_overlap}
-\title{Function to check if two periods overlap}
+\title{Check whether two inclusive date intervals overlap}
 \usage{
 is_overlap(start1, end1, start2, end2)
 }
 \description{
-Function to check if two periods overlap
+Check whether two inclusive date intervals overlap
 }
 \keyword{internal}

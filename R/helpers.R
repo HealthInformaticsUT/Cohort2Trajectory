@@ -1,9 +1,3 @@
-################################################################################
-#
-# Some regularly used functions to help code cleanness
-#
-################################################################################
-
 # Match identifiers as exact text, never by narrowing them to native integers.
 .subjectKeys <- function(ids) {
   if (inherits(ids, "integer64") || is.character(ids) || is.factor(ids)) {
@@ -67,50 +61,7 @@
 }
 
 
-#' Load and translate SQL file or an explicit SQL query to desired dialect.
-#'
-#' @param sql SQL file name or SQL query
-#' @param warnOnMissingParameters Should a warning be raised when parameters provided to this function do not appear in the parameterized SQL that is being rendered? By default, this is TRUE.
-#' @param output Should there be a .sql file created of the result
-#' @param outputFile Name of the output file
-#' @keywords internal
-loadRenderTranslateSql <- function(sql,
-                                   dbms = "postgresql",
-                                   warnOnMissingParameters = TRUE,
-                                   output = FALSE,
-                                   outputFile,
-                                   ...) {
-  if (grepl('.sql', sql)) {
-    pathToSql <- paste("inst/SQL/", sql, sep = "")
-    parameterizedSql <-
-      readChar(pathToSql, file.info(pathToSql)$size)[1]
-  }
-  else {
-    parameterizedSql <- sql
-  }
-  
-  renderedSql <-
-    SqlRender::render(sql = parameterizedSql, warnOnMissingParameters = warnOnMissingParameters, ...)
-  renderedSql <-
-    SqlRender::translate(sql = renderedSql, targetDialect = dbms)
-  
-  if (output == TRUE) {
-    SqlRender::writeSql(renderedSql, outputFile)
-    writeLines(paste("Created file '", outputFile, "'", sep = ""))
-  }
-  
-  return(renderedSql)
-}
-
-#' Function for finding NaN values in a data.frame object
-#'
-#' @param data SQL data.frame object
-#' @keywords internal
-is.nan.data.frame <- function(data) {
-  do.call(cbind, lapply(data, is.nan))
-}
-
-#' Function for saving summary tables to path
+#' Save a table as CSV or another object as an R data file
 #'
 #' @param object Object to save
 #' @param path Path to the file saved
@@ -128,18 +79,7 @@ save_object <- function(object, path) {
 }
 
 
-#' Function for controlling whether patient exists in a cohort
-#'
-#' @param data A dataframe object with subject_id values
-#' @param id The subject ID
-#' @keywords internal
-idExists <- function(data, id) {
-  if (as.character(id) %in% unique(as.character(data$subject_id)))
-    return(TRUE)
-  return(FALSE)
-}
-
-#' Function for calculating overlap in date intervals
+#' Count shared days between two inclusive date intervals
 #'
 #' @param dateStart Start of the boundary date interval
 #' @param dateEnd End of the boundary date interval
@@ -155,14 +95,14 @@ daysOverlap <- function(dateStart,
   max(as.numeric(overlapEnd - overlapStart) + 1, 0)
 }
 
-#' Function to check if two periods overlap
+#' Check whether two inclusive date intervals overlap
 #'
 #' @keywords internal
 is_overlap <- function(start1, end1, start2, end2) {
   return(start1 <= end2 && start2 <= end1)
 }
 
-#' Function which converts text formatted JSON to digestible JSON
+#' Serialize a cohort expression as JSON
 #'
 #' @param input An R object containing a cohort expression.
 #' @param pretty Whether to indent the JSON output.
@@ -208,7 +148,7 @@ createMandatorySubDirs <- function(pathToStudy, studyName) {
 }
 
 
-#' Create a list of all states (as elements) for each state (as index)
+#' Allow every state to transition to every state
 #'
 #' @param stateVector Character vector of state labels.
 #' @return A named list allowing every state to transition to every state.
@@ -279,27 +219,7 @@ addListVectorEl <-
 
 
 
-#' Function to sanitize a single string
-#' @param input_string A  state label name
-#' @keywords internal
-sanitize_single <- function(input_string) {
-  safe_string <- gsub("[^A-Za-z0-9_.-]", "_", input_string)  # Corrected regex
-  if (substr(safe_string, 1, 1) == '.') {
-    safe_string <- paste0('_', safe_string)
-  }
-  return(safe_string)
-}
-
-#' Sanitize filenames not in correct format
-#'
-#' @param input_strings A vector of state label names
-#' @keywords internal
-sanitize_filenames <- function(input_strings) {
-  # Apply the sanitization function to each element of the vector
-  sapply(input_strings, sanitize_single)
-}
-
-#' Custom function to merge overlapping date ranges within each group
+#' Merge overlapping date intervals within one patient and state
 #'
 #' @param data A dataframe with raw cohort data
 #' @keywords internal

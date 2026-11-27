@@ -2,7 +2,7 @@
 #'
 #' Retrieve cohort data from an OMOP CDM or read local cohort intervals, then
 #' apply observation bounds, mandatory-state requirements and optional state
-#' merging. The analyst defines the target and clinical state cohorts.
+#' merging. Pass the updated study environment to \code{\link{createTrajectories}}.
 #'
 #' @param cdm A CDM reference created with CDMConnector.
 #' @param studyEnv Study environment returned by cohort2TrajectoryConfiguration.
@@ -48,20 +48,18 @@
 #'   restored by a saved-study configuration.
 #'
 #' @details
-#' The target cohort defines observation bounds. Clinical state intervals,
-#' including history states and finite episodes, must be defined by the
-#' analyst before import. State labels are preserved for CDM, data-frame and
-#' CSV input. Spaces and punctuation are not replaced to make filenames.
-#' Use the same labels in mandatory states, priorities and transition rules.
-#' CSV cohort_definition_id values are read as text, preserving leading zeros
-#' and the literal label "NA". Empty labels are invalid. All mandatory-state
-#' labels are literal, including "No mandatory state".
+#' The first target interval defines each patient's observation bounds. Import
+#' clips state intervals to these bounds and combines overlapping records for
+#' the same patient and state. See \code{\link{cohort2TrajectoryConfiguration}}
+#' for observation and state rules.
 #'
-#' A nonempty target cohort remains valid when no clinical state records
-#' survive cleaning, provided mandatory-state requirements do not exclude its
-#' patients. The target intervals still define follow-up. Discrete trajectories
-#' use the configured gap rule. Continuous trajectories retain boundaries
-#' without inventing clinical states.
+#' State labels are preserved across input sources, including spaces and
+#' punctuation. CSV identifiers and labels are read as text, preserving leading
+#' zeros and literal "NA" labels. Mandatory-state labels are also literal.
+#'
+#' Patients without state records remain eligible unless mandatory-state
+#' requirements exclude them. Discrete trajectories then use the gap rule;
+#' continuous trajectories contain only boundary markers.
 #'
 #' An empty eligible cohort is not a successful import. Previous cleaned data,
 #' merged-state artifacts and saved settings remain unchanged. An unsuccessful
@@ -75,11 +73,10 @@
 #' apply to saved local studies. CDM imports ignore both local source arguments.
 #'
 #' @section Cohort definitions and saved studies:
-#' Fresh CDM imports stage definitions and their manifest in a temporary
-#' folder. Downloaded definitions and the manifest are published after data
-#' retrieval, cleaning and saving succeed. Failed downloads, queries or empty
-#' eligible cohorts leave the previous working JSON files unchanged. Existing
-#' local definitions and unrelated JSON files are not rewritten.
+#' Fresh CDM imports publish downloaded definitions and their manifest only
+#' after retrieval, cleaning and saving succeed. Failed imports preserve the
+#' previous working JSON files. Local definitions and unrelated JSON files
+#' are not rewritten.
 #'
 #' Successful CDM source overrides are retained for subsequent imports, keeping
 #' target and state selectors and the ATLAS URL aligned with clinical labels.
@@ -87,16 +84,14 @@
 #' use 0.json for the target and atlas_<id>.json for states. Repeated state IDs
 #' share a file without changing their clinical labels.
 #'
-#' Successful import captures the selected definition filenames and contents.
-#' After fresh trajectory generation completes, these are saved with the
-#' analysis settings in Settings/analysisSettings.rds using version 5 format.
-#' Version 4 snapshots are also accepted. The snapshot contains no patient data.
+#' After successful import and generation, the settings and cohort definitions
+#' are saved in Settings/analysisSettings.rds. Current snapshots use version 5;
+#' version 4 is also supported. The snapshot contains no patient records.
 #'
-#' Saved CDM runs write the embedded definitions to a new private folder and
-#' use them to query fresh data. They do not read or replace working JSON files
-#' or their manifest. A later fresh import cannot change the definitions in an
-#' earlier completed snapshot. Saved local runs require fresh local input.
-#' Neither saved mode accepts overrides to its restored analysis rules.
+#' Saved CDM runs query fresh data using the embedded definitions, leaving
+#' working JSON files unchanged. Saved local runs require fresh local input.
+#' Both restore their analysis rules without accepting overrides. See the
+#' import vignette for the saved-study workflow.
 #'
 #' @return Invisibly returns NULL after a successful import. Cleaned data are
 #'   saved in the study's Data directory and studyEnv is updated for generation.
@@ -109,7 +104,6 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             trajectoryDataObject = studyEnv$trajectoryDataObject,
                             cdm = NULL,
                             studyEnv = NULL,
-                            #settings = NULL,
                             atlasStateCohorts = studyEnv$atlasStateCohorts,
                             atlasTargetCohort = studyEnv$atlasTargetCohort,
                             stateCohortLabels = studyEnv$stateCohortLabels,

@@ -2,19 +2,19 @@
 % Please edit documentation in R/importData.R
 \name{addPersonalData}
 \alias{addPersonalData}
-\title{This function adds personal data to subjects: age, gender}
+\title{Join demographics and calculate age at state entry}
 \usage{
 addPersonalData(cohortData, cdm)
 }
 \arguments{
-\item{cohortData}{Imported cohort data}
+\item{cohortData}{Trajectory table with subject_id and state_start_date.}
 
 \item{cdm}{a cdm object}
 }
 \value{
-A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
+The trajectory table with gender_concept_id and age columns.
 }
 \description{
-This function adds personal data to subjects: age, gender
+Join demographics and calculate age at state entry
 }
 \keyword{internal}

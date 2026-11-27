@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{createStateList}
 \alias{createStateList}
-\title{Create a list of all states (as elements) for each state (as index)}
+\title{Allow every state to transition to every state}
 \usage{
 createStateList(stateVector)
 }
@@ -13,7 +13,7 @@ createStateList(stateVector)
 A named list allowing every state to transition to every state.
 }
 \description{
-Create a list of all states (as elements) for each state (as index)
+Allow every state to transition to every state
 }
 \examples{
 createStateList(c("Stable", "Complication", "Death"))

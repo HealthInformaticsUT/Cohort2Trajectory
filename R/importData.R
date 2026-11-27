@@ -1,14 +1,7 @@
-################################################################################
-#
-# Functions which will query relevant data from database and mutate data  frames
-# for better usage
-#
-################################################################################
-
-
-#' Get selected generated cohorts patient data
+#' Generate and collect selected cohorts
 #'
-#' This function queries all patient ID's in selected cohorts
+#' Read or download cohort definitions, generate the cohorts and collect their
+#' patient intervals.
 #'
 #' @param cdm common data model reference object
 #' @param selectedTarget The sample cohort ID
@@ -84,11 +77,11 @@ getCohortData <- function(cdm,
   return(data)
 }
 
-#' This function adds personal data to subjects: age, gender
+#' Join demographics and calculate age at state entry
 #'
 #' @param cdm a cdm object
-#' @param cohortData Imported cohort data
-#' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
+#' @param cohortData Trajectory table with subject_id and state_start_date.
+#' @return The trajectory table with gender_concept_id and age columns.
 #' @keywords internal
 addPersonalData <- function(cohortData, cdm) {
   data <- cohortData
@@ -141,10 +134,10 @@ addPersonalData <- function(cohortData, cdm) {
   return(data_merged)
 }
 
-#' This function eliminates patients which do not fulfill the inclusion criteria
+#' Bound cohort intervals and apply mandatory-state requirements
 #'
 #' @param cohortData Imported cohort data
-#' @param mandatoryStates States which have to be present in the trajectory, otherwise dropped#'
+#' @param mandatoryStates States required for each retained patient.
 #' @param outOfCohortAllowed boolean whether the patient trajectory can surpass the target cohort's observation-period
 #'
 #' @return A dataframe with selected patients. Columns: cohort_definition_id, subject_id, cohort_start_date, cohort_end_date
@@ -182,11 +175,7 @@ cleanCohortData <- function(cohortData,
   # Cleaning data from observations before and after target cohort
   #
   ##############################################################################
-  # Removing subjects information which have been included before
-  # target cohort start date (maybe should just switch the start date
-  # then for the same as target cohort)
-  
-  # Selecting the first occurring target cohort row
+  # The earliest target episode defines each patient's observation bounds.
   data_target <- data_tmp %>%
     dplyr::filter(.data$cohort_definition_id == "0") %>%
     dplyr::group_by(.data$subject_id) %>%
@@ -197,10 +186,10 @@ cleanCohortData <- function(cohortData,
   data_states <-
     dplyr::filter(data_tmp, .data$cohort_definition_id != "0")
   
-  # Merging all cases where patient has same state overlaps' can occur with custom datasets not cohorts
+  # Combine repeated or overlapping records for the same patient and state.
   data_states <- data_states %>%
     dplyr::group_by(.data$subject_id, .data$cohort_definition_id) %>%
-    dplyr::do(merge_overlaps(.)) %>%
+    dplyr::group_modify(function(.x, .y) merge_overlaps(.x)) %>%
     dplyr::arrange(.data$subject_id, .data$cohort_start_date, .data$cohort_end_date)
   
   
@@ -280,8 +269,6 @@ cleanCohortData <- function(cohortData,
   #
   ##############################################################################
   
-  # Order by patientId, start & end date
-  #data_merged = data_merged[order(data_merged[, 1], data_merged[, 3], data_merged[, 4]),]
   data_tmp <-
     dplyr::mutate(data_tmp, time_in_cohort = round(as.numeric(
       difftime(
@@ -303,70 +290,6 @@ cleanCohortData <- function(cohortData,
   return(.restoreSubjectIds(data_tmp, encoded$originals))
 }
 
-
-#' Build table for cohorts which shows the inclusion statistics
-#'
-#' This function creates an inclusion table from getCohortsPatients() function data
-#'
-#' @param cohortData Output of getCohortsPatients()
-#' @param selectedCohorts Vector of included cohort ID's
-#' @param cohortLabels Labels for cohort
-#'
-#' @return A dataframe with each selected cohort and its relation to the target cohort
-#' @keywords internal
-getInclusionTable <- function(cohortData,
-                              selectedCohorts,
-                              cohortLabels = NULL) {
-  data <- cohortData
-  nr_unique_cohorts <- length(unique(selectedCohorts))
-  cohortbyinclusion <-
-    as.data.frame(matrix(NA, nrow = nr_unique_cohorts, ncol = 3))
-  colnames(cohortbyinclusion) <-
-    c('(#) of patients', '(#) in target cohort', "(%) in target cohort")
-  rownames(cohortbyinclusion) <- c(unique(selectedCohorts))
-  
-  data_inclusion <- data %>%
-    dplyr::select(.data$cohort_definition_id, .data$subject_id) %>%
-    dplyr::distinct()
-  
-  patients_target <- data_inclusion %>%
-    dplyr::filter(.data$cohort_definition_id == "0") %>%
-    dplyr::select("subject_id")
-  
-  ##############################################################################
-  #
-  # It's important that the state cohorts are defined in Atlas so that they are
-  # always a subset of the target cohort, this way the statistics won't be time consuming
-  #
-  ##############################################################################
-  for (cohortID in unique(selectedCohorts)) {
-    patients_observed <- data_inclusion %>%
-      dplyr::filter(.data$cohort_definition_id == cohortID) %>%
-      dplyr::select("subject_id")
-    
-    nr_of_patients <- nrow(patients_observed)
-    nr_in_target <-
-      length(intersect(
-        patients_target$subject_id,
-        patients_observed$subject_id
-      ))
-    prc_in_target <-
-      ifelse(nr_of_patients == 0, 0.00, round((nr_in_target /
-                                                 nr_of_patients) * 100, 2))
-    cohortbyinclusion[toString(cohortID), ] = c(nr_of_patients, nr_in_target, prc_in_target)
-  }
-  
-  cohortbyinclusion[, 2] <- as.integer(cohortbyinclusion[, 2])
-  cohortbyinclusion[, 1] <- as.integer(cohortbyinclusion[, 1])
-  if (is.null(cohortLabels) |
-      length(cohortLabels) != length(selectedCohorts))
-    return(cohortbyinclusion)
-  if (cohortLabels[1] == "0") {
-    cohortLabels[1] <- "TARGET"
-  }
-  rownames(cohortbyinclusion) = cohortLabels
-  return(cohortbyinclusion)
-}
 
 # Resolve the first target episode once, independently of the available states.
 # Custom inputs without a target row fall back to their recorded state span.
@@ -413,11 +336,12 @@ getInclusionTable <- function(cohortData,
     dplyr::arrange(.data$subject_id, .data$cohort_start_date, .data$cohort_end_date)
 }
 
-#' Convert the imported cohort data to patient treatmnet trajectories
+#' Construct discrete patient histories
 #'
-#' This function outputs a data.frame object which describes the movement of patients between the defined states
+#' Select one state per cycle and add trajectory boundary markers.
 #'
-#' @param cohortData A data.frame object which is queried with getCohortsPatients function
+#' @param cohortData Cohort intervals with subject_id, cohort_definition_id,
+#'   cohort_start_date and cohort_end_date columns.
 #' @param stateDuration Positive whole-number cycle length in days. The final cycle is shortened when
 #'   the trajectory boundary falls before a full cycle is complete.
 #' @param stateSelection The chosen state selection method
@@ -539,7 +463,8 @@ getTrajectoriesDiscrete <- function(cdm,
 #'
 #' This function returns selected state intervals with trajectory boundary markers.
 #'
-#' @param patientData Object of class data.frame with columns subject_id, state_label, STATE_START_DATE, STATE_END_DATE
+#' @param patientData Cohort intervals with subject_id, cohort_definition_id,
+#'   cohort_start_date and cohort_end_date columns.
 #' @param stateSelection Selection of the type of ordering
 #' @param statePriorityVector All states in prioritized order
 #' @param absorbingStates Absorbing states in dataframe
@@ -750,11 +675,6 @@ generateCohortSetCSV <- function(selectedStates,
   
   cohortSet <- data.frame(cohortId, cohortName, jsonPath)
   
-  cohortList <- list(
-    cohortId = cohortSet$cohortId,
-    cohortName = cohortSet$cohortName,
-    jsonPath = cohortSet$jsonPath
-  )
   # write.csv replaces the intended manifest. No separate deletion is needed.
   save_object(cohortSet,
               file.path(pathToStudy, studyName, "JSON", "CohortsToCreate.csv"))
