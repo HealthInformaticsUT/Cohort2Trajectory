@@ -224,22 +224,22 @@ study <- cohort2TrajectoryConfiguration(
 )
 getDataForStudy(studyEnv = study)
 #> ℹ Importing data ...
-#> ✔ Importing data ... [3ms]
+#> ✔ Importing data ... [5ms]
 #> 
 #> ✔ Get cohort data success!
 #> ℹ Cleaning data ...
 #> ✔ Data cleaning completed!
 #> ℹ Cleaning data ...
 
-#> ℹ Saved cleaned data /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Data/importedDataCleaned.csv
+#> ℹ Saved cleaned data /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpfCOjE9/c2t-example-f56d6f54c1fd/example/Data/importedDataCleaned.csv
 #> ℹ Cleaning data ...
 
-#> ✔ Cleaning data ... [23ms]
+#> ✔ Cleaning data ... [25ms]
 #> 
 trajectories <- createTrajectories(studyEnv = study)
 #> ℹ Creating batch 1!!!
-#> ℹ Saved trajectory dataframe: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Data/patientDataDiscrete.csv
-#> ℹ Saved settings to: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpUjaIV7/c2t-example-b47c763c00f3/example/Settings/analysisSettings.rds
+#> ℹ Saved trajectory dataframe: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpfCOjE9/c2t-example-f56d6f54c1fd/example/Data/patientDataDiscrete.csv
+#> ℹ Saved settings to: /var/folders/04/_j3s9x5j6mvf0cbxxbbgy5_00000gn/T//RtmpfCOjE9/c2t-example-f56d6f54c1fd/example/Settings/analysisSettings.rds
 #> ✔ Trajectories generated!
 trajectories[c("subject_id", "state_label", "state_start_date", "state_end_date")]
 #> <Cohort2Trajectory trajectories>

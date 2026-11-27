@@ -15,13 +15,13 @@ Source:
 [`DESCRIPTION`](https://github.com/HealthInformaticsUT/Cohort2Trajectory/blob/HEAD/DESCRIPTION)
 
 Haug M, Kolde R (2026). *Cohort2Trajectory: Create Patient Trajectories
-from Clinical Cohorts*. R package version 1.3.0.9000,
+from Clinical Cohorts*. R package version 1.4.0,
 <https://healthinformaticsut.github.io/Cohort2Trajectory/>.
 
     @Manual{,
       title = {Cohort2Trajectory: Create Patient Trajectories from Clinical Cohorts},
       author = {Markus Haug and Raivo Kolde},
       year = {2026},
-      note = {R package version 1.3.0.9000},
+      note = {R package version 1.4.0},
       url = {https://healthinformaticsut.github.io/Cohort2Trajectory/},
     }

@@ -15,6 +15,17 @@ if you have not created one.
 
 ## CDM data
 
+CDM cohort generation needs the optional packages CirceR and SqlRender.
+Install them before importing:
+
+``` r
+
+install.packages(c("CirceR", "SqlRender"))
+```
+
+Both packages must load successfully. CirceR uses Java through rJava, so
+check the Java configuration if loading fails.
+
 For a study configured with `useCDM = TRUE`, pass the connected CDM
 reference:
 
