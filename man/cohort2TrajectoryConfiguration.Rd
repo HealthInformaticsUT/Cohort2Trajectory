@@ -27,7 +27,9 @@ cohort2TrajectoryConfiguration(
   allowedStatesList = createStateList(stateCohortLabels),
   mergeStates = FALSE,
   batchSize = 1000,
-  mergedStateOverrides = list()
+  mergedStateOverrides = list(),
+  targetEpisodeHandling = "First",
+  stopAfterAbsorbingEpisode = FALSE
 )
 }
 \arguments{
@@ -44,7 +46,7 @@ to read local definitions from the study's \code{JSON} folder during import.}
 
 \item{atlasTargetCohort}{ATLAS ID of the target cohort. With
 \code{baseUrl = NULL}, supply its local JSON filename without the extension.
-The first target interval defines each patient's observation period.}
+Target intervals define each patient's observation periods.}
 
 \item{atlasStateCohorts}{Named vector of ATLAS state cohort IDs, such as
 \code{c(Stable = 101, Complication = 102, Dead = 103)}. Names become the
@@ -134,6 +136,16 @@ whole number within R's integer range. The default is 1000.}
 \item{mergedStateOverrides}{List of \code{\link{mergedState}} definitions.
 Requires \code{mergeStates = TRUE}. Supply at most one definition per
 membership set. Omitted properties retain inherited values.}
+
+\item{targetEpisodeHandling}{\code{"First"} (default) retains the earliest
+target interval per patient. \code{"All"} retains separate, nonoverlapping
+intervals as episodes. Names ignore case and surrounding whitespace.
+Requires \code{outOfCohortAllowed = FALSE}. Changing this choice requires
+another import.}
+
+\item{stopAfterAbsorbingEpisode}{Whether a selected absorbing state also
+excludes later episodes for that patient. The default, \code{FALSE}, lets
+later episodes start afresh. An absorbing state always ends its own episode.}
 }
 \value{
 An environment of class \code{c2t_study} containing the study
@@ -147,15 +159,26 @@ for \code{\link{getDataForStudy}} and \code{\link{createTrajectories}}.
 }
 \section{Observation and state definitions}{
 
-The analyst defines target and state cohorts. The first target interval for
-each patient sets the observation bounds, including for patients without
-state records. State cohorts describe events or conditions within those
+The analyst defines target and state cohorts. By default, the first target
+interval for each patient sets the observation bounds, including for
+patients without state records. State cohorts describe events within those
 bounds; their labels do not change their dates or clinical meaning.
 
 Date intervals include both endpoints. A shared boundary date counts as
 one day of overlap. Discrete trajectories assign a state to each cycle.
 Continuous trajectories retain selected intervals and boundary markers
 without filling gaps or changing the times of simultaneous events.
+
+With \code{targetEpisodeHandling = "All"}, identical target intervals are
+deduplicated and overlapping intervals are rejected. Adjacent intervals are
+separate episodes. State records are clipped to every period they intersect;
+gaps between periods produce no rows. Mandatory states are required within
+each episode, before state merging. The chronological \code{episode_id} is
+assigned before eligibility filtering and is retained in output alongside
+the original \code{subject_id}. Cycles, elapsed time, sequence numbering,
+transition checks and carry-forward restart in each episode. An absorbing
+state ends that episode; later episodes remain eligible unless
+\code{stopAfterAbsorbingEpisode = TRUE}.
 }
 
 \section{State selection and gaps}{
@@ -236,8 +259,9 @@ The original-state rules remain unchanged in the configuration.
 \section{Saving and sharing a study}{
 
 A completed import and generation saves the analysis settings in
-\code{Settings/analysisSettings.rds} in version 5 format. Version 4 snapshots
-are also accepted. Reconfigure and rerun earlier formats. Omitted and
+\code{Settings/analysisSettings.rds} in version 6 format. Versions 4 and 5
+load with \code{targetEpisodeHandling = "First"} and
+\code{stopAfterAbsorbingEpisode = FALSE}. Reconfigure earlier formats. Omitted and
 explicit empty override fields remain distinct in saved settings.
 CDM snapshots contain the exact cohort JSON definitions captured at import.
 Saved runs use those definitions and fresh patient data, leaving working

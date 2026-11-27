@@ -12,7 +12,7 @@
 #' @param pathToStudy Parent folder containing the study folder.
 #' @param atlasTargetCohort ATLAS ID of the target cohort. With
 #'   \code{baseUrl = NULL}, supply its local JSON filename without the extension.
-#'   The first target interval defines each patient's observation period.
+#'   Target intervals define each patient's observation periods.
 #' @param atlasStateCohorts Named vector of ATLAS state cohort IDs, such as
 #'   \code{c(Stable = 101, Complication = 102, Dead = 103)}. Names become the
 #'   state labels. With \code{baseUrl = NULL}, use local JSON filenames without
@@ -84,6 +84,14 @@
 #'   imports can select a different input through \code{getDataForStudy()}.
 #' @param batchSize Maximum patients per generation batch. Supply one positive
 #'   whole number within R's integer range. The default is 1000.
+#' @param targetEpisodeHandling \code{"First"} (default) retains the earliest
+#'   target interval per patient. \code{"All"} retains separate, nonoverlapping
+#'   intervals as episodes. Names ignore case and surrounding whitespace.
+#'   Requires \code{outOfCohortAllowed = FALSE}. Changing this choice requires
+#'   another import.
+#' @param stopAfterAbsorbingEpisode Whether a selected absorbing state also
+#'   excludes later episodes for that patient. The default, \code{FALSE}, lets
+#'   later episodes start afresh. An absorbing state always ends its own episode.
 #'
 #' @return An environment of class \code{c2t_study} containing the study
 #'   settings. Printing shows a compact summary; inspect individual settings
@@ -91,15 +99,26 @@
 #'   \code{as.list(study, all.names = TRUE)}.
 #'
 #' @section Observation and state definitions:
-#' The analyst defines target and state cohorts. The first target interval for
-#' each patient sets the observation bounds, including for patients without
-#' state records. State cohorts describe events or conditions within those
+#' The analyst defines target and state cohorts. By default, the first target
+#' interval for each patient sets the observation bounds, including for
+#' patients without state records. State cohorts describe events within those
 #' bounds; their labels do not change their dates or clinical meaning.
 #'
 #' Date intervals include both endpoints. A shared boundary date counts as
 #' one day of overlap. Discrete trajectories assign a state to each cycle.
 #' Continuous trajectories retain selected intervals and boundary markers
 #' without filling gaps or changing the times of simultaneous events.
+#'
+#' With \code{targetEpisodeHandling = "All"}, identical target intervals are
+#' deduplicated and overlapping intervals are rejected. Adjacent intervals are
+#' separate episodes. State records are clipped to every period they intersect;
+#' gaps between periods produce no rows. Mandatory states are required within
+#' each episode, before state merging. The chronological \code{episode_id} is
+#' assigned before eligibility filtering and is retained in output alongside
+#' the original \code{subject_id}. Cycles, elapsed time, sequence numbering,
+#' transition checks and carry-forward restart in each episode. An absorbing
+#' state ends that episode; later episodes remain eligible unless
+#' \code{stopAfterAbsorbingEpisode = TRUE}.
 #'
 #' @section State selection and gaps:
 #' In discrete trajectories, only overlapping states allowed from the last
@@ -172,8 +191,9 @@
 #'
 #' @section Saving and sharing a study:
 #' A completed import and generation saves the analysis settings in
-#' \code{Settings/analysisSettings.rds} in version 5 format. Version 4 snapshots
-#' are also accepted. Reconfigure and rerun earlier formats. Omitted and
+#' \code{Settings/analysisSettings.rds} in version 6 format. Versions 4 and 5
+#' load with \code{targetEpisodeHandling = "First"} and
+#' \code{stopAfterAbsorbingEpisode = FALSE}. Reconfigure earlier formats. Omitted and
 #' explicit empty override fields remain distinct in saved settings.
 #' CDM snapshots contain the exact cohort JSON definitions captured at import.
 #' Saved runs use those definitions and fresh patient data, leaving working
@@ -245,7 +265,9 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
                                            allowedStatesList = createStateList(stateCohortLabels),
                                            mergeStates = FALSE,
                                            batchSize = 1000,
-                                           mergedStateOverrides = list()) {
+                                           mergedStateOverrides = list(),
+                                           targetEpisodeHandling = "First",
+                                           stopAfterAbsorbingEpisode = FALSE) {
   .validateStudyPath(pathToStudy, studyName)
   if (isTRUE(runSavedStudy)) {
     .checkSavedOverrides(match.call(), c(.studyImportFields(),
@@ -284,6 +306,9 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   .validateAllowedStateSources(allowedStatesList)
+  targetEpisodeHandling <- .validateEpisodeOptions(
+    targetEpisodeHandling, outOfCohortAllowed, stopAfterAbsorbingEpisode
+  )
   
   if (studyName %in% list.dirs(pathToStudy, full.names = FALSE, recursive = FALSE)) {
     cli::cli_warn("{.warning Study name already in use, consider renaming!}")
@@ -305,7 +330,6 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     }
   }
   
-  #studyName <<- NULL
   # Set study environment
   studyEnv <- rlang::env(
     # general
@@ -325,6 +349,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     allowedStatesList = allowedStatesList,
     mergeStates = mergeStates,
     mergedStateOverrides = mergedStateOverrides,
+    targetEpisodeHandling = targetEpisodeHandling,
 
     stateCohortLabels = stateCohortLabels,
     stateCohortPriorityOrder = stateCohortPriorityOrder,
@@ -337,6 +362,7 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
     trajectoryType = trajectoryType,
     cycleLength = cycleLength,
     outOfCohortAllowed = outOfCohortAllowed,
+    stopAfterAbsorbingEpisode = stopAfterAbsorbingEpisode,
 
     batchSize = batchSize
   )
@@ -363,4 +389,19 @@ cohort2TrajectoryConfiguration <- function(cdm = NULL,
          call. = FALSE)
   }
   invisible(NULL)
+}
+
+.validateEpisodeOptions <- function(targetEpisodeHandling, outOfCohortAllowed,
+                                    stopAfterAbsorbingEpisode = FALSE) {
+  policy <- .configurationChoice(targetEpisodeHandling, c("First", "All"),
+                                 "targetEpisodeHandling", allowNull = FALSE)
+  if (!is.logical(stopAfterAbsorbingEpisode) ||
+      length(stopAfterAbsorbingEpisode) != 1L || is.na(stopAfterAbsorbingEpisode)) {
+    stop("stopAfterAbsorbingEpisode must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (policy == "All" && !identical(outOfCohortAllowed, FALSE)) {
+    stop("targetEpisodeHandling = 'All' requires outOfCohortAllowed = FALSE.",
+         call. = FALSE)
+  }
+  policy
 }

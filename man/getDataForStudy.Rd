@@ -22,7 +22,8 @@ getDataForStudy(
   stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
   pathToData = studyEnv$pathToData,
   mergedStateOverrides = studyEnv$mergedStateOverrides,
-  webApiHeaders = NULL
+  webApiHeaders = NULL,
+  targetEpisodeHandling = studyEnv$targetEpisodeHandling
 )
 }
 \arguments{
@@ -85,6 +86,12 @@ selected inherited properties of merged states.}
 download only, for example an Authorization header. These values are never
 stored in the study settings. Supply them again for each fresh download.
 Saved studies use their embedded definitions and need no authentication.}
+
+\item{targetEpisodeHandling}{\code{"First"} (default) retains the earliest
+target interval per patient. \code{"All"} retains separate, nonoverlapping
+intervals as episodes. Names ignore case and surrounding whitespace.
+Requires \code{outOfCohortAllowed = FALSE}. Changing this choice requires
+another import.}
 }
 \value{
 Invisibly returns NULL after a successful import. Cleaned data are
@@ -96,9 +103,11 @@ apply observation bounds, mandatory-state requirements and optional state
 merging. Pass the updated study environment to \code{\link{createTrajectories}}.
 }
 \details{
-The first target interval defines each patient's observation bounds. Import
+The selected target intervals define observation bounds. Import
 clips state intervals to these bounds and combines overlapping records for
-the same patient and state. See \code{\link{cohort2TrajectoryConfiguration}}
+the same patient, episode and state. With \code{targetEpisodeHandling = "All"},
+each period is cleaned independently and mandatory states apply per episode.
+See \code{\link{cohort2TrajectoryConfiguration}}
 for observation and state rules.
 
 State labels are preserved across input sources, including spaces and
@@ -136,8 +145,9 @@ use 0.json for the target and atlas_<id>.json for states. Repeated state IDs
 share a file without changing their clinical labels.
 
 After successful import and generation, the settings and cohort definitions
-are saved in Settings/analysisSettings.rds. Current snapshots use version 5;
-version 4 is also supported. The snapshot contains no patient records.
+are saved in Settings/analysisSettings.rds. Current snapshots use version 6;
+versions 4 and 5 load with first-period behavior. The snapshot contains no
+patient records.
 
 Saved CDM runs query fresh data using the embedded definitions, leaving
 working JSON files unchanged. Saved local runs require fresh local input.

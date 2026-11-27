@@ -31,6 +31,8 @@ The trajectory summary counts patients and distinct clinical labels present
 in the returned rows. \code{START} and \code{EXIT} are boundary rows;
 \code{OUT OF COHORT} rows are unresolved cycles. These labels are excluded
 from the clinical-state count. Merged labels count as distinct states.
+Episodic output also counts distinct patient-episode pairs and includes
+\code{episode_id} in the preview.
 
 The preview shows patient identifiers, state labels, start and end dates,
 and time in cohort. All columns remain available through normal data-frame

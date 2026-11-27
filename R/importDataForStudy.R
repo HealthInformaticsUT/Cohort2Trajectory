@@ -46,11 +46,14 @@
 #'   supply both non-NULL local sources.
 #' @param runSavedStudy Whether to import fresh data using the analysis rules
 #'   restored by a saved-study configuration.
+#' @inheritParams cohort2TrajectoryConfiguration
 #'
 #' @details
-#' The first target interval defines each patient's observation bounds. Import
+#' The selected target intervals define observation bounds. Import
 #' clips state intervals to these bounds and combines overlapping records for
-#' the same patient and state. See \code{\link{cohort2TrajectoryConfiguration}}
+#' the same patient, episode and state. With \code{targetEpisodeHandling = "All"},
+#' each period is cleaned independently and mandatory states apply per episode.
+#' See \code{\link{cohort2TrajectoryConfiguration}}
 #' for observation and state rules.
 #'
 #' State labels are preserved across input sources, including spaces and
@@ -85,8 +88,9 @@
 #' share a file without changing their clinical labels.
 #'
 #' After successful import and generation, the settings and cohort definitions
-#' are saved in Settings/analysisSettings.rds. Current snapshots use version 5;
-#' version 4 is also supported. The snapshot contains no patient records.
+#' are saved in Settings/analysisSettings.rds. Current snapshots use version 6;
+#' versions 4 and 5 load with first-period behavior. The snapshot contains no
+#' patient records.
 #'
 #' Saved CDM runs query fresh data using the embedded definitions, leaving
 #' working JSON files unchanged. Saved local runs require fresh local input.
@@ -116,7 +120,8 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
                             stateCohortAbsorbing = studyEnv$stateCohortAbsorbing,
                             pathToData = studyEnv$pathToData,
                             mergedStateOverrides = studyEnv$mergedStateOverrides,
-                            webApiHeaders = NULL) {
+                            webApiHeaders = NULL,
+                            targetEpisodeHandling = studyEnv$targetEpisodeHandling) {
   
   # Variables from global studyEnv (can't be altered)
   studyName = studyEnv$studyName
@@ -138,6 +143,9 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   .validateMergeOptions(mergeStates, mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   .validateAllowedStateSources(allowedStatesList)
+  targetEpisodeHandling <- .validateEpisodeOptions(
+    targetEpisodeHandling, outOfCohortAllowed
+  )
   importSettings <- mget(.studyImportFields(), envir = environment(), inherits = FALSE)
   definitions <- NULL
   definitionContents <- NULL
@@ -237,11 +245,15 @@ getDataForStudy <- function(runSavedStudy = studyEnv$runSavedStudy,
   cli::cli_progress_step("Cleaning data ...")
   
   .validateObservedStateLabels(data$cohort_definition_id, stateCohortLabels)
-  data <- cleanCohortData(
-    cohortData = data,
-    mandatoryStates = stateCohortMandatory,
-    outOfCohortAllowed = outOfCohortAllowed
-  )
+  data <- if (targetEpisodeHandling == "All") {
+    .cleanAllTargetEpisodes(data, stateCohortMandatory)
+  } else {
+    cleanCohortData(
+      cohortData = data,
+      mandatoryStates = stateCohortMandatory,
+      outOfCohortAllowed = outOfCohortAllowed
+    )
+  }
   # Reject an empty eligible cohort before replacing any cleaned-data or
   # merged-state artifacts from the previous successful import.
   if (nrow(data) == 0L) {

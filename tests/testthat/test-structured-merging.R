@@ -79,7 +79,7 @@ test_that("merged overrides survive batching and a fresh saved-study import", {
     expect_identical(together$state_label, rep(c("START", "Combined", "C", "EXIT"), 2))
     expect_equal(createTrajectories(studyEnv = study, batchSize = 1), together)
     saved <- readRDS(file.path(root, type, "Settings", "analysisSettings.rds"))
-    expect_identical(saved$version, 5L)
+    expect_identical(saved$version, 6L)
     expect_identical(saved$generation$allowedStatesList, study$allowedStatesList)
     restored <- cohort2TrajectoryConfiguration(
       pathToStudy = root, studyName = type, useCDM = FALSE, runSavedStudy = TRUE,
@@ -122,7 +122,7 @@ test_that("older snapshot formats are rejected without modifying their files", {
     before <- tools::md5sum(file)
     expect_error(cohort2TrajectoryConfiguration(
       pathToStudy = root, studyName = study$studyName, useCDM = FALSE, runSavedStudy = TRUE
-    ), "Only versions 4 and 5 are supported")
+    ), "Only versions 4, 5 and 6 are supported")
     expect_identical(tools::md5sum(file), before)
   }
 })

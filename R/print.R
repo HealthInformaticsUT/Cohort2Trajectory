@@ -15,6 +15,8 @@
 #' in the returned rows. \code{START} and \code{EXIT} are boundary rows;
 #' \code{OUT OF COHORT} rows are unresolved cycles. These labels are excluded
 #' from the clinical-state count. Merged labels count as distinct states.
+#' Episodic output also counts distinct patient-episode pairs and includes
+#' \code{episode_id} in the preview.
 #'
 #' The preview shows patient identifiers, state labels, start and end dates,
 #' and time in cohort. All columns remain available through normal data-frame
@@ -48,7 +50,12 @@ print.c2t_study <- function(x, ...) {
   if (identical(x$trajectoryType, "Discrete")) {
     cat(" | Cycle:", choice(x$cycleLength), "days")
   }
-  cat("\nClinical states configured:", length(x$stateCohortLabels), "\n")
+  cat("\n")
+  if (identical(x$targetEpisodeHandling, "All")) {
+    cat("Target episodes: All | Stop after absorbing episode:",
+        choice(x$stopAfterAbsorbingEpisode), "\n")
+  }
+  cat("Clinical states configured:", length(x$stateCohortLabels), "\n")
   cat("Folder:", file.path(x$pathToStudy, x$studyName), "\n")
   cat("Inspect all settings with as.list(x, all.names = TRUE).\n")
   invisible(x)
@@ -71,12 +78,17 @@ print.c2t_trajectories <- function(x, ..., n = 6L) {
   unresolved <- labels %in% "OUT OF COHORT"
   clinical <- !is.na(labels) & !boundaries & !unresolved & labels != "0"
   cat("<Cohort2Trajectory trajectories>\n")
-  cat("Patients:", length(unique(x$subject_id[!is.na(x$subject_id)])),
-      "| Clinical states present:", length(unique(labels[clinical])),
+  cat("Patients:", length(unique(x$subject_id[!is.na(x$subject_id)])))
+  if ("episode_id" %in% names(x)) {
+    known <- !is.na(x$subject_id) & !is.na(x$episode_id)
+    episodes <- unique(as.data.frame(x)[known, c("subject_id", "episode_id"), drop = FALSE])
+    cat(" | Episodes:", nrow(episodes))
+  }
+  cat(" | Clinical states present:", length(unique(labels[clinical])),
       "| Rows:", nrow(x), "\n")
   cat("Boundary rows (START/EXIT):", sum(boundaries),
       "| Unresolved rows (OUT OF COHORT):", sum(unresolved), "\n")
-  columns <- intersect(c("subject_id", "state_label", "state_start_date",
+  columns <- intersect(c("subject_id", "episode_id", "state_label", "state_start_date",
                          "state_end_date", "time_in_cohort"), names(x))
   rows <- seq_len(min(n, nrow(x)))
   cat("Preview:", length(rows), "of", nrow(x), "rows;",

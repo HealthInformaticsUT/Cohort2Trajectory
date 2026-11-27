@@ -22,17 +22,46 @@
 
 .encodeSubjectIds <- function(data) {
   keys <- .subjectKeys(data$subject_id)
+  episodic <- "episode_id" %in% names(data)
+  if (episodic) {
+    episodes <- data$episode_id
+    if (!is.numeric(episodes) || is.complex(episodes) || anyNA(episodes) ||
+        any(!is.finite(episodes)) || any(episodes < 1) ||
+        any(episodes != trunc(episodes)) || any(episodes > .Machine$integer.max)) {
+      stop("episode_id must contain positive whole numbers within R's integer range.",
+           call. = FALSE)
+    }
+    data$episode_id <- as.integer(episodes)
+    # Match the subject separately before pairing integer components. Arbitrary
+    # subject text cannot collide with the separator in this temporary key.
+    keys <- if (length(keys)) {
+      paste0(match(keys, unique(keys)), ":", data$episode_id)
+    } else {
+      character(0)
+    }
+  }
   first <- !duplicated(keys)
-  originals <- data$subject_id[first]
-  if (length(originals) > .Machine$integer.max) {
-    stop("Too many distinct patients in one native operation.", call. = FALSE)
+  originals <- if (episodic) {
+    data[first, c("subject_id", "episode_id"), drop = FALSE]
+  } else {
+    data$subject_id[first]
+  }
+  if (sum(first) > .Machine$integer.max) {
+    stop(if (episodic) "Too many distinct trajectories in one native operation." else
+      "Too many distinct patients in one native operation.", call. = FALSE)
   }
   data$subject_id <- match(keys, keys[first])
   list(data = data, originals = originals)
 }
 
 .restoreSubjectIds <- function(data, originals) {
-  data$subject_id <- originals[as.integer(data$subject_id)]
+  indices <- as.integer(data$subject_id)
+  if (is.data.frame(originals)) {
+    data$subject_id <- originals$subject_id[indices]
+    data$episode_id <- originals$episode_id[indices]
+  } else {
+    data$subject_id <- originals[indices]
+  }
   data
 }
 

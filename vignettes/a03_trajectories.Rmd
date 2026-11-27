@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+library(Cohort2Trajectory)
 ```
 
 ## Before generation
@@ -130,9 +131,10 @@ These rules apply only to discrete output.
 
 ## Observation boundaries and absorbing states
 
-The first target interval supplies each patient's start and end dates. Patients
-without clinical state records remain eligible unless mandatory-state rules
-exclude them. Their discrete cycles follow the gap rule; continuous output
+By default, the first target interval supplies each patient's start and end
+dates. With `targetEpisodeHandling = "All"`, each target period supplies its own
+bounds. Periods without clinical state records remain eligible unless mandatory
+rules exclude them. Their discrete cycles follow the gap rule; continuous output
 contains only boundary markers.
 
 State intervals are bounded by the target interval unless
@@ -140,8 +142,8 @@ State intervals are bounded by the target interval unless
 its start. Set it during import to keep later records: generation cannot recover
 discarded records. Local input needs a target row for every included patient.
 
-Only a selected, permitted absorbing state ends follow-up early. No further
-transitions are checked after it.
+Only a selected, permitted absorbing state ends follow-up early within a period.
+No further transitions are checked in that period after it.
 
 Discrete output stops after the absorbing cycle, using the cycle's dates.
 Absorption does not shorten that cycle to the original event date; an observation
@@ -151,6 +153,82 @@ interval's end date, and earlier overlapping intervals are capped there.
 `START` marks the trajectory start. `EXIT` marks the day after the final cycle or
 continuous follow-up endpoint. Neither marker adds observed time or indicates
 death by itself.
+
+## Multiple observation periods
+
+The default, `targetEpisodeHandling = "First"`, uses one target interval per
+patient. Use `"All"` to generate a separate episode for every distinct target
+interval. Each episode has its own `START` and `EXIT`, cycles, elapsed time and
+sequence counts. Transitions and carry-forward also restart; gaps between target
+periods produce no rows. State IDs and any merged-state dictionary remain
+study-wide, and `batchSize` still counts patients.
+
+Here one patient has two periods separated by a gap. `Discharged` is absorbing
+within the first period. The later admission is retained because
+`stopAfterAbsorbingEpisode` defaults to `FALSE`. Use `TRUE` for a terminal outcome,
+such as death, that should exclude subsequent observation periods.
+
+```{r multiple-periods, results='hide', message=FALSE}
+periods <- data.frame(
+  subject_id = "001",
+  cohort_definition_id = c("0", "0", "In hospital", "Discharged", "In hospital"),
+  cohort_start_date = as.Date("2020-01-01") + c(0, 21, 0, 3, 21),
+  cohort_end_date = as.Date("2020-01-01") + c(6, 27, 2, 3, 27)
+)
+episodePath <- tempfile("c2t-episodes-")
+dir.create(episodePath)
+episodeStudy <- cohort2TrajectoryConfiguration(
+  studyName = "episodes",
+  pathToStudy = episodePath,
+  useCDM = FALSE,
+  trajectoryDataObject = periods,
+  stateCohortLabels = c("In hospital", "Discharged"),
+  stateCohortPriorityOrder = c("Discharged", "In hospital"),
+  stateCohortAbsorbing = "Discharged",
+  stateSelectionType = "Priority",
+  trajectoryType = "Discrete",
+  cycleLength = 7,
+  targetEpisodeHandling = "All"
+)
+getDataForStudy(studyEnv = episodeStudy)
+episodeTrajectories <- createTrajectories(studyEnv = episodeStudy)
+```
+
+```{r multiple-periods-output}
+knitr::kable(episodeTrajectories[c(
+  "subject_id", "episode_id", "state_label", "state_start_date", "state_end_date"
+)], row.names = FALSE)
+```
+
+For a fresh study, change suppression at generation:
+
+```{r multiple-periods-stop, results='hide', message=FALSE}
+firstEpisodeOnly <- createTrajectories(
+  studyEnv = episodeStudy,
+  stopAfterAbsorbingEpisode = TRUE
+)
+```
+
+```{r multiple-periods-checks, include=FALSE}
+stopifnot(
+  identical(unique(episodeTrajectories$episode_id), 1:2),
+  identical(unique(firstEpisodeOnly$episode_id), 1L)
+)
+```
+
+Only a selected, permitted absorbing state triggers suppression. A rejected
+absorbing record does not suppress later episodes. With suppression disabled,
+later episodes start independently of an earlier absorbing outcome.
+
+Input periods must not overlap; adjacent periods are allowed and identical
+duplicates are removed. State records spanning several periods are clipped to
+each. Mandatory-state requirements apply per episode; IDs are assigned before
+that filtering and can therefore have gaps. `outOfCohortAllowed = TRUE` is
+incompatible with `"All"`. Changing the period policy requires reimport.
+
+The current TMA reader rejects this multi-episode format. See
+[Read the output](a05_output.html#handing-the-result-to-an-analysis-package)
+before using it in downstream analysis.
 
 ## Clinical history and event timing
 

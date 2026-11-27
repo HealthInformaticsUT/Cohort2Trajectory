@@ -145,6 +145,9 @@ addPersonalData <- function(cohortData, cdm) {
 cleanCohortData <- function(cohortData,
                             mandatoryStates,
                             outOfCohortAllowed = FALSE) {
+  # Episode assignment belongs to the explicit All-target import. Extra raw
+  # columns must not change the historical First-target behavior.
+  cohortData$episode_id <- NULL
   .validateObservedStateLabels(cohortData$cohort_definition_id)
   encoded <- .encodeSubjectIds(cohortData)
   data_tmp <- encoded$data
@@ -294,6 +297,8 @@ cleanCohortData <- function(cohortData,
 # Resolve the first target episode once, independently of the available states.
 # Custom inputs without a target row fall back to their recorded state span.
 .boundTrajectoryData <- function(data, outOfCohortAllowed = FALSE) {
+  encoded <- if ("episode_id" %in% names(data)) .encodeSubjectIds(data) else NULL
+  if (!is.null(encoded)) data <- encoded$data
   data <- as.data.frame(data)
   .validateObservedStateLabels(data$cohort_definition_id)
   .subjectKeys(data$subject_id)
@@ -331,9 +336,11 @@ cleanCohortData <- function(cohortData,
     cohort_start_date = .data$bound_start, cohort_end_date = .data$bound_end
   )
   # Native discrete selection calculates elapsed time from these boundaries.
-  dplyr::bind_rows(targetRows, states) %>%
+  result <- dplyr::bind_rows(targetRows, states) %>%
     dplyr::mutate(time_in_cohort = 0) %>%
     dplyr::arrange(.data$subject_id, .data$cohort_start_date, .data$cohort_end_date)
+  if (!is.null(encoded)) result <- .restoreSubjectIds(result, encoded$originals)
+  result
 }
 
 #' Construct discrete patient histories

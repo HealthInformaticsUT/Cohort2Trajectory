@@ -158,6 +158,8 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
 # Sweep changes in active membership, rather than expanding every patient-day.
 # Inputs have already been bounded and filtered for mandatory original states.
 .composeStateIntervals <- function(data, baseLabels, overrides) {
+  encoded <- if ("episode_id" %in% names(data)) .encodeSubjectIds(data) else NULL
+  if (!is.null(encoded)) data <- encoded$data
   original <- as.character(data$cohort_definition_id)
   baseLabels <- unique(c(baseLabels, original[original != "0"]))
   .stateRegistry(baseLabels, overrides = overrides) # Validate before composing.
@@ -202,6 +204,7 @@ mergedState <- function(members, allowedTransitions, absorbing, label = NULL) {
   resolved <- dplyr::bind_rows(c(list(targets), rows))
   reference <- targets$cohort_start_date[match(.subjectKeys(resolved$subject_id), .subjectKeys(targets$subject_id))]
   resolved$time_in_cohort <- as.numeric(resolved$cohort_start_date - reference) / 365.25
+  if (!is.null(encoded)) resolved <- .restoreSubjectIds(resolved, encoded$originals)
   list(data = resolved, registry = registry)
 }
 

@@ -1,6 +1,8 @@
 # Resolve priority and transition eligibility together at interval boundaries.
 # Inputs are already bounded. No patient-day expansion or gap filling is needed.
 .selectContinuousPriorityIntervals <- function(data, priority, rules, absorbing) {
+  encoded <- if ("episode_id" %in% names(data)) .encodeSubjectIds(data) else NULL
+  if (!is.null(encoded)) data <- encoded$data
   boundaries <- data[data$cohort_definition_id %in% c("START", "EXIT"), , drop = FALSE]
   states <- data[!data$cohort_definition_id %in% c("START", "EXIT"), , drop = FALSE]
   missing <- setdiff(unique(states$cohort_definition_id), priority)
@@ -62,5 +64,7 @@
       if (terminal) break
     }
   }
-  dplyr::bind_rows(c(list(boundaries), rows))
+  result <- dplyr::bind_rows(c(list(boundaries), rows))
+  if (!is.null(encoded)) result <- .restoreSubjectIds(result, encoded$originals)
+  result
 }

@@ -52,7 +52,7 @@ test_that("discrete definitions retain unobserved states and effective generatio
   saved <- readRDS(file.path(root, "discrete", "Settings", "analysisSettings.rds"))
   expect_identical(names(saved), c("version", "import", "generation", "definitions",
                                    "definitionContents", "stateDictionary"))
-  expect_identical(saved$version, 5L)
+  expect_identical(saved$version, 6L)
   expect_equal(saved$generation$cycleLength, 7)
   expect_identical(saved$generation$stateCohortAbsorbing, c("Death", "Fallback"))
   expect_false("trajectory_definition" %in% names(saved))
@@ -129,4 +129,37 @@ test_that("continuous definitions have no discrete cycle length", {
   withoutAbsorption <- createTrajectories(studyEnv = study, stateCohortAbsorbing = NULL)
   expect_identical(attr(withoutAbsorption, "trajectory_definition")$absorbingStates,
                    character(0))
+})
+
+test_that("episodic definitions declare episode identity without patient data", {
+  base <- list(
+    version = 1L, trajectoryType = "Discrete", cycleLength = 7L,
+    states = c("A", "Death"), absorbingStates = "Death"
+  )
+  states <- c("START", "A", "Death", "OUT OF COHORT", "EXIT")
+  expect_identical(.trajectoryDefinition("Discrete", 7, states, "Death"), base)
+  expect_identical(.trajectoryDefinition(
+    "Discrete", 7, states, "Death", targetEpisodeHandling = "First",
+    stopAfterAbsorbingEpisode = TRUE
+  ), base)
+  for (stop in c(FALSE, TRUE)) {
+    expected <- base
+    expected$version <- 2L
+    expected$identityColumns <- c("subject_id", "episode_id")
+    expected$timeOrigin <- "episode_start"
+    expected$targetEpisodeHandling <- "All"
+    expected$stopAfterAbsorbingEpisode <- stop
+    actual <- .trajectoryDefinition(
+      "Discrete", 7, states, "Death", targetEpisodeHandling = "All",
+      stopAfterAbsorbingEpisode = stop
+    )
+    expect_identical(actual, expected)
+    continuous <- .trajectoryDefinition(
+      "Continuous", 7, states, "Death", targetEpisodeHandling = "All",
+      stopAfterAbsorbingEpisode = stop
+    )
+    expect_null(continuous$cycleLength)
+    expect_identical(continuous$identityColumns, c("subject_id", "episode_id"))
+    expect_identical(continuous$timeOrigin, "episode_start")
+  }
 })

@@ -62,13 +62,13 @@ priorities and rule-source names. Labels are not filenames.
 `stateCohortMandatory = NULL` and `stateCohortAbsorbing = NULL` mean no mandatory
 or absorbing states. `character(0)` also means none.
 
-A mandatory state must occur somewhere in the patient's retained interval.
+A mandatory state must occur somewhere in the retained observation period.
 Use the target cohort to define eligibility at a particular time, such as Day 7.
 Mandatory requirements are applied during import, so changing them requires
 another import.
 
-An absorbing state ends a trajectory when it is retained by the selection and
-transition rules. Use the exact state label in `stateCohortAbsorbing`.
+An absorbing state ends the current observation episode when retained by the
+selection and transition rules. Use its exact label in `stateCohortAbsorbing`.
 
 By default, `allowedStatesList` permits transitions between the configured
 states. To restrict transitions, supply one named entry per source state:
@@ -82,6 +82,21 @@ stay A or enter B, while B can only stay B. `character(0)` for one source permit
 no destinations from that source. An empty list, `list()`, leaves transitions
 unrestricted. Unknown destination labels are rejected before generation.
 See `help("cohort2TrajectoryConfiguration")` for the full rule syntax.
+
+## Choose the observation periods
+
+`targetEpisodeHandling = "First"` uses the first target interval per patient.
+This is the default. Set it to `"All"` to retain each distinct, non-overlapping
+target interval as a separate episode. Mandatory-state requirements then apply
+to each episode. Changing this choice requires another import.
+
+Transitions, gap handling and elapsed time restart independently in each episode.
+By default, an absorbing state ends only its own episode. Set
+`stopAfterAbsorbingEpisode = TRUE` to omit that patient's later episodes after a
+selected, permitted absorbing state. This choice can also be supplied at
+generation for a fresh study. See the
+[multiple-period example](a03_trajectories.html#multiple-observation-periods)
+for input rules and output.
 
 ## Merge overlapping states when needed
 
@@ -153,8 +168,8 @@ follow the [local input example](a02_import.html#local-data).
 After successful import and trajectory generation, the study contains
 `Settings/analysisSettings.rds`. It stores the analysis settings and, for a CDM
 study, the cohort JSON definitions used during import. Patient data and database
-connections are excluded. Current snapshots use format version 5; version 4 is
-also supported.
+connections are excluded. Current snapshots use format version 6; versions 4
+and 5 still load with first-period handling and no suppression of later episodes.
 
 Copy the completed study's `Settings` folder to
 `new-study-location/example/Settings`. JSON and Data folders are not needed for

@@ -25,15 +25,21 @@ as.data.frame(trajectories)   # Ordinary data-frame display
 | Column | Meaning |
 |:--|:--|
 | `subject_id` | The original patient identifier. Internal batching IDs are not exported. |
+| `episode_id` | Present only with `targetEpisodeHandling = "All"`. Chronological target-period number within the patient, assigned before eligibility filtering. |
 | `state_label` | The selected clinical label, or `START`, `EXIT` or `OUT OF COHORT`. |
 | `state_start_date` | First date of the selected interval or discrete cycle. |
 | `state_end_date` | Last date of that interval or cycle, including this date. |
-| `time_in_cohort` | Years from trajectory start to this row's start, calculated as elapsed days divided by 365.25. |
+| `time_in_cohort` | Years from the observation period's start to this row's start, calculated as elapsed days divided by 365.25. |
 | `seq_ordinal` | Consecutive occurrence number of the same label in that patient's output rows. It resets when the label changes. It is not a cycle number. |
 | `state_id` | An identifier assigned to the label within the run. It is not a clinical concept ID or a cross-database key. |
 | `age` | Age in years at this row's start, when a CDM demographic join is used. Otherwise `NA`. |
 | `gender_concept_id` | The CDM person's recorded gender concept ID, when joined. Otherwise `NA`. |
 | `state_key` | Present only for merged studies. Identifies the original members of a state across runs with the same labels. |
+
+In `"All"` mode, `START`, `EXIT`, cycles, `time_in_cohort` and `seq_ordinal`
+restart in each episode. Use both `subject_id` and `episode_id` to identify a
+history. State IDs and the state dictionary cover the whole study. No rows
+represent the gaps between episodes.
 
 Dates are `Date` values in R and date strings in CSV. Use column names rather
 than positions. Treat `state_id` as an identifier; its type can be character or
@@ -61,9 +67,12 @@ as character or `integer64`; digits rounded by numeric storage cannot be recover
 
 ## Observation boundaries and unresolved cycles
 
-The first target interval supplies observation bounds. A selected absorbing
+By default, the first target interval supplies observation bounds. A selected absorbing
 state can end follow-up early; `outOfCohortAllowed = TRUE` lets retained records
-extend its end, but not its start.
+extend its end, but not its start. With `targetEpisodeHandling = "All"`, every
+episode has its own target bounds and `outOfCohortAllowed` must be `FALSE`.
+Later episodes remain eligible after absorption unless
+`stopAfterAbsorbingEpisode = TRUE`.
 
 `START` marks the first date. `EXIT` is the day after the retained follow-up
 endpoint: the final cycle end for discrete output. Each marker has identical
@@ -146,16 +155,22 @@ Labels and absorbing status reflect merged-state overrides; configured states
 remain declared when absent from the data. Inspect it with
 `attr(trajectories, "trajectory_definition")`.
 
-TMA reads these definitions when you pass the output directly:
+For default `"First"` output, TMA reads the version-1 definition directly:
 
 ```{r, eval = FALSE}
 histories <- TrajectoryMarkovAnalysis::prepareTrajectories(trajectories)
 transitions <- TrajectoryMarkovAnalysis::estimateTransitions(histories)
 ```
 
+`"All"` output uses a version-2 definition to mark its separate episodes.
+The current TMA reader accepts only version 1 and rejects this output. An
+analysis must preserve episode boundaries rather than joining the end of one
+episode to the start of the next. Removing the attribute does not make such a
+join valid.
+
 Use `saveRDS(trajectories, "trajectories.rds")` to preserve rows and definitions.
 Ordinary data-frame row subsets also retain the attribute. CSV preserves only
-rows: after reading it, supply cycle length, state labels and absorbing states
+rows. For `"First"` CSVs, supply cycle length, state labels and absorbing states
 to TMA explicitly. TMA rejects settings conflicting with an attached definition.
 Update the definition if a transformation changes state meanings or cycle length.
 

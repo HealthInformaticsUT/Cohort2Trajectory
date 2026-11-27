@@ -95,5 +95,6 @@ cycle length; use `saveRDS()` to preserve these when saving the table in R.
 ## Next steps
 
 - [Configure a study](a01_configuration.html) explains state selection, transitions and merging.
-- [A weekly worked example](a04_example.html) uses analyst-defined pneumonia-history and death states and checks a saved-study rerun.
+- [Create trajectories](a03_trajectories.html) includes a runnable example with multiple observation periods per patient.
+- [A weekly worked example](a04_example.html) uses analyst-defined pneumonia-history and death states.
 - [Read the output](a05_output.html) explains the columns and what must be considered before downstream analysis.

@@ -157,8 +157,11 @@ test_that("version 4 cycle settings migrate in memory without changing portable 
   )
   generation <- mget(.studyGenerationFields(), envir = study)
   legacy <- generation
+  legacy$stopAfterAbsorbingEpisode <- NULL
   names(legacy)[names(legacy) == "cycleLength"] <- "lengthOfStay"
-  snapshot <- list(version = 4L, import = mget(.studyImportFields(), envir = study),
+  imported <- mget(.studyImportFields(), envir = study)
+  imported$targetEpisodeHandling <- NULL
+  snapshot <- list(version = 4L, import = imported,
                    generation = legacy, definitions = NULL, definitionContents = NULL,
                    stateDictionary = NULL)
   file <- file.path(root, "old", "Settings", "analysisSettings.rds")
@@ -170,7 +173,8 @@ test_that("version 4 cycle settings migrate in memory without changing portable 
   expect_equal(restored$cycleLength, 7)
   expect_false(exists("lengthOfStay", envir = restored, inherits = FALSE))
   expected <- snapshot
-  expected$version <- 5L
+  expected$version <- 6L
+  expected$import$targetEpisodeHandling <- "First"
   expected$generation <- generation
   expect_identical(restored$.savedSettings, expected)
   expect_identical(tools::md5sum(file), before)
@@ -192,7 +196,11 @@ test_that("version 4 cycle settings migrate in memory without changing portable 
   expect_error(.readStudySnapshot(root, "old"), "cycleLength must be a single positive whole number")
 
   # Version 5 accepts only the current field name.
-  expected$generation$lengthOfStay <- 7
-  saveRDS(expected, file)
+  malformed <- snapshot
+  malformed$version <- 5L
+  malformed$generation <- legacy
+  names(malformed$generation)[names(malformed$generation) == "lengthOfStay"] <- "cycleLength"
+  malformed$generation$lengthOfStay <- 7
+  saveRDS(malformed, file)
   expect_error(.readStudySnapshot(root, "old"), "Unsupported or incomplete saved-study")
 })

@@ -76,3 +76,45 @@ test_that("compact printing preserves study settings and complete trajectory dat
     expect_identical(tools::md5sum(files), checksums)
   }
 })
+
+test_that("episode previews count patient-episode pairs and preserve first-mode printing", {
+  path <- tempfile("c2t-episode-print-")
+  dir.create(path)
+  on.exit(unlink(path, recursive = TRUE))
+  study <- cohort2TrajectoryConfiguration(
+    studyName = "episodes", pathToStudy = path, useCDM = FALSE,
+    stateCohortLabels = "A", stateCohortPriorityOrder = "A",
+    stateSelectionType = "Priority", cycleLength = 7
+  )
+  firstText <- capture.output(print(study))
+  expect_false(any(grepl("Target episodes:", firstText, fixed = TRUE)))
+  study$targetEpisodeHandling <- "All"
+  study$stopAfterAbsorbingEpisode <- TRUE
+  expect_match(paste(capture.output(print(study)), collapse = "\n"),
+               "Target episodes: All \\| Stop after absorbing episode: TRUE")
+  study$targetEpisodeHandling <- "First"
+  expect_identical(capture.output(print(study)), firstText)
+
+  result <- structure(data.frame(
+    subject_id = rep(c("001", "002"), each = 6),
+    episode_id = rep(rep(1:2, each = 3), 2),
+    state_label = rep(c("START", "A", "EXIT"), 4),
+    state_start_date = as.Date("2020-01-01"),
+    state_end_date = as.Date("2020-01-01"), time_in_cohort = 0
+  ), class = c("c2t_trajectories", "data.frame"))
+  before <- serialize(result, NULL)
+  text <- capture.output(print(result, n = 2))
+  expect_match(paste(text, collapse = "\n"),
+               "Patients: 2 \\| Episodes: 4 \\| Clinical states present: 1 \\| Rows: 12")
+  expect_true(any(grepl("episode_id", text, fixed = TRUE)))
+  expect_identical(serialize(result, NULL), before)
+  empty <- paste(capture.output(print(result[FALSE, ])), collapse = "\n")
+  expect_match(empty, "Patients: 0 \\| Episodes: 0 \\| Clinical states present: 0 \\| Rows: 0")
+
+  result$episode_id <- NULL
+  ordinaryText <- capture.output(print(result, n = 2))
+  expect_false(any(grepl("Episodes:", ordinaryText, fixed = TRUE)))
+  expect_false(any(grepl("episode_id", ordinaryText, fixed = TRUE)))
+  expect_match(paste(ordinaryText, collapse = "\n"),
+               "Patients: 2 \\| Clinical states present: 1 \\| Rows: 12")
+})

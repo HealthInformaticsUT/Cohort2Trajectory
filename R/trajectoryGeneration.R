@@ -34,15 +34,18 @@
 #'   vignette for the complete schema.
 #'   The \code{trajectory_definition} attribute records the effective trajectory
 #'   type, cycle length, ordered clinical labels and absorbing labels.
-#'   \pkg{TrajectoryMarkovAnalysis} reads these settings directly. Labels and
+#'   \pkg{TrajectoryMarkovAnalysis} reads first-period definitions directly.
+#'   All-period output uses version 2 metadata with episode identity and time
+#'   origin, requiring an episode-aware downstream reader. Labels and
 #'   absorbing status reflect merged-state overrides; configured but unobserved
 #'   states remain declared.
 #'   \code{saveRDS()} preserves this attribute; CSV output contains only rows
 #'   and columns.
 #'
 #' @section Boundaries and timing:
-#' The first target interval, labelled \code{"0"} in cleaned data, supplies the
-#' start and end boundaries. Patients without clinical state records remain
+#' Target intervals, labelled \code{"0"} in cleaned data, supply the start and
+#' end boundaries. The import's \code{targetEpisodeHandling} selects the first
+#' interval or all episodes. Patients without clinical state records remain
 #' eligible unless mandatory-state requirements exclude them. Discrete cycles include
 #' both endpoint dates, and the final cycle is shortened at the observation
 #' boundary. A selected absorbing state stops generation after its cycle.
@@ -67,8 +70,8 @@
 #' complete file if a batch fails. Unknown transition destinations are rejected
 #' before generation writes output files.
 #'
-#' A completed fresh run saves \code{Settings/analysisSettings.rds} in version 5
-#' format. Version 4 snapshots are also supported. See
+#' A completed fresh run saves \code{Settings/analysisSettings.rds} in version 6
+#' format. Versions 4 and 5 also load with first-period behavior. See
 #' \code{\link{cohort2TrajectoryConfiguration}} for saving and sharing rules.
 #'
 #' @section Labels and identifiers:
@@ -106,7 +109,8 @@ createTrajectories <- function(cdm = NULL,
                                useCDM = studyEnv$useCDM,
                                pathToStudy = studyEnv$pathToStudy,
                                batchSize = studyEnv$batchSize,
-                               mergedStateOverrides = studyEnv$mergedStateOverrides) {
+                               mergedStateOverrides = studyEnv$mergedStateOverrides,
+                               stopAfterAbsorbingEpisode = studyEnv$stopAfterAbsorbingEpisode) {
   if (isTRUE(runSavedStudy)) {
     .checkSavedOverrides(match.call(), .studyGenerationFields())
     if (is.null(studyEnv$.savedSettings) || !isTRUE(studyEnv$.dataReady)) {
@@ -135,6 +139,11 @@ createTrajectories <- function(cdm = NULL,
   .validateMergeOptions(isTRUE(studyEnv$mergeStates), mergedStateOverrides)
   .validateStateLabels(stateCohortLabels)
   .validateAllowedStateSources(allowedStatesList)
+  targetEpisodeHandling <- studyEnv$targetEpisodeHandling
+  if (is.null(targetEpisodeHandling)) targetEpisodeHandling <- "First"
+  targetEpisodeHandling <- .validateEpisodeOptions(
+    targetEpisodeHandling, outOfCohortAllowed, stopAfterAbsorbingEpisode
+  )
   # Eligibility was applied before state merging. Generation cannot safely
   # change it or recover patients excluded from the cleaned input.
   imported <- studyEnv$.importSettings
@@ -148,6 +157,11 @@ createTrajectories <- function(cdm = NULL,
          "Rerun getDataForStudy with the desired stateCohortMandatory value ",
          "before creating trajectories.", call. = FALSE)
   }
+  importedPolicy <- if (is.null(imported$targetEpisodeHandling)) "First" else imported$targetEpisodeHandling
+  if (!identical(targetEpisodeHandling, importedPolicy)) {
+    stop("targetEpisodeHandling differs from the policy used during import. ",
+         "Rerun getDataForStudy before creating trajectories.", call. = FALSE)
+  }
   # Save validated choices before data-dependent merged-state expansion so a
   # new site can apply the same expansion to its own observed states.
   generationSettings <- mget(.studyGenerationFields(), envir = environment(), inherits = FALSE)
@@ -158,6 +172,10 @@ createTrajectories <- function(cdm = NULL,
   atlasTarget = studyEnv$atlasTargetCohort
   
   data <- .readPatientCsv(.cleanedDataPath(pathToStudy, studyName))
+  if ((targetEpisodeHandling == "All") != ("episode_id" %in% names(data))) {
+    stop("Cleaned data do not match targetEpisodeHandling. Rerun getDataForStudy.",
+         call. = FALSE)
+  }
 
   data$time_in_cohort = as.integer(data$time_in_cohort)
   data$cohort_start_date = as.Date(data$cohort_start_date)
@@ -313,6 +331,14 @@ createTrajectories <- function(cdm = NULL,
 
   }
 
+  if (targetEpisodeHandling == "All") {
+    if (stopAfterAbsorbingEpisode) {
+      result <- .omitLaterAbsorbingEpisodes(result, stateCohortAbsorbing)
+    }
+    result <- result[order(.subjectKeys(result$subject_id), result$episode_id,
+                           result$state_start_date, seq_len(nrow(result))), , drop = FALSE]
+    rownames(result) <- NULL
+  }
   if (!is.null(registry)) {
     result$state_key <- result$state_label
     matched <- match(result$state_label, registry$state_key)
@@ -338,8 +364,19 @@ createTrajectories <- function(cdm = NULL,
   
   # Attach the in-memory handoff only after writing unchanged output files.
   attr(result, "trajectory_definition") <- .trajectoryDefinition(
-    trajectoryType, cycleLength, stateLevels, stateCohortAbsorbing, registry
+    trajectoryType, cycleLength, stateLevels, stateCohortAbsorbing, registry,
+    targetEpisodeHandling, stopAfterAbsorbingEpisode
   )
   class(result) <- c("c2t_trajectories", class(result))
   return(result)
+}
+
+# Only states retained by the generation engine can suppress later episodes.
+.omitLaterAbsorbingEpisodes <- function(data, absorbingStates) {
+  selected <- data$state_label %in% absorbingStates
+  if (!any(selected)) return(data)
+  subjects <- .subjectKeys(data$subject_id)
+  cutoff <- tapply(data$episode_id[selected], subjects[selected], min)
+  limit <- unname(cutoff[match(subjects, names(cutoff))])
+  data[is.na(limit) | data$episode_id <= limit, , drop = FALSE]
 }

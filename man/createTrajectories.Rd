@@ -21,7 +21,8 @@ createTrajectories(
   useCDM = studyEnv$useCDM,
   pathToStudy = studyEnv$pathToStudy,
   batchSize = studyEnv$batchSize,
-  mergedStateOverrides = studyEnv$mergedStateOverrides
+  mergedStateOverrides = studyEnv$mergedStateOverrides,
+  stopAfterAbsorbingEpisode = studyEnv$stopAfterAbsorbingEpisode
 )
 }
 \arguments{
@@ -99,6 +100,10 @@ whole number within R's integer range. The default is 1000.}
 \item{mergedStateOverrides}{List of \code{\link{mergedState}} definitions.
 Requires \code{mergeStates = TRUE}. Supply at most one definition per
 membership set. Omitted properties retain inherited values.}
+
+\item{stopAfterAbsorbingEpisode}{Whether a selected absorbing state also
+excludes later episodes for that patient. The default, \code{FALSE}, lets
+later episodes start afresh. An absorbing state always ends its own episode.}
 }
 \value{
 A data frame of class \code{c2t_trajectories}, also saved as a CSV in
@@ -108,7 +113,9 @@ A data frame of class \code{c2t_trajectories}, also saved as a CSV in
   vignette for the complete schema.
   The \code{trajectory_definition} attribute records the effective trajectory
   type, cycle length, ordered clinical labels and absorbing labels.
-  \pkg{TrajectoryMarkovAnalysis} reads these settings directly. Labels and
+  \pkg{TrajectoryMarkovAnalysis} reads first-period definitions directly.
+  All-period output uses version 2 metadata with episode identity and time
+  origin, requiring an episode-aware downstream reader. Labels and
   absorbing status reflect merged-state overrides; configured but unobserved
   states remain declared.
   \code{saveRDS()} preserves this attribute; CSV output contains only rows
@@ -121,8 +128,9 @@ and the required state definitions.
 }
 \section{Boundaries and timing}{
 
-The first target interval, labelled \code{"0"} in cleaned data, supplies the
-start and end boundaries. Patients without clinical state records remain
+Target intervals, labelled \code{"0"} in cleaned data, supply the start and
+end boundaries. The import's \code{targetEpisodeHandling} selects the first
+interval or all episodes. Patients without clinical state records remain
 eligible unless mandatory-state requirements exclude them. Discrete cycles include
 both endpoint dates, and the final cycle is shortened at the observation
 boundary. A selected absorbing state stops generation after its cycle.
@@ -149,8 +157,8 @@ CSV is written after all patient batches finish, preserving a previous
 complete file if a batch fails. Unknown transition destinations are rejected
 before generation writes output files.
 
-A completed fresh run saves \code{Settings/analysisSettings.rds} in version 5
-format. Version 4 snapshots are also supported. See
+A completed fresh run saves \code{Settings/analysisSettings.rds} in version 6
+format. Versions 4 and 5 also load with first-period behavior. See
 \code{\link{cohort2TrajectoryConfiguration}} for saving and sharing rules.
 }
 

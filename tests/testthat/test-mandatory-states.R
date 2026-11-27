@@ -60,7 +60,7 @@ test_that("generation cannot silently change mandatory-state eligibility", {
   expect_equal(unique(createTrajectories(studyEnv = study)$subject_id), c(1, 2))
 
   snapshot <- readRDS(files[2])
-  expect_identical(snapshot$version, 5L)
+  expect_identical(snapshot$version, 6L)
   snapshot$generation$stateCohortMandatory <- "A"
   saveRDS(snapshot, files[2])
   before <- tools::md5sum(files[2])

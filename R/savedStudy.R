@@ -12,14 +12,14 @@
 .studyImportFields <- function() {
   c("stateCohortLabels", "stateCohortPriorityOrder", "stateCohortMandatory",
     "stateCohortAbsorbing", "outOfCohortAllowed", "allowedStatesList",
-    "mergeStates", "mergedStateOverrides")
+    "mergeStates", "mergedStateOverrides", "targetEpisodeHandling")
 }
 
 .studyGenerationFields <- function() {
   c("trajectoryType", "oocFix", "outOfCohortAllowed", "cycleLength",
     "stateCohortLabels", "stateCohortPriorityOrder", "stateSelectionType",
     "stateCohortAbsorbing", "stateCohortMandatory", "allowedStatesList",
-    "mergedStateOverrides")
+    "mergedStateOverrides", "stopAfterAbsorbingEpisode")
 }
 
 .checkSavedOverrides <- function(call, fields) {
@@ -41,9 +41,10 @@
   }
   saved <- readRDS(path)
   if (!is.list(saved) ||
-      !(identical(saved$version, 4L) || identical(saved$version, 5L))) {
+      !(identical(saved$version, 4L) || identical(saved$version, 5L) ||
+        identical(saved$version, 6L))) {
     stop("Unsupported saved-study format at ", path,
-         ". Only versions 4 and 5 are supported. Configure the study with runSavedStudy = FALSE ",
+         ". Only versions 4, 5 and 6 are supported. Configure the study with runSavedStudy = FALSE ",
          "and complete import and trajectory generation with this package version.",
          call. = FALSE)
   }
@@ -60,7 +61,13 @@
     }
     # Translate the historical storage name once, without rewriting the file.
     names(saved$generation)[names(saved$generation) == "lengthOfStay"] <- "cycleLength"
-    saved$version <- 5L
+  }
+  if (saved$version < 6L) {
+    # Earlier studies used one target interval and did not link absorbing
+    # status across separate episodes. Retain that behaviour on replay.
+    saved$import$targetEpisodeHandling <- "First"
+    saved$generation$stopAfterAbsorbingEpisode <- FALSE
+    saved$version <- 6L
   }
   if (!all(.studyImportFields() %in% names(saved$import)) ||
       !all(.studyGenerationFields() %in% names(saved$generation)) ||
@@ -78,6 +85,12 @@
   .validateStateLabels(saved$generation$stateCohortLabels)
   .validateAllowedStateSources(saved$import$allowedStatesList, "Saved import allowedStatesList")
   .validateAllowedStateSources(saved$generation$allowedStatesList, "Saved generation allowedStatesList")
+  saved$import$targetEpisodeHandling <- .validateEpisodeOptions(
+    saved$import$targetEpisodeHandling, saved$import$outOfCohortAllowed
+  )
+  .validateEpisodeOptions(saved$import$targetEpisodeHandling,
+                          saved$generation$outOfCohortAllowed,
+                          saved$generation$stopAfterAbsorbingEpisode)
   saved$generation$trajectoryType <- .configurationChoice(
     saved$generation$trajectoryType, c("Discrete", "Continuous"),
     "trajectoryType", allowNull = FALSE
@@ -154,7 +167,7 @@
   if (is.null(imported)) {
     imported <- mget(.studyImportFields(), envir = studyEnv, inherits = FALSE)
   }
-  snapshot <- list(version = 5L, import = imported, generation = generation,
+  snapshot <- list(version = 6L, import = imported, generation = generation,
                    definitions = studyEnv$.cohortDefinitions,
                    definitionContents = studyEnv$.cohortDefinitionContents,
                    stateDictionary = studyEnv$stateDictionary)

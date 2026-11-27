@@ -59,6 +59,13 @@ recovery need their own cohort definitions when the analysis distinguishes them.
 `OUT OF COHORT` marks a discrete cycle with no selected state. `START` and
 `EXIT` mark observation boundaries.
 
+By default, the first target interval supplies each patient's observation period.
+Use `targetEpisodeHandling = "All"` to keep every non-overlapping target period
+as a separate episode, identified by `episode_id`. Selection and elapsed time
+restart in each episode; gaps between periods are omitted. Later episodes remain
+eligible after an absorbing state unless `stopAfterAbsorbingEpisode = TRUE`.
+See the [multiple-period example](https://healthinformaticsut.github.io/Cohort2Trajectory/articles/a03_trajectories.html#multiple-observation-periods).
+
 Use `mergeStates = TRUE` to represent overlapping states together.
 `mergedState()` can change a combination's destinations, absorbing status or
 display label. Membership is stored separately from labels.
@@ -92,6 +99,9 @@ absorbing states for use by
 [TrajectoryMarkovAnalysis](https://github.com/HealthInformaticsUT/TrajectoryMarkovAnalysis).
 Use `saveRDS()` to preserve both the rows and these definitions. CSV contains
 only the rows, so downstream tools need the definitions supplied separately.
+The current TMA reader accepts the default single-period format. It rejects
+the version-2 definition used by `targetEpisodeHandling = "All"`; those episodes
+need an analysis that preserves their separate observation boundaries.
 
 Related packages:
 [CohortContrast](https://github.com/HealthInformaticsUT/CohortContrast) and

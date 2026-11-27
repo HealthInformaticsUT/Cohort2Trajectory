@@ -25,7 +25,7 @@ test_that("generation accepts named choices and rejects invalid overrides withou
   settingsFile <- file.path(path, "choices", "Settings", "analysisSettings.rds")
   snapshot <- readRDS(settingsFile)
   saved <- snapshot$generation
-  expect_identical(snapshot$version, 5L)
+  expect_identical(snapshot$version, 6L)
   expect_identical(c(saved$trajectoryType, saved$stateSelectionType), c("Continuous", "Priority"))
   files <- c(settingsFile, file.path(path, "choices", "Data",
                                       c("patientDataDiscrete.csv", "patientDataContinuous.csv")))

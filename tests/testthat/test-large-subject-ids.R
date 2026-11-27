@@ -62,6 +62,25 @@ test_that("integer64 IDs are restored before exact demographic joins", {
     expect_equal(as.character(starts$subject_id), as.character(ids))
     expect_equal(starts$gender_concept_id, c(8507, 8532))
   }
+
+  later <- input
+  later$cohort_start_date <- later$cohort_start_date + 14
+  later$cohort_end_date <- later$cohort_end_date + 14
+  episodes <- .cleanAllTargetEpisodes(rbind(input, later), NULL)
+  outputs <- list(
+    getTrajectoriesDiscrete(cdm, episodes, stateDuration = 7, statePriorityVector = c("A", "B")),
+    getTrajectoriesContinuous(cdm, episodes, stateSelection = 3, statePriorityVector = c("A", "B"))
+  )
+  for (output in outputs) {
+    expect_s3_class(output$subject_id, "integer64")
+    starts <- output[output$state_label == "START", ]
+    for (i in seq_along(ids)) {
+      patient <- starts[as.character(starts$subject_id) == as.character(ids[i]), ]
+      expect_equal(sort(patient$episode_id), 1:2)
+      expect_equal(patient$gender_concept_id, rep(c(8507, 8532)[i], 2))
+      expect_equal(patient$time_in_cohort, c(0, 0))
+    }
+  }
 })
 
 test_that("invalid patient IDs fail before they can mix histories", {

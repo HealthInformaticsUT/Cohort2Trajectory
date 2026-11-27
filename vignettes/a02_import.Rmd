@@ -162,16 +162,26 @@ both local source arguments.
 
 ## What cleaning does
 
-Only patients with a target row are retained. If a patient has several target
-intervals, the first interval by start date supplies the bounds. State records
-before its start are removed or clipped. By default, records after its end are
-also removed or clipped. `outOfCohortAllowed = TRUE` allows retained state
-records to extend beyond the target end, without moving the target start.
+Only patients with a target row are retained. With the default
+`targetEpisodeHandling = "First"`, the first target interval by start date
+supplies the bounds. State records are removed or clipped to those bounds.
+`outOfCohortAllowed = TRUE` lets retained records extend the target end, without
+moving its start.
+
+With `targetEpisodeHandling = "All"`, identical target intervals are deduplicated
+and each distinct interval becomes an episode. Overlapping target intervals are
+rejected, including a shared endpoint because dates are inclusive. Adjacent
+intervals are valid. States are clipped to every intersecting episode; no rows
+are created for gaps between episodes. This mode requires
+`outOfCohortAllowed = FALSE`. Set the period choice during configuration or pass
+it to `getDataForStudy()` for a fresh study; reimport to change it.
 
 Overlapping records for the same patient and state are combined. Every label in
-`stateCohortMandatory` must occur within the retained interval. This checks
-presence anywhere in that interval. Patients with only a target interval remain
-eligible when no mandatory rule excludes them.
+`stateCohortMandatory` must occur within each retained episode. Eligibility is
+checked separately for every episode in `"All"` mode. Episodes with no state
+records remain eligible when there are no mandatory requirements. Episode
+numbers are assigned chronologically within the patient before eligibility
+filtering, so retained episode IDs can have gaps.
 
 When `mergeStates = TRUE`, overlaps between different states are then represented
 by their structured membership, as described in
@@ -183,7 +193,7 @@ Changing mandatory-state requirements also requires another import.
 
 ## Saved studies
 
-Restore a version 5 or version 4 snapshot with `runSavedStudy = TRUE`, then
+Restore a version 6, 5 or 4 snapshot with `runSavedStudy = TRUE`, then
 import fresh data.
 See [saved-study configuration](a01_configuration.html#repeat-a-saved-study)
 for the Settings-only sharing workflow. A saved CDM study uses the definitions
@@ -196,7 +206,8 @@ getDataForStudy(cdm = newCdm, studyEnv = savedStudy)
 For a saved local-data study, configure `useCDM = FALSE` and supply a new local
 source. The same per-call source precedence applies. Saved runs restore their
 analysis settings, so do not pass replacement labels, mandatory states,
-transition rules or merging options.
+transition rules, episode handling or merging options. Versions 4 and 5 restore
+`targetEpisodeHandling = "First"` and `stopAfterAbsorbingEpisode = FALSE`.
 
 After import, continue to [trajectory generation](a03_trajectories.html).
 The [output article](a05_output.html) describes cleaned data, trajectories and
