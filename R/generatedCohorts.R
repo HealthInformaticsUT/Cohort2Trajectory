@@ -2,6 +2,13 @@
 # the caller, including a table named 'cohort'. Collect before cleanup and keep
 # the caller's connection open on both successful and failed imports.
 .collectGeneratedCohorts <- function(cdm, cohortSet, selectedIds) {
+  if (!requireNamespace("CirceR", quietly = TRUE) ||
+      !requireNamespace("SqlRender", quietly = TRUE)) {
+    stop("CDM cohort generation requires loadable CirceR and SqlRender packages. ",
+         "Install them with install.packages(c('CirceR', 'SqlRender')); ",
+         "if loading still fails, check the Java/rJava configuration.",
+         call. = FALSE)
+  }
   name <- paste0("c2t_", basename(tempfile(pattern = "")))
   name <- substr(gsub("[^a-z0-9_]", "", tolower(name)), 1L, 13L)
   owned <- paste0(name, c("", "_count", "_set", "_attrition", "_codelist", "_inclusion",

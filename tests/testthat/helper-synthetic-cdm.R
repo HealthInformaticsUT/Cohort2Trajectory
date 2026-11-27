@@ -23,6 +23,8 @@ writeFixtureDefinitions <- function(paths, concepts = c(1001L, 2001L, 3001L)) {
 }
 
 fixtureCdm <- function(con, name = "Synthetic two-person fixture") {
+  testthat::skip_if_not_installed("CirceR")
+  testthat::skip_if_not_installed("SqlRender")
   day <- as.Date("2020-01-01")
   input <- list(
     person = data.frame(person_id = 1:2, year_of_birth = c(1950L, 1960L),
